@@ -61,6 +61,18 @@ test('GAS archives multiple runs in one private gzip JSON file and adds a UTC re
   assert.equal(r.stats().locked, false);
 });
 
+test('existing receiver preserves deployment labels and collision attribution in summaries and events', () => {
+  const r = receiver();
+  const batch = structuredClone(example);
+  Object.assign(batch.runs[0].summary, { environment: 'development', build_id: 'sha256-1234567890abcdef',
+    death_cause: 'wall', wall_id: 'wall-7', wall_source: 'expired_food', collision_cell: { x: 4, y: 5 } });
+  Object.assign(batch.runs[0].events.at(-1).details, batch.runs[0].summary);
+  assert.equal(r.post(batch).ok, true);
+  const archive = JSON.parse(gunzipSync([...r.files.values()][0]));
+  assert.deepEqual(archive.runs[0].summary, batch.runs[0].summary);
+  assert.deepEqual(archive.runs[0].events.at(-1).details, batch.runs[0].events.at(-1).details);
+});
+
 test('GAS deduplicates retries durably and rejects conflicting batch IDs', () => {
   const r = receiver();
   r.post();

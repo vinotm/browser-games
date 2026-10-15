@@ -1,3 +1,4 @@
+import { wallOutline } from './walls.js?v=beta-public-1';
 import { size, interval, largeFoodLifetime, regularFoodLifetimeMs, wallWarningMs, magnetRadius, magnetFlightMs, buffTypes } from './config.js?v=beta-public-1';
 import { effectActive, pickupDistance, reverseStatusOpacity } from './effects.js?v=beta-public-1';
 
@@ -5,6 +6,7 @@ import { effectActive, pickupDistance, reverseStatusOpacity } from './effects.js
 export function createSnakeRenderer({ canvas, motionPreference, gameTime, foodPosition }) {
   const context = canvas.getContext('2d');
   const tile = canvas.width / size;
+  const wallPaths = new WeakMap();
   let snake, previousSnake, walls, pendingWalls, food, foodBorn, bonusFood, bonusLife, bonusBorn,
     buffs, timedEffects, magnetFlights, shortenRemaining, extendRemaining, shortenEffect, extendEffect,
     scorePopups, progress, palette;
@@ -38,19 +40,29 @@ function draw(snapshot, deathProgress = 0) {
   return { shortenEffect, extendEffect, scorePopups, magnetFlights };
 }
 
+function wallPath(wall) {
+  if (!wallPaths.has(wall)) {
+    const path = new Path2D();
+    for (const loop of wallOutline(wall, 2 / tile)) {
+      loop.forEach(([x, y], i) => i === 0
+        ? path.moveTo(x * tile, y * tile) : path.lineTo(x * tile, y * tile));
+      path.closePath();
+    }
+    wallPaths.set(wall, path);
+  }
+  return wallPaths.get(wall);
+}
+
+function fillWall(wall) {
+  context.fill(wallPath(wall));
+}
+
 function drawBoard() {
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = palette.board;
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = palette.wall;
-  for (const wall of walls)
-    for (const part of wall.parts || [wall])
-      context.fillRect(
-        part.x * tile + 2,
-        part.y * tile + 2,
-        part.width * tile - 4,
-        part.height * tile - 4,
-      );
+  for (const wall of walls) fillWall(wall);
   context.save();
   context.strokeStyle = palette.wall;
   context.lineWidth = 2;
@@ -60,20 +72,9 @@ function drawBoard() {
     const amount = entry.appearance ?? 0;
     const smooth = amount * amount * (3 - 2 * amount);
     context.globalAlpha = (0.3 + 0.3 * Math.min(1, age / wallWarningMs)) * (1 - smooth);
-    for (const part of entry.wall.parts) {
-      context.strokeRect(part.x * tile + 2, part.y * tile + 2,
-        part.width * tile - 4, part.height * tile - 4);
-      if (smooth > 0) {
-        const width = part.width * tile - 4, height = part.height * tile - 4;
-        const scale = motionPreference.matches ? 1 : 0.2 + 0.8 * smooth;
-        const w = part.width === 1 ? width * scale : width;
-        const h = part.height === 1 ? height * scale : height;
-        context.globalAlpha = smooth;
-        context.fillRect(part.x * tile + 2 + (width - w) / 2,
-          part.y * tile + 2 + (height - h) / 2, w, h);
-        context.globalAlpha = (0.3 + 0.3 * Math.min(1, age / wallWarningMs)) * (1 - smooth);
-      }
-    }
+    context.stroke(wallPath(entry.wall));
+    context.globalAlpha = smooth;
+    fillWall(entry.wall);
   }
   context.restore();
 }

@@ -5,9 +5,10 @@ import { createTimedEffects, collectTimedEffect, effectActive, movementInterval,
   pickupDistance } from './effects.js?v=beta-public-1';
 import { movingFoodWait as movingWait, randomDelay, createTemporarySpawner,
   temporarySpawnSucceeded, temporarySpawnDeferred } from './spawning.js?v=beta-public-1';
-import { generateWalls, wallIsClear, advanceWallAppearance, createWallProgression,
-  takeWallMilestones, scheduleWallPlans } from './walls.js?v=beta-public-1';
+import { generateWalls, wallIsClear, wallActivationReservations, advanceWallAppearance, createWallProgression,
+  takeWallMilestones, scheduleWallPlans, milestoneWallCount, expiredFoodWall } from './walls.js?v=beta-public-1';
 import { createSnakeRenderer } from './renderer.js?v=beta-public-1';
+import { describeFatalCollision } from './collision.js?v=beta-public-1';
 import { createCritStats, collectCritBuff } from './critical.js?v=beta-public-1';
 import { createCombo, advanceCombo, expireCombo, comboFade, scoreWithCombo } from './combo.js?v=beta-public-1';
 import { createStorage } from '../../shared/js/storage.js?v=beta-public-1';
@@ -21,7 +22,7 @@ import { bindSwipe, bindDirectionButtons, bindVisibilityPause, isEditableTarget 
 
 import { loadDeploymentConfig } from '../../shared/js/config.js?v=beta-public-1';
 
-const { analyticsEndpoint } = await loadDeploymentConfig(new URL('../analytics-config.json', import.meta.url));
+const { analyticsEndpoint, environment, buildId } = await loadDeploymentConfig(new URL('../analytics-config.json', import.meta.url));
 const canvas = document.querySelector('#board');
 const screen = document.querySelector('.game-screen');
 const scoreLabel = document.querySelector('#score');
@@ -229,7 +230,7 @@ function wallReservations() {
 function addMilestoneWalls() {
   const requests = takeWallMilestones(wallProgression, score);
   const plans = scheduleWallPlans(requests, scheduledWalls,
-    walls.length + pendingWalls.length, gameTime(), lastWallWarningAt);
+    milestoneWallCount(walls) + milestoneWallCount(pendingWalls.map(entry => entry.wall)), gameTime(), lastWallWarningAt);
   for (const plan of plans) {
     plan.id = objectId('wall');
     report('wall_scheduled', { score, warning_at_ms: plan.dueAt, corners_allowed: plan.corners }, plan.id);
@@ -245,7 +246,7 @@ function showScheduledWallWarnings() {
   scheduledWalls.shift();
   const existing = [...walls, ...pendingWalls.map((entry) => entry.wall)];
   const added = generateWalls({
-    size, count: Math.min(1, Math.max(0, wallLimit - existing.length)),
+    size, count: Math.min(1, Math.max(0, wallLimit - milestoneWallCount(existing))),
     existing, reserved: wallReservations(), corners: request.corners,
   });
   for (const wall of added) {
@@ -258,7 +259,10 @@ function showScheduledWallWarnings() {
 }
 
 function activatePendingWalls() {
-  const reserved = wallReservations();
+  const reserved = wallActivationReservations({
+    snake, previousSnake,
+    food: foodPosition(), bonusFood, buffs,
+  });
   pendingWalls = pendingWalls.filter((entry) => {
     if (!advanceWallAppearance(entry, gameTime(), wallIsClear(entry.wall, reserved))) return true;
     installWalls([entry.wall]);
@@ -319,7 +323,18 @@ function emptyFoodPositions(width, reserveRegular = false) {
 // Regular and timed pickups.
 
 function placeFood(relocate = false) {
-  if (relocate && food) report('item_expired', { kind: regularKind(), ...foodPosition() }, regularFoodId);
+  if (relocate && food) {
+    const position = foodPosition();
+    report('item_expired', { kind: regularKind(), ...position }, regularFoodId);
+    const wall = expiredFoodWall(position, walls, size);
+    if (wall) {
+      wall.id = objectId('wall');
+      // Start fading immediately; overlap checks still protect a crossing snake.
+      pendingWalls.push({ wall, born: gameTime(), warningMs: 0 });
+      report('wall_warning', { cells: wall.cells, source: wall.source,
+        food_id: regularFoodId, warning_ms: 0 }, wall.id);
+    }
+  }
   const oldPositions = relocate ? [food, previousFood, foodPosition(1)].filter(Boolean) : [];
   if (!relocate) movingFood = normalFoods >= normalFoodWarmup && untilMoving <= 0;
   let empty = emptyFoodPositions(1);
@@ -332,9 +347,9 @@ function placeFood(relocate = false) {
     empty = emptyFoodPositions(1);
   }
   // A warning outline must not take the final available food position.
-  if (!empty.length && pendingWalls.length) {
-    pendingWalls.forEach((entry) => report('wall_cancelled', { reason: 'food_space' }, entry.wall.id));
-    pendingWalls = [];
+  if (!empty.length && pendingWalls.some(entry => entry.wall.source !== 'expired_food')) {
+    pendingWalls.filter(entry => entry.wall.source !== 'expired_food').forEach((entry) => report('wall_cancelled', { reason: 'food_space' }, entry.wall.id));
+    pendingWalls = pendingWalls.filter(entry => entry.wall.source === 'expired_food');
     empty = emptyFoodPositions(1);
   }
   if (relocate) {
@@ -707,9 +722,8 @@ function stopFrame() { frames.cancel(); }
 function gameOver(won = false) {
   freezeTimer();
   const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
-  const cause = won ? 'board_filled' : head.x < 0 || head.y < 0 || head.x >= size || head.y >= size
-    ? 'edge' : isBarrier(head) ? 'wall' : 'body';
-  analytics.finish('completed', gameTime(), { score, snake_length: snake.length, death_cause: cause });
+  const collision = won ? { death_cause: 'board_filled' } : describeFatalCollision(head, walls, size);
+  analytics.finish('completed', gameTime(), { score, snake_length: snake.length, ...collision });
   void analytics.flush({ force: true });
   queuedDirection = null;
   pauseButton.disabled = true;
@@ -878,7 +892,7 @@ function start() {
   screen.classList.remove('impact');
   overlayView.hide();
   if (!firstStart) reset();
-  analytics.start(0, { score: 0, base_step_ms: interval });
+  analytics.start(0, { score: 0, base_step_ms: interval, environment, build_id: buildId });
   reportRegularSpawn();
   pauseButton.disabled = false;
   pauseButton.hidden = false;

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateWalls, wallIsClear, advanceWallAppearance, createWallProgression,
-  takeWallMilestones, scheduleWallPlans } from '../snake-game/js/walls.js';
+  takeWallMilestones, scheduleWallPlans, wallActivationReservations, wallOutline, milestoneWallCount, expiredFoodWall } from '../snake-game/js/walls.js';
 import { buffTypes, interval, regularFoodLifetimeMs, largeFoodLifetime } from '../snake-game/js/config.js';
 
 function seeded(seed) {
@@ -156,4 +156,93 @@ test('a stalled frame cannot skip straight from outline to solid wall', () => {
   advanceWallAppearance(entry, 1500, true);
   assert.equal(advanceWallAppearance(entry, 60000, true), false);
   assert.ok(entry.appearance < 1);
+});
+
+
+test('forming walls protect occupied cells but ignore nearby objects and forward paths', () => {
+  const state = { snake: [{ x: 10, y: 10 }, { x: 9, y: 10 }],
+    previousSnake: [{ x: 9, y: 10 }, { x: 8, y: 10 }],
+    direction: { x: 1, y: 0 }, queuedDirection: null,
+    food: { x: 20.4, y: 20 }, bonusFood: { x: 25, y: 25 }, buffs: [] };
+  const clear = (x, y) => wallIsClear({ cells: [{ x, y }] }, wallActivationReservations(state));
+  assert.equal(clear(9, 11), true); // Adjacent body.
+  assert.equal(clear(8, 10), false); // Interpolating departing tail.
+  assert.equal(clear(11, 10), true); // Immediately ahead, still unoccupied.
+  assert.equal(clear(16, 10), true); // Heading toward a wall does not delay it.
+  assert.equal(clear(17, 10), true);
+  assert.equal(clear(15, 11), true); // Beside the path.
+  assert.equal(clear(20, 20), false); // Fractional moving-food overlap.
+  assert.equal(clear(21, 20), false);
+  assert.equal(clear(22, 20), true);
+  assert.equal(clear(26, 26), false); // Full large-food footprint.
+  assert.equal(clear(27, 26), true);
+  const crossing = { wall: { cells: [{ x: 11, y: 10 }] }, born: 0, appearance: 0.99,
+    lastAppearanceAt: 2000 };
+  state.snake.unshift({ x: 11, y: 10 });
+  assert.equal(advanceWallAppearance(crossing, 2050,
+    wallIsClear(crossing.wall, wallActivationReservations(state))), false);
+  assert.ok(crossing.appearance < 0.99); // A last-moment crossing prevents solidity.
+  state.snake.shift();
+  assert.equal(advanceWallAppearance(crossing, 2150,
+    wallIsClear(crossing.wall, wallActivationReservations(state))), true);
+  state.queuedDirection = { x: 0, y: -1 };
+  assert.equal(clear(15, 10), true); // Turning away clears the old heading.
+  assert.equal(clear(10, 4), true);
+  state.queuedDirection = { x: 0, y: 1 };
+  assert.equal(clear(10, 16), true);
+  state.queuedDirection = { x: -1, y: 0 };
+  assert.equal(clear(4, 10), true);
+});
+
+test('L outlines follow only the union perimeter in every orientation', () => {
+  for (const horizontal of [false, true]) for (const sign of [-1, 1]) {
+    const wall = { parts: horizontal
+      ? [{ x: 4, y: 4, width: 4, height: 1 },
+        { x: 4, y: sign < 0 ? 1 : 4, width: 1, height: 4 }]
+      : [{ x: 4, y: 4, width: 1, height: 4 },
+        { x: sign < 0 ? 1 : 4, y: 4, width: 4, height: 1 }] };
+    const loops = wallOutline(wall);
+    assert.equal(loops.length, 1);
+    let area = 0, perimeter = 0;
+    const loop = loops[0];
+    loop.forEach(([x, y], i) => {
+      const [nx, ny] = loop[(i + 1) % loop.length];
+      area += x * ny - nx * y;
+      perimeter += Math.abs(nx - x) + Math.abs(ny - y);
+    });
+    assert.equal(Math.abs(area) / 2, 7);
+    assert.equal(perimeter, 16); // Separate rectangles would include interior seams.
+    assert.equal(wallOutline(wall, 2 / 30).length, 1);
+  }
+});
+
+
+test('expired food becomes a permanent single-cell wall only after three solid walls', () => {
+  const solid = [0, 1, 2].map(x => ({ cells: [{ x, y: 0 }] }));
+  assert.equal(expiredFoodWall({ x: 10, y: 12 }, solid.slice(0, 2), 32), null);
+  const staticWall = expiredFoodWall({ x: 10, y: 12 }, solid, 32);
+  assert.deepEqual(staticWall.cells, [{ x: 10, y: 12 }]);
+  assert.deepEqual(expiredFoodWall({ x: 10.7, y: 12.1 }, solid, 32).cells,
+    [{ x: 11, y: 12 }]);
+  assert.equal(expiredFoodWall({ x: 0, y: 0 }, solid, 32), null);
+  const full = Array.from({ length: 15 }, () => solid[0]);
+  const extras = Array.from({ length: 20 }, () => staticWall);
+  assert.equal(milestoneWallCount([...full, ...extras]), 15);
+  assert.equal(milestoneWallCount([...solid, ...extras]), 3);
+  const plans = scheduleWallPlans([{ count: 3, corners: true }], [],
+    milestoneWallCount([...solid, ...extras]), 0, -Infinity, () => 0);
+  assert.equal(plans.length, 3);
+  assert.equal(wallIsClear(staticWall, [{ x: 10, y: 12, padding: 0 }]), false);
+});
+
+test('expired-food walls fade immediately but still wait for a crossing snake', () => {
+  const entry = { born: 0, warningMs: 0 };
+  advanceWallAppearance(entry, 0, true);
+  advanceWallAppearance(entry, 100, true);
+  assert.ok(entry.appearance > 0);
+  advanceWallAppearance(entry, 200, false);
+  assert.equal(entry.appearance, 0);
+  for (let t = 300; t <= 800; t += 100)
+    assert.equal(advanceWallAppearance(entry, t, true), false);
+  assert.equal(advanceWallAppearance(entry, 850, true), true);
 });

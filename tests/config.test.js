@@ -10,12 +10,12 @@ test('public deployment configuration defaults to disabled when unavailable or i
     { analyticsEndpoint: 'https://example.test/exec#fragment' },
     { analyticsEndpoint: 'not-a-url' }]) {
     assert.deepEqual(await loadDeploymentConfig('test', async () => ({ ok: true, json: async () => value })),
-      { analyticsEndpoint: '' });
+      { analyticsEndpoint: '', environment: 'unknown', buildId: 'unknown' });
   }
   assert.deepEqual(await loadDeploymentConfig('test', async () => { throw new Error('offline'); }),
-    { analyticsEndpoint: '' });
+    { analyticsEndpoint: '', environment: 'unknown', buildId: 'unknown' });
   assert.deepEqual(await loadDeploymentConfig('test', async () => ({ ok: false })),
-    { analyticsEndpoint: '' });
+    { analyticsEndpoint: '', environment: 'unknown', buildId: 'unknown' });
 });
 
 test('deployment configuration accepts a public HTTPS endpoint and drops other settings', async () => {
@@ -24,7 +24,7 @@ test('deployment configuration accepts a public HTTPS endpoint and drops other s
     assert.equal(options.credentials, 'same-origin');
     return { ok: true, json: async () => ({ analyticsEndpoint: 'https://example.test/exec', ignored: 'unused' }) };
   });
-  assert.deepEqual(result, { analyticsEndpoint: 'https://example.test/exec' });
+  assert.deepEqual(result, { analyticsEndpoint: 'https://example.test/exec', environment: 'unknown', buildId: 'unknown' });
 });
 
 test('disabled analytics neither reads local data nor records or uploads a session', async () => {
@@ -37,4 +37,14 @@ test('disabled analytics neither reads local data nor records or uploads a sessi
   assert.equal(analytics.active, false);
   assert.equal(analytics.pending, 0);
   assert.equal(await analytics.flush(), false);
+});
+
+test('deployment labels survive disabled analytics and cannot contain URLs or arbitrary metadata', async () => {
+  for (const environment of ['development', 'preview', 'production']) {
+    const config = { analyticsEndpoint: '', environment, buildId: 'sha256-1234567890abcdef' };
+    assert.deepEqual(await loadDeploymentConfig('test', async () => ({ ok: true, json: async () => config })), config);
+  }
+  assert.deepEqual(await loadDeploymentConfig('test', async () => ({ ok: true, json: async () => ({
+    analyticsEndpoint: 'https://example.test/exec', environment: 'https://private-host', buildId: '/private/path',
+  }) })), { analyticsEndpoint: 'https://example.test/exec', environment: 'unknown', buildId: 'unknown' });
 });
