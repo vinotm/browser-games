@@ -2,6 +2,7 @@
 import { cp, mkdir, readdir, rm, lstat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sourceBuildId } from './source-version.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = join(root, 'dist');
@@ -22,6 +23,12 @@ async function collect(relative, extensions) {
 
 await collect('shared', ['.js', '.css']);
 await collect('snake-game/js', ['.js']);
+const environment = process.env.SNAKE_ENVIRONMENT || (process.env.CF_PAGES === '1' &&
+  process.env.CF_PAGES_BRANCH !== 'main' ? 'preview' : 'production');
+if (!['development', 'preview', 'production'].includes(environment)) {
+  throw new Error('SNAKE_ENVIRONMENT must be development, preview, or production');
+}
+const buildId = await sourceBuildId(root, files);
 let endpoint = process.env.SNAKE_ANALYTICS_ENDPOINT ?? '';
 if (endpoint) {
   const url = new URL(endpoint);
@@ -40,5 +47,5 @@ for (const file of files) {
   await cp(join(root, file), join(output, file));
 }
 await writeFile(join(output, 'snake-game/analytics-config.json'),
-  JSON.stringify({ analyticsEndpoint: endpoint }, null, 2) + '\n');
+  JSON.stringify({ analyticsEndpoint: endpoint, environment, buildId }, null, 2) + '\n');
 console.log(`Exported ${files.length} public files to dist/. Analytics ${endpoint ? 'enabled' : 'disabled'}.`);

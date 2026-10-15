@@ -54,6 +54,26 @@ combo counts; `summary.max_combo` records the run maximum. There are no per-fram
 movement events. Coordinates use two decimal places, timing details use integer
 milliseconds, and empty fields are omitted in schema 2.
 
+### Release, environment, and fatal collisions
+
+`game_version` identifies the gameplay release. Every new run also records
+`summary.build_id` (a public-source fingerprint, such as `sha256-1234567890abcdef`)
+and `summary.environment` (`development`, `preview`, `production`, or `unknown`).
+These persist across partial chunks, retries, and reload recovery. Filter by both
+environment and build before comparing gameplay changes. Earlier runs without
+these fields have an unknown origin; they cannot be reliably labelled retroactively.
+
+Completed runs record `death_cause`. Fatal moves also include `collision_cell`,
+the attempted grid coordinate. For wall deaths, `wall_id` links to the existing
+`wall_warning` and `wall_solid` events, and `wall_source` is `milestone` or
+`expired_food`. These fields appear in both the final summary and `run_ended`
+details. A filled-board win has no collision cell. No movement stream is added.
+
+The metadata uses existing schema 2 summary/detail objects, so the receiver needs
+no schema migration. Older tabs keep their original version and metadata when
+pending reports upload after a deployment. These labels describe the served build,
+not the player's identity, and are not authenticated claims.
+
 Device metadata uses only these categories:
 
 - `category`: `desktop`, `mobile`, `tablet`, or `unknown`.

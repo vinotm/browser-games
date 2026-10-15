@@ -10,7 +10,7 @@ test('public export excludes unpublished sources, deployment state and private o
   const temporary = mkdtempSync(join(tmpdir(), 'browser-games-export-'));
   const source = fileURLToPath(new URL('../', import.meta.url));
   try {
-    for (const item of ['index.html', 'shared', 'snake-game', 'scripts']) {
+    for (const item of ['index.html', 'shared', 'snake-game', 'scripts', 'preview_server.py']) {
       cpSync(join(source, item), join(temporary, item), {
         recursive: true,
         filter: (path) => !path.split(/[\\/]/).includes('private'),
@@ -21,20 +21,55 @@ test('public export excludes unpublished sources, deployment state and private o
       writeFileSync(join(temporary, path, 'unpublished.txt'), 'not a public asset');
     }
     writeFileSync(join(temporary, 'snake-game/js/settings.local.js'), 'local-only');
-    const build = (endpoint = '') => spawnSync(process.execPath, ['scripts/build.mjs'], {
-      cwd: temporary, env: { ...process.env, SNAKE_ANALYTICS_ENDPOINT: endpoint }, encoding: 'utf8',
+    const build = (endpoint = '', extra = {}) => spawnSync(process.execPath, ['scripts/build.mjs'], {
+      cwd: temporary, env: { ...process.env, CF_PAGES: '', SNAKE_ENVIRONMENT: '',
+        SNAKE_ANALYTICS_ENDPOINT: endpoint, ...extra }, encoding: 'utf8',
     });
     let result = build();
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['index.html', 'shared', 'snake-game']);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game')).includes('private'), false);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game/js')).includes('settings.local.js'), false);
-    assert.deepEqual(JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json'))),
-      { analyticsEndpoint: '' });
+    const firstConfig = JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json')));
+    assert.match(firstConfig.buildId, /^sha256-[a-f0-9]{16}$/);
+    assert.deepEqual(firstConfig,
+      { analyticsEndpoint: '', environment: 'production', buildId: firstConfig.buildId });
+    // The preview reads its private override, emits only public fields, and hashes
+    // exactly the same public sources as the static build, without a Git checkout.
+    writeFileSync(join(temporary, 'snake-game/private/analytics-config.json'), JSON.stringify({
+      analyticsEndpoint: 'https://preview.test/exec', private_note: 'never expose',
+    }));
+    const preview = spawnSync(process.env.PYTHON ?? 'python3', ['-c', `
+import io, json
+from preview_server import FreshAssetsHandler
+h = FreshAssetsHandler.__new__(FreshAssetsHandler)
+h.directory = '.'
+h.path = '/snake-game/analytics-config.json'
+h.wfile = io.BytesIO()
+h.send_response = lambda *a: None
+h.send_header = lambda *a: None
+h.end_headers = lambda: None
+assert h.deployment_config()
+print(h.wfile.getvalue().decode())
+`], { cwd: temporary, encoding: 'utf8' });
+    assert.equal(preview.status, 0, preview.stderr);
+    assert.deepEqual(JSON.parse(preview.stdout), { analyticsEndpoint: 'https://preview.test/exec',
+      environment: 'development', buildId: firstConfig.buildId });
+    result = build('', { CF_PAGES: '1', CF_PAGES_BRANCH: 'snake' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json'))).environment, 'preview');
+    result = build('', { CF_PAGES: '1', CF_PAGES_BRANCH: 'main' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json'))).environment, 'production');
+    result = build('', { SNAKE_ENVIRONMENT: 'development' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json'))).environment, 'development');
+    writeFileSync(join(temporary, 'snake-game/js/config.js'), readFileSync(join(temporary, 'snake-game/js/config.js')) + '\n// updated rules\n');
     result = build('https://example.test/exec');
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json'))).analyticsEndpoint,
-      'https://example.test/exec');
+    const updatedConfig = JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json')));
+    assert.equal(updatedConfig.analyticsEndpoint, 'https://example.test/exec');
+    assert.notEqual(updatedConfig.buildId, firstConfig.buildId);
     const before = readFileSync(join(temporary, 'dist/snake-game/analytics-config.json'), 'utf8');
     result = build('https://user:password@example.test/exec');
     assert.notEqual(result.status, 0);

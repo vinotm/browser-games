@@ -40,7 +40,7 @@ export function scheduleWallPlans(requests, scheduled, occupied, now, lastWarnin
 }
 
 export function advanceWallAppearance(entry, now, safe) {
-  const readyAt = entry.born + wallWarningMs;
+  const readyAt = entry.born + (entry.warningMs ?? wallWarningMs);
   const previous = Math.max(readyAt, entry.lastAppearanceAt ?? now);
   // Bound a stalled frame so the fill still gives a visible warning transition.
   const elapsed = Math.max(0, Math.min(100, now - previous));
@@ -54,8 +54,8 @@ export function advanceWallAppearance(entry, now, safe) {
 export function wallIsClear(wall, reserved) {
   return !wall.cells.some((p) => reserved.some((r) => {
     const padding = r.padding ?? 1;
-    return p.x >= r.x - padding && p.x < r.x + (r.width ?? 1) + padding &&
-      p.y >= r.y - padding && p.y < r.y + (r.height ?? 1) + padding;
+    return p.x + 1 > r.x - padding && p.x < r.x + (r.width ?? 1) + padding &&
+      p.y + 1 > r.y - padding && p.y < r.y + (r.height ?? 1) + padding;
   }));
 }
 
@@ -97,4 +97,67 @@ export function generateWalls({ size, count, existing = [], reserved = [], corne
     reserveWall(wall);
   }
   return added;
+}
+
+// Activation is stricter about actual overlap, without placement's safety margins.
+export function wallActivationReservations({ snake, previousSnake, food, bonusFood, buffs }) {
+  return [
+    ...snake.map(p => ({ ...p, padding: 0 })),
+    ...previousSnake.map(p => ({ ...p, padding: 0 })),
+    ...(food ? [{ ...food, padding: 0 }] : []),
+    ...[bonusFood, ...buffs].filter(Boolean).map(p => ({
+      ...p, width: 2, height: 2, padding: 0,
+    })),
+  ];
+}
+
+// Trace the union of the inset rectangles, excluding all interior seams.
+export function wallOutline(wall, inset = 0) {
+  const parts = (wall.parts || [wall]).map(p => ({
+    left: p.x + inset, top: p.y + inset,
+    right: p.x + p.width - inset, bottom: p.y + p.height - inset,
+  }));
+  const xs = [...new Set(parts.flatMap(p => [p.left, p.right]))].sort((a, b) => a - b);
+  const ys = [...new Set(parts.flatMap(p => [p.top, p.bottom]))].sort((a, b) => a - b);
+  const inside = (x, y) => x >= 0 && y >= 0 && x < xs.length - 1 && y < ys.length - 1 &&
+    parts.some(p => xs[x] >= p.left && xs[x + 1] <= p.right &&
+      ys[y] >= p.top && ys[y + 1] <= p.bottom);
+  const edges = new Map();
+  const edge = (a, b) => edges.set(a.join(','), { a, b });
+  for (let y = 0; y < ys.length - 1; y++)
+    for (let x = 0; x < xs.length - 1; x++) {
+      if (!inside(x, y)) continue;
+      if (!inside(x, y - 1)) edge([xs[x], ys[y]], [xs[x + 1], ys[y]]);
+      if (!inside(x + 1, y)) edge([xs[x + 1], ys[y]], [xs[x + 1], ys[y + 1]]);
+      if (!inside(x, y + 1)) edge([xs[x + 1], ys[y + 1]], [xs[x], ys[y + 1]]);
+      if (!inside(x - 1, y)) edge([xs[x], ys[y + 1]], [xs[x], ys[y]]);
+    }
+  const loops = [];
+  while (edges.size) {
+    const start = edges.keys().next().value;
+    let key = start;
+    const loop = [];
+    do {
+      const segment = edges.get(key);
+      loop.push(segment.a);
+      edges.delete(key);
+      key = segment.b.join(',');
+    } while (key !== start);
+    loops.push(loop);
+  }
+  return loops;
+}
+
+// Food remnants are real obstacles, but never consume milestone wall capacity.
+export function milestoneWallCount(walls) {
+  return walls.filter(wall => wall.source !== 'expired_food').length;
+}
+
+export function expiredFoodWall(position, solidWalls, size) {
+  if (!position || solidWalls.length < 3) return null;
+  const x = Math.max(0, Math.min(size - 1, Math.round(position.x)));
+  const y = Math.max(0, Math.min(size - 1, Math.round(position.y)));
+  if (solidWalls.some(wall => wall.cells.some(cell => cell.x === x && cell.y === y))) return null;
+  return { x, y, width: 1, height: 1, source: 'expired_food',
+    parts: [{ x, y, width: 1, height: 1 }], cells: [{ x, y }] };
 }

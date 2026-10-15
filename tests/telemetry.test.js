@@ -38,6 +38,30 @@ test('completed runs upload with device, UTC timestamps and joined object lifecy
   assert.deepEqual(run.events.slice(1, 3).map((e) => e.object_id), ['food-1', 'food-1']);
 });
 
+test('build and environment remain attached across chunks, reload and queued uploads', async () => {
+  const { telemetry: a, calls, saved } = setup();
+  const metadata = { environment: 'development', build_id: 'sha256-1234567890abcdef' };
+  a.start(0, metadata);
+  a.checkpoint();
+  a.finish('completed', 1000, { death_cause: 'wall', wall_id: 'wall-7', wall_source: 'expired_food',
+    collision_cell: { x: 4, y: 5 } });
+  await a.flush();
+  assert.equal(calls.length, 2);
+  for (const batch of calls) {
+    assert.equal(batch.runs[0].summary.environment, metadata.environment);
+    assert.equal(batch.runs[0].summary.build_id, metadata.build_id);
+  }
+  assert.equal(calls[1].runs[0].summary.wall_id, 'wall-7');
+  assert.deepEqual(calls[1].runs[0].events.at(-1).details.collision_cell, { x: 4, y: 5 });
+  a.start(0, metadata);
+  createAnalytics({ endpoint: 'https://example.test/exec', game: 'snake', version: 'new-version',
+    storage: saved, now: () => 1700000002000, id: () => 'reloaded-batch' });
+  const recovered = JSON.parse(saved.get('queue')).queue[0];
+  assert.equal(recovered.game_version, 'test');
+  assert.equal(recovered.runs[0].summary.environment, 'development');
+  assert.equal(recovered.runs[0].summary.build_id, metadata.build_id);
+});
+
 test('failed or unacknowledged uploads retain the exact batch for later retry', async () => {
   let attempts = 0, clock = 100000;
   const batches = [];

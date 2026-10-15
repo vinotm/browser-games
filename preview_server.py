@@ -1,10 +1,29 @@
 """Preview public game assets without exposing repository or private files."""
 import argparse
+import hashlib
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
+
+
+def source_build_id(root):
+    files = [root / 'index.html', root / 'snake-game/index.html', root / 'snake-game/style.css']
+    for directory, extensions in [('shared', ('.js', '.css')), ('snake-game/js', ('.js',))]:
+        for target in (root / directory).rglob('*'):
+            relative = target.relative_to(root)
+            if any(part == 'private' or part.startswith('.') or '.local.' in part for part in relative.parts):
+                continue
+            if target.is_symlink():
+                raise ValueError('Symbolic links cannot be fingerprinted')
+            if target.is_file() and target.suffix in extensions:
+                files.append(target)
+    digest = hashlib.sha256()
+    for target in sorted(files, key=lambda target: target.relative_to(root).as_posix()):
+        digest.update(target.relative_to(root).as_posix().encode() + b'\0')
+        digest.update(target.read_bytes() + b'\0')
+    return 'sha256-' + digest.hexdigest()[:16]
 
 
 class FreshAssetsHandler(SimpleHTTPRequestHandler):
@@ -34,14 +53,13 @@ class FreshAssetsHandler(SimpleHTTPRequestHandler):
         if unquote(urlsplit(self.path).path) != '/snake-game/analytics-config.json':
             return False
         override = Path(self.directory) / 'snake-game/private/analytics-config.json'
-        if not override.is_file():
-            return False
         try:
-            config = json.loads(override.read_text())
+            config = json.loads(override.read_text()) if override.is_file() else {}
             endpoint = config.get('analyticsEndpoint', '')
             if not isinstance(endpoint, str):
                 raise ValueError('Invalid endpoint setting')
-            body = json.dumps({'analyticsEndpoint': endpoint}).encode()
+            body = json.dumps({'analyticsEndpoint': endpoint, 'environment': 'development',
+                               'buildId': source_build_id(Path(self.directory))}).encode()
         except (OSError, ValueError, TypeError, AttributeError):
             body = b'{"analyticsEndpoint":""}'
         self.send_response(200)

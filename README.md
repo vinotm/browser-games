@@ -70,6 +70,15 @@ can supply the same `analyticsEndpoint` setting. The server exposes only that pu
 setting through the normal configuration URL; it does not serve the private file.
 The build uses its environment setting, not private preview overrides.
 
+Reports distinguish releases with Snake's `game_version` and a `summary.build_id`
+fingerprint of public HTML, CSS, and JavaScript. The fingerprint changes when those
+assets change, including uncommitted edits; private files and Git history are excluded.
+`summary.environment` is `development` for the preview server, `production` for
+static exports, and `preview` for Cloudflare Pages branches other than `main`.
+Set `SNAKE_ENVIRONMENT=development|preview|production` to override a build's label.
+No hostname, URL, branch name, or local path is collected. Other static servers
+serving source files directly report `unknown` unless given deployment configuration.
+
 ## Source layout
 
 ```text
