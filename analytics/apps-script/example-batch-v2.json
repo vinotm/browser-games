@@ -1,0 +1,67 @@
+{
+  "schema_version": 2,
+  "game": "snake",
+  "game_version": "beta-analytics-2",
+  "batch_id": "demo-v2-batch-001",
+  "sent_at": "2025-01-01T08:31:00.000+00:00",
+  "runs": [
+    {
+      "run_id": "demo-run-001",
+      "device": {
+        "category": "desktop",
+        "input": "mouse",
+        "viewport": "large"
+      },
+      "status": "completed",
+      "started_at": "2025-01-01T08:30:00.000+00:00",
+      "ended_at": "2025-01-01T08:31:00.000+00:00",
+      "summary": {
+        "score": 24,
+        "active_ms": 55000,
+        "death_cause": "wall"
+      },
+      "events": [
+        {
+          "seq": 0,
+          "type": "run_started",
+          "active_ms": 0,
+          "elapsed_ms": 0
+        },
+        {
+          "seq": 1,
+          "type": "item_spawned",
+          "active_ms": 10,
+          "object_id": "food-1",
+          "details": {
+            "kind": "normal",
+            "x": 12,
+            "y": 8
+          },
+          "elapsed_ms": 10
+        },
+        {
+          "seq": 2,
+          "type": "item_eaten",
+          "active_ms": 3000,
+          "object_id": "food-1",
+          "details": {
+            "points": 1,
+            "critical": false,
+            "combo": 1
+          },
+          "elapsed_ms": 3000
+        },
+        {
+          "seq": 3,
+          "type": "run_ended",
+          "active_ms": 55000,
+          "details": {
+            "score": 24,
+            "death_cause": "wall"
+          },
+          "elapsed_ms": 60000
+        }
+      ]
+    }
+  ]
+}
