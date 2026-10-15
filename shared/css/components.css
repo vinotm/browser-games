@@ -1,0 +1,207 @@
+/* Common score rows, overlays, buttons, hints, and accessibility helpers. */
+.scores {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 16px;
+}
+strong {
+  margin-left: 6px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.game-screen {
+  position: relative;
+}
+.overlay {
+  position: absolute;
+  inset: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay);
+}
+.overlay-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.overlay-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 650;
+}
+.overlay-detail {
+  margin: 12px 0 20px;
+  font-size: 16px;
+  color: var(--muted);
+}
+.hints {
+  margin: 16px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: center;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.hint-keys {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+.hint-label {
+  color: var(--text);
+  font-weight: 650;
+  text-align: right;
+}
+kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--key-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--key);
+  color: var(--key-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 5px;
+  padding: 12px 24px;
+  background: var(--primary);
+  color: #fff;
+  font:
+    600 16px/20px -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+button:hover {
+  background: var(--primary-hover);
+}
+button:active {
+  filter: brightness(0.9);
+}
+button:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.secondary {
+  background: var(--secondary);
+  color: var(--text);
+}
+.secondary:hover {
+  background: var(--secondary-hover);
+}
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+}
+.icon-button:hover {
+  background: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  .icon-button:hover {
+    background: var(--secondary);
+  }
+}
+.icon-button svg {
+  width: 22px;
+  height: 22px;
+}
+.sun-icon {
+  display: none;
+}
+:root[data-theme='dark'] .sun-icon {
+  display: block;
+}
+:root[data-theme='dark'] .moon-icon {
+  display: none;
+}
+
+/* Optional directional controls for games that use four-way movement. */
+.direction-pad {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: repeat(2, 56px);
+  gap: 10px;
+}
+.direction-pad button {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--key-border);
+  background: var(--direction-background, #d0dae4);
+  color: var(--text);
+  user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform 90ms ease-out, filter 90ms ease-out, box-shadow 90ms ease-out;
+}
+:root[data-theme='dark'] .direction-pad button {
+  --direction-background: #40566b;
+}
+.direction-pad button:disabled {
+  opacity: 1;
+}
+.direction-pad button:hover {
+  background: var(--direction-background, #d0dae4);
+}
+.direction-pad button svg {
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+.direction-pad button:enabled:is(.is-pressed, :focus-visible:active) {
+  transform: scale(0.96);
+  filter: brightness(0.8);
+  box-shadow: inset 0 3px 8px rgb(0 0 0 / 22%);
+}
+.direction-pad [data-direction='up'] {
+  grid-area: 1 / 2;
+}
+.direction-pad [data-direction='left'] {
+  grid-area: 1 / 1 / 3 / 2;
+}
+.direction-pad [data-direction='down'] {
+  grid-area: 2 / 2;
+}
+.direction-pad [data-direction='right'] {
+  grid-area: 1 / 3 / 3 / 4;
+}
+@media (prefers-reduced-motion: reduce) {
+  .direction-pad button {
+    transition: none;
+  }
+  .direction-pad button:enabled:is(.is-pressed, :focus-visible:active) {
+    transform: none;
+  }
+}

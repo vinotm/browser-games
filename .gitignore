@@ -1,0 +1,32 @@
+# Private per-game material and deployment overrides (at any depth).
+private/
+*.local.json
+*.local.js
+*.local.env
+.env
+.env.*
+!.env.example
+
+# Credentials and private keys.
+.secrets/
+secrets/
+credentials*.json
+*oauth-token*.json
+*.pem
+*.key
+
+# Generated site, dependencies and caches.
+/dist/
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.cache/
+coverage/
+playwright-report/
+test-results/
+*.log
+*.zip
+*.gz
+.DS_Store

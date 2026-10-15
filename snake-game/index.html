@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Snake</title>
+    <link rel="stylesheet" href="../shared/css/base.css?v=beta-public-1" />
+    <link rel="stylesheet" href="../shared/css/components.css?v=beta-public-1" />
+    <link rel="stylesheet" href="style.css?v=beta-public-1" />
+  </head>
+  <body class="game-page">
+    <main class="game-layout">
+      <header class="game-header">
+        <span></span>
+        <h1 class="game-title">Snake<span class="beta-label">beta</span></h1>
+        <button
+          id="theme"
+          class="icon-button"
+          aria-label="Switch to dark mode"
+          title="Switch to dark mode"
+        >
+          <!-- Lucide sun (ISC); custom crescent moon. -->
+          <svg
+            class="sun-icon"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2" />
+            <path d="M12 20v2" />
+            <path d="m4.93 4.93 1.41 1.41" />
+            <path d="m17.66 17.66 1.41 1.41" />
+            <path d="M2 12h2" />
+            <path d="M20 12h2" />
+            <path d="m6.34 17.66-1.41 1.41" />
+            <path d="m19.07 4.93-1.41 1.41" />
+          </svg>
+
+          <svg
+            class="moon-icon"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              fill="currentColor" stroke="none"
+              transform="rotate(-35 12 12)"
+              d="M14 3.225A9 9 0 1 0 14 20.775A9 9 0 0 1 14 3.225Z"
+            />
+          </svg>
+        </button>
+      </header>
+      <div class="scores">
+        <span>Score <strong id="score">0</strong></span
+        ><span>Time <strong id="timer">0:00</strong></span
+        ><span>Best <strong id="best">0</strong></span>
+      </div>
+      <div class="game-screen">
+        <div id="combo" class="combo-panel" hidden>
+          <span id="combo-content" class="combo-content">
+            <span class="combo-caption">Combo</span>
+            <strong id="combo-count" aria-live="polite">0!</strong>
+          </span>
+        </div>
+        <canvas
+          id="board"
+          width="960"
+          height="960"
+          role="img"
+          aria-label="Snake game board"
+          tabindex="0"
+        ></canvas>
+        <button id="pause" class="board-pause" type="button" aria-label="Pause game" title="Pause game" hidden>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="4" width="4" height="16" rx="1" />
+            <rect x="14" y="4" width="4" height="16" rx="1" />
+          </svg>
+        </button>
+        <div id="overlay" class="overlay" hidden>
+          <p id="overlay-title" class="overlay-title" role="status">Paused</p>
+          <p id="overlay-detail" class="overlay-detail"></p>
+          <div class="overlay-actions">
+            <button id="overlay-action">Start</button
+            ><button id="start" class="secondary" hidden>Restart</button>
+          </div>
+          <button id="privacy-open" class="privacy-link" type="button" hidden>Data privacy</button>
+        </div>
+        <section id="privacy-view" class="privacy-view" aria-labelledby="privacy-title" hidden>
+          <h2 id="privacy-title" tabindex="-1">A little data, a better game</h2>
+          <p id="privacy-intro">Small, anonymous gameplay reports help improve Snake.</p>
+          <p id="privacy-details">Reports include scores, game events, timestamps and broad device details. Names, emails and precise location aren’t collected.</p>
+          <p class="privacy-status">Reports are stored privately. Offline reports upload when you’re connected again.</p>
+          <button id="privacy-back" class="privacy-link" type="button">← Back to game</button>
+        </section>
+      </div>
+      <div class="mobile-directions" role="group" aria-label="Snake direction controls">
+        <div class="direction-pad">
+          <button type="button" class="secondary" data-direction="up" aria-label="Move up" disabled>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5 21 19H3Z" /></svg>
+          </button>
+          <button type="button" class="secondary" data-direction="left" aria-label="Move left" disabled>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M5 12 19 3V21Z" /></svg>
+          </button>
+          <button type="button" class="secondary" data-direction="down" aria-label="Move down" disabled>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5H21L12 19Z" /></svg>
+          </button>
+          <button type="button" class="secondary" data-direction="right" aria-label="Move right" disabled>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3 19 12 5 21Z" /></svg>
+          </button>
+        </div>
+      </div>
+      <div class="hints">
+        <span class="hint-label">Move</span>
+        <div class="hint-keys">
+          <kbd aria-label="Arrow keys">↑ ↓ ← →</kbd> <kbd>WASD</kbd>
+        </div>
+        <span class="hint-label">Start / Pause / Resume</span>
+        <div class="hint-keys"><kbd>Space</kbd></div>
+      </div>
+      <p class="mobile-hint">Use the arrows, or swipe inside the board to move.</p>
+      <p id="status" class="sr-only" role="status"></p>
+    </main>
+    <script type="module" src="js/game.js?v=beta-public-1"></script>
+  </body>
+</html>
