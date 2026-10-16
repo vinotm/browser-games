@@ -473,7 +473,6 @@ function applyBuff(buff, source = 'snake') {
       Math.max(0, snake.length - minimumSnakeLength),
     );
     shortenEffect = { born: gameTime(), removed: shortenRemaining };
-    queuedDirection = null;
     extendRemaining = 0;
     extendEffect = null;
   } else if (buff.type === 'extender') {
@@ -745,14 +744,6 @@ function gameOver(won = false) {
 
 function tick() {
   advancePickups();
-  if (shortenRemaining > 0) {
-    previousSnake = copySnake();
-    snake.pop();
-    shortenRemaining--;
-    moveFood();
-    activatePendingWalls();
-    return;
-  }
   if (queuedDirection) direction = queuedDirection;
   queuedDirection = null;
   const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
@@ -761,7 +752,7 @@ function tick() {
     target && Math.hypot(head.x - target.x, head.y - target.y) <= 0.65;
   const eatingBonus = bonusContains(head);
   const foodPoints = movingFood ? 2 : 1;
-  const extending = extendRemaining > 0;
+  const extending = extendRemaining > 0 && shortenRemaining === 0;
   const body = eating || eatingBonus || extending ? snake : snake.slice(0, -1);
   if (
     head.x < 0 ||
@@ -777,6 +768,12 @@ function tick() {
   previousSnake = copySnake();
   snake.unshift(head);
   if (!eating && !eatingBonus && !extending) snake.pop();
+  // Keep moving normally; shortening removes one additional tail cell per step.
+  if (shortenRemaining > 0) {
+    if (snake.length > minimumSnakeLength) snake.pop();
+    shortenRemaining--;
+    if (snake.length <= minimumSnakeLength) shortenRemaining = 0;
+  }
   // Hold the tail while the head advances, adding one real segment per step.
   if (extending && !eating && !eatingBonus) extendRemaining--;
   if (eating || eatingBonus) {

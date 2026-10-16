@@ -1,7 +1,7 @@
 // Snake-specific settings; shared utilities know nothing about these rules.
 export const size = 32;
 export const interval = 80;
-export const gameVersion = 'beta-3';
+export const gameVersion = 'beta-4';
 export const minimumSnakeLength = 5;
 export const normalFoodWarmup = 5;
 export const largeFoodLifetime = 125; // Ten seconds of active play.
@@ -51,13 +51,15 @@ export const buffTypes = {
   critRate: { color: '#8951c8', lifetime: 7500 / interval },
   critMultiplier: { color: '#c46a12', lifetime: 7500 / interval },
   speedUp: { color: '#c74e36', lifetime: 8000 / interval, durationMs: 3000,
-    label: 'Speed up!', icon: 'M3 5L10 12L3 19M12 5L19 12L12 19' },
+    label: 'Speed up!', icon: 'M4 5L11 12L4 19M13 5L20 12L13 19' },
   slowDown: { color: '#267fb1', lifetime: 8000 / interval, durationMs: 3000,
-    label: 'Slow down!', icon: 'M5 3H19M5 21H19M7 3V6L17 18V21M17 3V6L7 18V21' },
+    label: 'Slow down!', icon: 'M7 4H17V7L13 12L17 17V20H7V17L11 12L7 7Z' },
   reverse: { color: '#a451ac', lifetime: 8000 / interval, durationMs: 10000,
-    label: 'Reverse!', icon: 'M4 7H20L16 3M20 17H4L8 21' },
+    label: 'Reverse!', icon: 'M5 9H19L16 6M19 15H5L8 18' },
   magnet: { color: '#138b87', lifetime: 8000 / interval, durationMs: 10000,
-    label: 'Magnet!', icon: 'M5 4V13A7 7 0 0 0 19 13V4M5 8H8M16 8H19' },
+    label: 'Magnet!', iconStrokeWidth: 2,
+    icon: 'M5 4H9V12A3 3 0 0 0 15 12V4H19V12A7 7 0 0 1 5 12ZM5 8H9M15 8H19',
+    iconOffsetY: 0.5 },
 };
 
 export function getPalette(dark) {
