@@ -91,7 +91,7 @@ function drawSnake(deathProgress) {
     snake[0].x !== previousSnake[0].x || snake[0].y !== previousSnake[0].y;
   const shrinking = snake.length < previousSnake.length;
   const route = shrinking
-    ? [...snake, mix(previousSnake.at(-1), snake.at(-1))]
+    ? [mix(previousSnake[0], snake[0]), ...snake.slice(1), mix(previousSnake.at(-1), snake.at(-1))]
     : moving
       ? [
           mix(previousSnake[0], snake[0]),
@@ -285,9 +285,9 @@ function drawItemIcon(type, x, y, radius) {
   context.save();
   context.translate(x, y);
   context.scale(radius / 12, radius / 12);
-  context.translate(-12, -12);
+  context.translate(-12, -12 + (buffTypes[type].iconOffsetY ?? 0));
   context.strokeStyle = '#fff';
-  context.lineWidth = 2.5;
+  context.lineWidth = buffTypes[type].iconStrokeWidth ?? 2.5;
   context.lineCap = context.lineJoin = 'round';
   context.stroke(new Path2D(buffTypes[type].icon));
   context.restore();

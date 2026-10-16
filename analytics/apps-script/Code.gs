@@ -1,8 +1,14 @@
 /* Browser Games analytics receiver. No read endpoint and no browser credentials. */
 const INGEST_LIMITS = Object.freeze({ bytes: 256 * 1024, runs: 50, events: 2000 });
 
+const HARDENING = Object.freeze({ version: '2026-10-15.1',
+  bytes: 1000000000, files: 1000000, burst: 60, perSecond: 1,
+  dailyFiles: 5000, dailyBytes: 50000000, lockMs: 1000 });
+const BUDGET_KEY = 'ANALYTICS_BUDGET_V1';
+
 function doGet() {
-  return jsonResponse_({ ok: true, service: 'browser-games-analytics', schema_version: 2, accepted_schemas: [1, 2], storage: 'json.gz' });
+  return jsonResponse_({ ok: true, service: 'browser-games-analytics', schema_version: 2,
+    accepted_schemas: [1, 2], storage: 'json.gz', hardening_version: HARDENING.version });
 }
 
 function doPost(e) {
@@ -18,36 +24,82 @@ function doPost(e) {
       Utilities.newBlob(raw).getBytes().length <= INGEST_LIMITS.bytes, 'batch_too_large');
     let payload;
     try { payload = JSON.parse(raw); } catch (_) { reject_('invalid_json'); }
-    const batch = validateBatch_(payload);
-    const encoded = JSON.stringify(batch);
-    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
-      encoded, Utilities.Charset.UTF_8).map((b) => ((b + 256) % 256).toString(16).padStart(2, '0')).join('');
+    // Preserve the original canonical form for retrying archives written before hardening.
+    const legacy = validateLegacyBatch_(payload);
+    const batch = hardenBatch_(legacy);
+    const digest = digest_(batch);
+    const legacyDigest = digest_(legacy);
+    lock = LockService.getScriptLock();
+    require_(lock.tryLock(HARDENING.lockMs), 'busy');
+    // Recheck the emergency switch inside the lock.
+    require_(properties.getProperty('INGEST_ENABLED') !== 'false', 'disabled');
+    const state = budgetState_(properties, folderId);
+    const now = Date.now();
+    const tokens = Math.min(HARDENING.burst, state.tokens + Math.max(0, now - state.token_at) / 1000 * HARDENING.perSecond);
+    require_(tokens >= 1, 'rate_limited');
+    state.tokens = tokens - 1;
+    state.token_at = Math.max(state.token_at, now);
+    // A valid attempt, including a duplicate, consumes a token before Drive work.
+    properties.setProperty(BUDGET_KEY, JSON.stringify(state));
     const legacyName = batch.game + '_batch_' + batch.batch_id + '.json';
     const name = legacyName + '.gz';
-    lock = LockService.getScriptLock();
-    require_(lock.tryLock(5000), 'busy');
     const folder = DriveApp.getFolderById(folderId);
-    // Check both generations so retries from old tabs never create another archive.
     for (const candidate of [name, legacyName]) {
       const matches = folder.getFilesByName(candidate);
       if (matches.hasNext()) {
         const blob = matches.next().getBlob();
+        require_(blob.getBytes().length <= INGEST_LIMITS.bytes + 4096, 'invalid_existing_archive');
         const stored = JSON.parse((candidate === name ? Utilities.ungzip(blob) : blob).getDataAsString('UTF-8'));
-        require_(stored.payload_sha256 === digest, 'batch_id_conflict');
+        require_(stored.payload_sha256 === digest || stored.payload_sha256 === legacyDigest, 'batch_id_conflict');
         return jsonResponse_({ ok: true, batch_id: batch.batch_id, duplicate: true });
       }
     }
-    const archive = Object.assign({ received_at: new Date().toISOString(), payload_sha256: digest }, batch);
-    folder.createFile(Utilities.gzip(Utilities.newBlob(JSON.stringify(archive), 'application/json'), name));
+    const archive = Object.assign({ received_at: new Date(now).toISOString(),
+      payload_sha256: digest, ingestion_version: HARDENING.version }, batch);
+    const blob = Utilities.gzip(Utilities.newBlob(JSON.stringify(archive), 'application/json'), name);
+    const size = blob.getBytes().length;
+    require_(size <= INGEST_LIMITS.bytes + 4096, 'batch_too_large');
+    // Rotate only forwards: a backwards clock cannot reset a spent daily allowance.
+    const day = Utilities.formatDate(new Date(now), 'Asia/Jakarta', 'yyyy-MM-dd');
+    if (day > state.day) { state.day = day; state.day_files = 0; state.day_bytes = 0; }
+    require_(state.files + 1 <= HARDENING.files && state.bytes + size <= HARDENING.bytes, 'storage_limit');
+    require_(state.day_files + 1 <= HARDENING.dailyFiles &&
+      state.day_bytes + size <= HARDENING.dailyBytes, 'daily_limit');
+    state.files++; state.bytes += size; state.day_files++; state.day_bytes += size;
+    // Reserve BEFORE createFile. Never release on errors/timeouts: a write may have succeeded.
+    // A stale/missing/corrupt ledger fails closed. Deletion never replenishes capacity.
+    properties.setProperty(BUDGET_KEY, JSON.stringify(state));
+    folder.createFile(blob);
     return jsonResponse_({ ok: true, batch_id: batch.batch_id, duplicate: false });
   } catch (error) {
-    // Never expose folder IDs, private file contents, or internal Google errors.
     const code = error && error.ingestCode || 'storage_error';
     if (code === 'storage_error') console.error('Analytics storage operation failed');
     return jsonResponse_({ ok: false, error: code });
   } finally {
     if (lock && lock.hasLock()) lock.releaseLock();
   }
+}
+
+function digest_(batch) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, JSON.stringify(batch),
+    Utilities.Charset.UTF_8).map((b) => ((b + 256) % 256).toString(16).padStart(2, '0')).join('');
+}
+
+function budgetState_(properties, folderId) {
+  let state;
+  try { state = JSON.parse(properties.getProperty(BUDGET_KEY)); } catch (_) { reject_('budget_unavailable'); }
+  require_(object_(state) && state.version === 1 && state.folder_id === folderId, 'budget_unavailable');
+  for (const field of ['files', 'bytes', 'day_files', 'day_bytes', 'token_at']) {
+    require_(Number.isSafeInteger(state[field]) && state[field] >= 0, 'budget_unavailable');
+  }
+  require_(Number.isFinite(state.tokens) && state.tokens >= 0 && state.tokens <= HARDENING.burst &&
+    typeof state.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(state.day), 'budget_unavailable');
+  return state;
+}
+
+// Editor-only administration. No public endpoint exposes counters or private folder metadata.
+function inspectAnalyticsBudget() {
+  console.log(JSON.stringify(budgetState_(PropertiesService.getScriptProperties(), receiverFolderId_())));
 }
 
 function receiverFolderId_() {
@@ -63,7 +115,7 @@ function verifySetup() {
   console.log('Destination accessible: ' + folder.getName());
 }
 
-function validateBatch_(input) {
+function validateLegacyBatch_(input) {
   require_(object_(input) && [1, 2].includes(input.schema_version), 'invalid_schema');
   // Extend this list when another game's event collection is implemented.
   require_(input.game === 'snake', 'invalid_game');
@@ -137,4 +189,84 @@ function require_(condition, code) { if (!condition) reject_(code); }
 function reject_(code) { const error = new Error(code); error.ingestCode = code; throw error; }
 function jsonResponse_(data) {
   return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+const EVENT_TYPES = Object.freeze(['run_started', 'run_ended', 'run_abandoned', 'paused', 'resumed',
+  'item_spawned', 'item_eaten', 'item_expired', 'item_removed', 'effect_started', 'effect_refreshed',
+  'effect_ended', 'wall_scheduled', 'wall_warning', 'wall_solid', 'wall_cancelled',
+  'combo_increased', 'combo_ended']);
+const REPORT_FIELDS = Object.freeze(['score', 'active_ms', 'max_combo', 'base_step_ms', 'environment',
+  'build_id', 'death_cause', 'snake_length', 'reason', 'collision_cell', 'wall_id', 'wall_source',
+  'kind', 'x', 'y', 'lifetime_ms', 'warning_at_ms', 'corners_allowed', 'cells', 'source', 'food_id',
+  'warning_ms', 'duration_ms', 'points', 'critical', 'combo', 'count']);
+const STRING_FIELDS = Object.freeze(['kind', 'reason', 'source', 'wall_source', 'death_cause', 'environment', 'build_id', 'wall_id', 'food_id']);
+const VALUE_SETS = Object.freeze({
+  kind: ['normal', 'normal_food', 'moving_food', 'large_food', 'shortener', 'extender', 'critRate', 'critMultiplier', 'speedUp', 'slowDown', 'reverse', 'magnet'],
+  source: ['snake', 'magnet', 'expired_food', 'milestone'],
+  wall_source: ['milestone', 'expired_food'],
+  reason: ['restart', 'page_reloaded', 'expired', 'opposite_pickup', 'no_safe_space', 'food_space', 'timeout', 'miss', 'death'],
+  death_cause: ['edge', 'wall', 'body', 'board_filled'],
+});
+const MAX_DURATION = 365 * 24 * 60 * 60 * 1000;
+
+function validateBatch_(input) { return hardenBatch_(validateLegacyBatch_(input)); }
+
+function hardenBatch_(batch) {
+  require_(/^[A-Za-z0-9][A-Za-z0-9._+-]{0,79}$/.test(batch.game_version), 'invalid_game_version');
+  const future = Date.now() + 24 * 60 * 60 * 1000;
+  require_(Date.parse(batch.sent_at) <= future, 'invalid_sent_at');
+  return Object.assign({}, batch, { runs: batch.runs.map((run) => {
+    require_(Date.parse(run.started_at) <= future && (run.ended_at == null || Date.parse(run.ended_at) <= future), 'invalid_run_times');
+    // Partial chunks may start at any sequence number and offline data has no age cutoff.
+    require_(run.events.length > 0, 'invalid_events');
+    return Object.assign({}, run, { summary: cleanReport_(run.summary), events: run.events.map((event) => {
+      require_(EVENT_TYPES.includes(event.type), 'invalid_event_type');
+      require_(event.seq <= 10000000 && event.active_ms <= MAX_DURATION, 'invalid_event_sequence');
+      if (batch.schema_version === 2) {
+        require_(event.elapsed_ms <= MAX_DURATION && event.active_ms <= event.elapsed_ms + 1000, 'invalid_event_time');
+      } else require_(Date.parse(event.occurred_at) <= future &&
+        Date.parse(event.occurred_at) >= Date.parse(run.started_at), 'invalid_event_time');
+      const result = Object.assign({}, event);
+      if (event.details) result.details = cleanReport_(event.details);
+      if (batch.schema_version === 2 && result.details && !Object.keys(result.details).length) delete result.details;
+      return result;
+    }) });
+  }) });
+}
+
+function cleanReport_(value) {
+  require_(object_(value), 'invalid_report');
+  const result = {};
+  for (const key of Object.keys(value)) {
+    require_(!['__proto__', 'constructor', 'prototype'].includes(key), 'invalid_report');
+    // Unknown fields are intentionally discarded; never store arbitrary caller-provided metadata.
+    if (!REPORT_FIELDS.includes(key)) continue;
+    const item = value[key];
+    if (STRING_FIELDS.includes(key)) {
+      require_(typeof item === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(item), 'invalid_report');
+      if (Object.prototype.hasOwnProperty.call(VALUE_SETS, key)) require_(VALUE_SETS[key].includes(item), 'invalid_report');
+      if (key === 'environment') require_(['production', 'preview', 'development', 'unknown'].includes(item), 'invalid_report');
+      if (key === 'build_id') require_(item === 'unknown' || /^sha256-[a-f0-9]{16}$/.test(item), 'invalid_report');
+    } else if (key === 'critical' || key === 'corners_allowed') {
+      require_(typeof item === 'boolean', 'invalid_report');
+    } else if (key === 'collision_cell') {
+      result[key] = cleanCell_(item, true); continue;
+    } else if (key === 'cells') {
+      require_(Array.isArray(item) && item.length <= 1024, 'invalid_report');
+      result[key] = item.map((cell) => cleanCell_(cell, false)); continue;
+    } else {
+      require_(Number.isFinite(item) && item >= 0 && item <= (key.endsWith('_ms') ? MAX_DURATION : 1000000000), 'invalid_report');
+      if (key === 'x' || key === 'y') require_(item <= 32, 'invalid_report');
+      if (key === 'snake_length') require_(Number.isSafeInteger(item) && item <= 1024, 'invalid_report');
+      if (key === 'base_step_ms') require_(item > 0 && item <= 60000, 'invalid_report');
+    }
+    result[key] = item;
+  }
+  return result;
+}
+
+function cleanCell_(cell, collision) {
+  require_(object_(cell) && Number.isSafeInteger(cell.x) && Number.isSafeInteger(cell.y) &&
+    cell.x >= (collision ? -1 : 0) && cell.y >= (collision ? -1 : 0) && cell.x <= (collision ? 32 : 31) && cell.y <= (collision ? 32 : 31), 'invalid_report');
+  return { x: cell.x, y: cell.y };
 }

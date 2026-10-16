@@ -8,10 +8,11 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 const source = readFileSync(new URL('../analytics/apps-script/Code.gs', import.meta.url), 'utf8');
 const example = JSON.parse(readFileSync(new URL('../analytics/apps-script/example-batch.json', import.meta.url)));
 
-function receiver({ configured = true, busy = false, broken = false } = {}) {
+function receiver({ configured = true, busy = false, broken = false, writeFailure = false, initialized = true } = {}) {
   const files = new Map();
   let locked = false, releases = 0, reads = 0;
   const properties = new Map(configured ? [['DESTINATION_FOLDER_ID', 'private-folder']] : []);
+  if (initialized) properties.set('ANALYTICS_BUDGET_V1', JSON.stringify({ version: 1, folder_id: 'private-folder', files: 0, bytes: 0, day_files: 0, day_bytes: 0, day: '2020-01-01', tokens: 60, token_at: Date.now() }));
   const blob = (body, type, name) => ({ body, type, name,
     getBytes: () => [...Buffer.from(body)], getDataAsString: () => Buffer.from(body).toString('utf8') });
   const folder = {
@@ -21,14 +22,16 @@ function receiver({ configured = true, busy = false, broken = false } = {}) {
       return { hasNext: () => !!found && !consumed,
         next() { consumed = true; return { getBlob: () => blob(found) }; } };
     },
-    createFile(value) { files.set(value.name, value.body); },
+    getFiles() { return { hasNext: () => files.size > 0 }; },
+    getFolders() { return { hasNext: () => false }; },
+    createFile(value) { if (writeFailure) throw new Error("uncertain write"); files.set(value.name, value.body); },
   };
   const context = createContext({
-    console: { error() {} },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: (key) => properties.get(key) || null }) },
+    console: { error() {}, log() {} },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (key) => properties.get(key) ?? null, setProperty: (key, value) => properties.set(key, value) }) },
     ContentService: { MimeType: { JSON: 'application/json' },
       createTextOutput: (body) => ({ body, setMimeType() { return this; } }) },
-    Utilities: { newBlob: blob, gzip: (value, name) => blob(gzipSync(value.body), 'application/gzip', name),
+    Utilities: { formatDate: (date, zone) => { assert.equal(zone, 'Asia/Jakarta'); return new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date); }, newBlob: blob, gzip: (value, name) => blob(gzipSync(value.body), 'application/gzip', name),
       ungzip: (value) => blob(gunzipSync(value.body)), DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' },
       computeDigest: (_, body) => [...createHash('sha256').update(body).digest()] },
     LockService: { getScriptLock: () => ({ tryLock() { locked = !busy; return locked; },
@@ -42,6 +45,7 @@ function receiver({ configured = true, busy = false, broken = false } = {}) {
     } },
   });
   runInContext(source, context);
+  runInContext(readFileSync(new URL('../analytics/apps-script/Setup.gs', import.meta.url), 'utf8'), context);
   const post = (data = example) => JSON.parse(context.doPost({ postData: {
     contents: typeof data === 'string' ? data : JSON.stringify(data) } }).body);
   return { context, files, properties, post, stats: () => ({ releases, reads, locked }) };
@@ -189,4 +193,76 @@ test('schema 1 retries recognize legacy uncompressed archives', () => {
   const changed = structuredClone(example);
   changed.runs[0].summary.score++;
   assert.equal(r.post(changed).error, 'batch_id_conflict');
+});
+
+test('hardening fails closed and enforces global, daily and cumulative budgets', () => {
+  const key = 'ANALYTICS_BUDGET_V1';
+  const missing = receiver({ initialized: false });
+  assert.equal(missing.post().error, 'budget_unavailable');
+  assert.equal(missing.stats().reads, 0);
+  for (const [patch, error] of [
+    [{ tokens: 0, token_at: Date.now() + 10000 }, 'rate_limited'],
+    [{ files: 1000000 }, 'storage_limit'],
+    [{ bytes: 1000000000 }, 'storage_limit'],
+    [{ day: '9999-12-31', day_files: 5000 }, 'daily_limit'],
+    [{ day: '9999-12-31', day_bytes: 50000000 }, 'daily_limit'],
+  ]) {
+    const r = receiver();
+    r.properties.set(key, JSON.stringify({ ...JSON.parse(r.properties.get(key)), ...patch }));
+    assert.equal(r.post().error, error);
+    assert.equal(r.files.size, 0);
+  }
+  const r = receiver({ writeFailure: true });
+  assert.equal(r.post().error, 'storage_error');
+  const state = JSON.parse(r.properties.get(key));
+  assert.equal(state.files, 1);
+  assert.ok(state.bytes > 0); // Keep reservations after uncertain writes.
+});
+
+test('duplicates consume rate tokens without spending more storage allowance', () => {
+  const r = receiver();
+  r.post();
+  const before = JSON.parse(r.properties.get('ANALYTICS_BUDGET_V1'));
+  assert.equal(r.post().duplicate, true);
+  const after = JSON.parse(r.properties.get('ANALYTICS_BUDGET_V1'));
+  assert.equal(after.files, before.files);
+  assert.equal(after.bytes, before.bytes);
+  assert.ok(after.tokens < before.tokens);
+});
+
+test('metadata is sanitized and legacy canonical digests still acknowledge retries', () => {
+  const r = receiver();
+  const batch = structuredClone(example);
+  batch.runs[0].summary.email = 'discard@example.test';
+  const legacy = r.context.validateLegacyBatch_(batch);
+  const digest = createHash('sha256').update(JSON.stringify(legacy)).digest('hex');
+  r.files.set(`snake_batch_${batch.batch_id}.json`, JSON.stringify({ payload_sha256: digest }));
+  assert.equal(r.post(batch).duplicate, true);
+  r.files.clear();
+  assert.equal(r.post(batch).ok, true);
+  const stored = JSON.parse(gunzipSync([...r.files.values()][0]));
+  assert.equal('email' in stored.runs[0].summary, false);
+  batch.batch_id = 'invalid-event';
+  batch.runs[0].events[0].type = 'arbitrary_event';
+  assert.equal(r.post(batch).error, 'invalid_event_type');
+  batch.runs[0].events[0].type = 'run_started';
+  batch.runs[0].summary.environment = 'personal-host';
+  assert.equal(r.post(batch).error, 'invalid_report');
+});
+
+test('new budget setup requires disabled ingestion, an empty folder and no existing ledger', () => {
+  const r = receiver({ initialized: false });
+  assert.throws(() => r.context.initializeNewAnalyticsBudget(), /disable_ingestion_first/);
+  r.properties.set('INGEST_ENABLED', 'false');
+  r.files.set('existing', 'data');
+  assert.throws(() => r.context.initializeNewAnalyticsBudget(), /destination_not_empty/);
+  r.files.clear();
+  r.context.initializeNewAnalyticsBudget();
+  const state = JSON.parse(r.properties.get('ANALYTICS_BUDGET_V1'));
+  assert.equal(state.files, 0);
+  assert.equal(state.bytes, 0);
+  assert.match(state.day, /^\d{4}-\d{2}-\d{2}$/);
+  assert.throws(() => r.context.initializeNewAnalyticsBudget(), /budget_already_exists/);
+  r.properties.set('INGEST_ENABLED', 'true');
+  assert.equal(r.post().ok, true);
 });

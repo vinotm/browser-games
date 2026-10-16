@@ -7,18 +7,50 @@ public endpoint for reading archived data. The games can run with analytics disa
 ## Setup
 
 1. Create a private Drive folder for reports.
-2. Create an Apps Script project and add [Code.gs](Code.gs).
+2. Create an Apps Script project and add [Code.gs](Code.gs) and [Setup.gs](Setup.gs).
 3. Enable the manifest editor and use [appsscript.json](appsscript.json).
 4. In project settings, add script property `DESTINATION_FOLDER_ID` containing the
    destination folder's ID. Keep this setting out of browser code and version control.
-5. Run `verifySetup` in the editor and authorize Drive access as the folder owner.
-6. Deploy a web app that executes as the owner and allows anonymous submissions.
-7. Set `SNAKE_ANALYTICS_ENDPOINT` to the deployment's `/exec` URL when building the site.
+5. Set script property `INGEST_ENABLED` to `false`. For a **new, empty folder** only,
+   run `initializeNewAnalyticsBudget` in the editor. This refuses existing ledgers
+   and nonempty destinations. Never delete a ledger to reset spent capacity.
+6. Run `verifySetup` in the editor and authorize Drive access as the folder owner.
+7. Deploy a web app that executes as the owner and allows anonymous submissions.
+8. Set `INGEST_ENABLED` to `true`. Set `SNAKE_ANALYTICS_ENDPOINT` to the deployment's `/exec` URL when building the site.
 
 The endpoint URL is public. Folder permissions remain private. An anonymous endpoint
 can receive fabricated data or spam; it is not an anti-cheat system. Apps Script
 execution quotas and Drive storage limits apply. Set script property `INGEST_ENABLED`
 to `false` to suspend ingestion.
+
+## Receiver safeguards
+
+The receiver limits valid attempts globally to a burst of 60, replenishing one token
+per second. Duplicate attempts also consume tokens. Archive creation is limited to
+5,000 files / 50 MB per Asia/Jakarta calendar day and a cumulative 1,000,000 files /
+1 GB (decimal bytes). Change `HARDENING` deliberately for a different budget.
+
+A script-lock-protected Script Properties ledger reserves compressed bytes and file
+counts before Drive writes. Uncertain write failures retain reservations. Missing,
+corrupt or mismatched ledgers block ingestion; deleting files does not restore
+allowance. Manual uploads and unrelated Drive files are outside this accounting.
+Run `inspectAnalyticsBudget` in the editor to inspect the ledger privately.
+
+For an existing receiver, preserve its initialized ledger when updating source or
+published versions. Migrating an older receiver without a ledger requires a separate,
+audited migration: stop POST processing, wait beyond the maximum execution runtime,
+verify two identical folder inventories, and seed counters conservatively from those
+inventories. The fresh-folder initializer intentionally cannot perform this migration.
+Do not publish the old receiver again: it bypasses the new budget controls.
+
+Only supported event types and report fields are accepted; unknown report fields are
+discarded and supported values are validated. Older archive digests remain recognized
+for retries. When adding gameplay telemetry, update these allowlists and tests too.
+
+Rejections include `rate_limited`, `daily_limit`, `storage_limit`, and
+`budget_unavailable`. The client retains rejected batches and uses its existing bounded
+retry queue. These controls do not authenticate players, provide per-IP throttling, or
+prevent incoming requests from consuming Apps Script execution quotas.
 
 ## Event format
 

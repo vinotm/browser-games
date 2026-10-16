@@ -68,7 +68,7 @@ Picking up speed up while speed up is active refreshes its three-second duration
 
 Reverse and Magnet can coexist with each other and either speed effect. Recollecting either refreshes its ten-second duration without stacking strength. Reverse applies to all directional inputs, while the usual no-neck-turn rule remains in force. It does not reverse the snake's current travel direction automatically.
 
-Shortening temporarily removes tail segments without advancing the head. Collecting a shortener cancels pending lengthening. A lengthener replaces its outstanding growth count with five; shortening already in progress finishes first. Effects and pickup lifetimes run on active time, so changing speed does not change their duration.
+Shortening keeps the head moving normally and removes one extra tail segment per step, up to five extra segments, without reducing length below five. Food still awards its usual points and growth during shortening. Collecting a shortener cancels pending lengthening. A lengthener replaces its outstanding growth count with five; shortening already in progress finishes first. Effects and pickup lifetimes run on active time, so changing speed does not change their duration.
 
 ### Magnet
 
