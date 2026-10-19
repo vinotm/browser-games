@@ -8,9 +8,14 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 
-def source_build_id(root):
-    files = [root / 'index.html', root / 'snake-game/index.html', root / 'snake-game/style.css']
-    for directory, extensions in [('shared', ('.js', '.css')), ('snake-game/js', ('.js',))]:
+def source_build_id(root, game="snake"):
+    if game == "sudoku":
+        files = [root / "sudoku-game/index.html", root / "sudoku-game/style.css"]
+        directories = [("shared", (".js", ".css")), ("sudoku-game/js", (".js",))]
+    else:
+        files = [root / 'index.html', root / 'snake-game/index.html', root / 'snake-game/style.css']
+        directories = [('shared', ('.js', '.css')), ('snake-game/js', ('.js',))]
+    for directory, extensions in directories:
         for target in (root / directory).rglob('*'):
             relative = target.relative_to(root)
             if any(part == 'private' or part.startswith('.') or '.local.' in part for part in relative.parts):
@@ -45,21 +50,23 @@ class FreshAssetsHandler(SimpleHTTPRequestHandler):
             return False
         if relative == Path('.') or relative == Path('index.html'):
             return True
-        return (relative.parts[0] in ('snake-game', 'shared') and
+        return (relative.parts[0] in ('snake-game', 'sudoku-game', 'shared') and
                 (target.is_dir() or target.suffix in ('.html', '.css', '.js', '.json')))
 
     def deployment_config(self, head=False):
         # Only the public endpoint is returned; the private file is never served.
-        if unquote(urlsplit(self.path).path) != '/snake-game/analytics-config.json':
+        path = unquote(urlsplit(self.path).path)
+        if path not in ('/snake-game/analytics-config.json', '/sudoku-game/analytics-config.json'):
             return False
-        override = Path(self.directory) / 'snake-game/private/analytics-config.json'
+        game = path.split('-game/')[0].lstrip('/')
+        override = Path(self.directory) / (game + '-game/private/analytics-config.json')
         try:
             config = json.loads(override.read_text()) if override.is_file() else {}
             endpoint = config.get('analyticsEndpoint', '')
             if not isinstance(endpoint, str):
                 raise ValueError('Invalid endpoint setting')
             body = json.dumps({'analyticsEndpoint': endpoint, 'environment': 'development',
-                               'buildId': source_build_id(Path(self.directory))}).encode()
+                               'buildId': source_build_id(Path(self.directory), game)}).encode()
         except (OSError, ValueError, TypeError, AttributeError):
             body = b'{"analyticsEndpoint":""}'
         self.send_response(200)
@@ -70,13 +77,33 @@ class FreshAssetsHandler(SimpleHTTPRequestHandler):
             self.wfile.write(body)
         return True
 
+    def asset_review(self, head=False):
+        if unquote(urlsplit(self.path).path) not in ('/assets-review/', '/assets-review'):
+            return False
+        page = Path(self.directory) / 'snake-game/private/assets-review/index.html'
+        if not page.is_file():
+            self.send_error(404)
+            return True
+        body = page.read_bytes()
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        if not head:
+            self.wfile.write(body)
+        return True
+
     def do_GET(self):
+        if self.asset_review():
+            return
         if not self.public_path():
             self.send_error(404)
         elif not self.deployment_config():
             super().do_GET()
 
     def do_HEAD(self):
+        if self.asset_review(head=True):
+            return
         if not self.public_path():
             self.send_error(404)
         elif not self.deployment_config(head=True):

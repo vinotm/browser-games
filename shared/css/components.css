@@ -130,7 +130,7 @@ button:disabled {
   background: transparent;
 }
 @media (hover: hover) and (pointer: fine) {
-  .icon-button:hover {
+  .icon-button:not(#theme):hover {
     background: var(--secondary);
   }
 }

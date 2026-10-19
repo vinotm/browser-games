@@ -3,6 +3,12 @@
 Browser games built with HTML, CSS, and JavaScript modules. Snake runs entirely in
 the browser without a game server, framework, external assets, or npm dependencies.
 
+Play the Sudoku beta at `sudoku-game/`: fill the grid yourself, or confirm
+“Solve puzzle” to watch the solution appear. Puzzles are generated in the browser,
+verified to have exactly one solution, and queued in the background. Pencil notes,
+checkpoints and undo/redo support regular play; Manual mode turns off selected helpers.
+Difficulty grading is planned.
+
 Play Snake at `snake-game/`. See [the rules](snake-game/RULES.md) for scoring,
 pickups, combos, and wall progression.
 
@@ -37,7 +43,7 @@ npm run build
 ```
 
 Publish **only `dist/`** to a static host, such as GitHub Pages or Cloudflare Pages.
-The export contains the homepage, Snake, shared browser assets, and icon attribution.
+The export contains the homepage, Snake, Sudoku, shared browser assets, and icon attribution.
 Paths support hosting at a domain root or a repository subpath. Tests, receiver
 source, scripts, and private files are excluded from the deployed site.
 
@@ -86,6 +92,7 @@ index.html                 Game collection homepage
 shared/css/                Common themes, layouts, and controls
 shared/js/                 Theme, storage, input, clock, configuration, and analytics
 snake-game/                Snake page, rules, rendering, and gameplay modules
+sudoku-game/               Sudoku beta, puzzle logic, and animated solver
 analytics/apps-script/     Optional receiver and event format examples
 tests/                     Automated regression tests
 scripts/build.mjs          Public site export
@@ -99,3 +106,8 @@ helpers they use. Keep deployment overrides and unpublished material in ignored
 public export when deploying.
 
 Snake's icon attribution is in [LUCIDE-LICENSE](snake-game/LUCIDE-LICENSE).
+
+Sudoku's optional summary analytics use a separate receiver and
+`SUDOKU_ANALYTICS_ENDPOINT` build setting. See [Sudoku analytics](sudoku-game/analytics/README.md)
+for the data collected, privacy behavior and setup. Its source fingerprint and environment
+labels are independent of Snake's settings.

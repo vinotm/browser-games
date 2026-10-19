@@ -10,7 +10,7 @@ test('public export excludes unpublished sources, deployment state and private o
   const temporary = mkdtempSync(join(tmpdir(), 'browser-games-export-'));
   const source = fileURLToPath(new URL('../', import.meta.url));
   try {
-    for (const item of ['index.html', 'shared', 'snake-game', 'scripts', 'preview_server.py']) {
+    for (const item of ['index.html', 'shared', 'snake-game', 'sudoku-game', 'scripts', 'preview_server.py']) {
       cpSync(join(source, item), join(temporary, item), {
         recursive: true,
         filter: (path) => !path.split(/[\\/]/).includes('private'),
@@ -27,13 +27,18 @@ test('public export excludes unpublished sources, deployment state and private o
     });
     let result = build();
     assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['index.html', 'shared', 'snake-game']);
+    assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['index.html', 'shared', 'snake-game', 'sudoku-game']);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game')).includes('private'), false);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game/js')).includes('settings.local.js'), false);
     const firstConfig = JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json')));
     assert.match(firstConfig.buildId, /^sha256-[a-f0-9]{16}$/);
     assert.deepEqual(firstConfig,
       { analyticsEndpoint: '', environment: 'production', buildId: firstConfig.buildId });
+    const sudokuConfig = JSON.parse(readFileSync(join(temporary, 'dist/sudoku-game/analytics-config.json')));
+    assert.equal(sudokuConfig.analyticsEndpoint, '');
+    assert.match(sudokuConfig.buildId, /^sha256-[a-f0-9]{16}$/);
+    assert.equal(readdirSync(join(temporary, 'dist/sudoku-game')).includes('analytics'), false);
+    assert.equal(readdirSync(join(temporary, 'dist/sudoku-game')).includes('private'), false);
     // The preview reads its private override, emits only public fields, and hashes
     // exactly the same public sources as the static build, without a Git checkout.
     writeFileSync(join(temporary, 'snake-game/private/analytics-config.json'), JSON.stringify({
@@ -64,6 +69,17 @@ print(h.wfile.getvalue().decode())
     result = build('', { SNAKE_ENVIRONMENT: 'development' });
     assert.equal(result.status, 0, result.stderr);
     assert.equal(JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json'))).environment, 'development');
+    result = build('', { SUDOKU_ANALYTICS_ENDPOINT: 'https://sudoku.test/exec', SUDOKU_ENVIRONMENT: 'preview' });
+    assert.equal(result.status, 0, result.stderr);
+    const configuredSudoku = JSON.parse(readFileSync(join(temporary, 'dist/sudoku-game/analytics-config.json')));
+    assert.equal(configuredSudoku.analyticsEndpoint, 'https://sudoku.test/exec');
+    assert.equal(configuredSudoku.environment, 'preview');
+    writeFileSync(join(temporary, 'sudoku-game/private-note.local.js'), 'not public');
+    writeFileSync(join(temporary, 'sudoku-game/js/puzzle.js'), readFileSync(join(temporary, 'sudoku-game/js/puzzle.js')) + '\n// Sudoku-only change\n');
+    result = build();
+    assert.equal(result.status, 0, result.stderr);
+    assert.notEqual(JSON.parse(readFileSync(join(temporary, 'dist/sudoku-game/analytics-config.json'))).buildId, sudokuConfig.buildId);
+    assert.equal(JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json'))).buildId, firstConfig.buildId);
     writeFileSync(join(temporary, 'snake-game/js/config.js'), readFileSync(join(temporary, 'snake-game/js/config.js')) + '\n// updated rules\n');
     result = build('https://example.test/exec');
     assert.equal(result.status, 0, result.stderr);
