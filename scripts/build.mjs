@@ -37,9 +37,26 @@ if (endpoint) {
   }
   endpoint = url.href;
 }
-// Validate inputs before replacing an existing export.
+// Sudoku has an independent source fingerprint and endpoint.
+const sudokuFiles = ['sudoku-game/index.html', 'sudoku-game/style.css', 'sudoku-game/analytics-config.json'];
+const snakeFileCount = files.length;
+await collect('sudoku-game/js', ['.js']);
+sudokuFiles.push(...files.splice(snakeFileCount));
+const sudokuBuildId = await sourceBuildId(root, [...sudokuFiles, ...files.filter(file => file.startsWith('shared/'))]);
+const sudokuEnvironment = process.env.SUDOKU_ENVIRONMENT || (process.env.CF_PAGES === '1' &&
+  process.env.CF_PAGES_BRANCH !== 'main' ? 'preview' : 'production');
+if (!['development', 'preview', 'production'].includes(sudokuEnvironment)) throw new Error('Invalid SUDOKU_ENVIRONMENT');
+let sudokuEndpoint = process.env.SUDOKU_ANALYTICS_ENDPOINT ?? '';
+if (sudokuEndpoint) {
+  const url = new URL(sudokuEndpoint);
+  if (url.protocol !== 'https:' || url.username || url.password || url.hash) throw new Error('Invalid SUDOKU_ANALYTICS_ENDPOINT');
+  sudokuEndpoint = url.href;
+}
+files.push(...sudokuFiles);
+// Validate every input before replacing an existing export.
 for (const file of files) {
-  if (!(await lstat(join(root, file))).isFile()) throw new Error('Expected a regular public source file');
+  const stat = await lstat(join(root, file));
+  if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('Expected a regular public source file');
 }
 await rm(output, { recursive: true, force: true });
 for (const file of files) {
@@ -48,4 +65,6 @@ for (const file of files) {
 }
 await writeFile(join(output, 'snake-game/analytics-config.json'),
   JSON.stringify({ analyticsEndpoint: endpoint, environment, buildId }, null, 2) + '\n');
+await writeFile(join(output, 'sudoku-game/analytics-config.json'),
+  JSON.stringify({ analyticsEndpoint: sudokuEndpoint, environment: sudokuEnvironment, buildId: sudokuBuildId }, null, 2) + '\n');
 console.log(`Exported ${files.length} public files to dist/. Analytics ${endpoint ? 'enabled' : 'disabled'}.`);
