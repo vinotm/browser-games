@@ -78,8 +78,8 @@ claims than the implementation supports. See [privacy](../PRIVACY.md).
 
 The collection version describes shared shell and homepage releases. Game versions
 also change when shared components affect their experience; a small shared change
-may use a dotted beta revision. Keep visible labels, analytics version constants,
-and game docs consistent. Preserve old report versions during retries.
+may use a dotted beta revision. Show only a small beta label in page titles; keep numeric versions in package
+metadata, analytics constants, and game documentation. Preserve old report versions during retries.
 Source fingerprints identify exact asset changes independently of release labels.
 
 Retain required third-party notices. Git author names and emails are ordinary
