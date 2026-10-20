@@ -11,7 +11,11 @@ export function createClock(now = () => performance.now()) {
   };
 }
 
-export function formatDuration(milliseconds) {
+// Elapsed time, not a time of day: hours never wrap at 24.
+export function formatDuration(milliseconds, { padMinutes = false } = {}) {
   const seconds = Math.floor(Math.max(0, milliseconds) / 1000);
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor(seconds / 60) % 60;
+  const minuteLabel = String(minutes).padStart(hours || padMinutes ? 2 : 1, '0');
+  return `${hours ? `${hours}:` : ''}${minuteLabel}:${String(seconds % 60).padStart(2, '0')}`;
 }

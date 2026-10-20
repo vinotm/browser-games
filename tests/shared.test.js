@@ -166,3 +166,16 @@ test('frame scheduler deduplicates, cancels, and can reschedule inside callback'
   delete globalThis.requestAnimationFrame;
   delete globalThis.cancelAnimationFrame;
 });
+
+test('elapsed-time formatting switches to hours without day rollover', () => {
+  assert.equal(formatDuration(0), '0:00');
+  assert.equal(formatDuration(-1000), '0:00');
+  assert.equal(formatDuration(59999), '0:59');
+  assert.equal(formatDuration(3599999), '59:59');
+  assert.equal(formatDuration(3600000), '1:00:00');
+  assert.equal(formatDuration(3660000), '1:01:00');
+  assert.equal(formatDuration(90000000), '25:00:00');
+  assert.equal(formatDuration(366100999), '101:41:40');
+  assert.equal(formatDuration(61000, { padMinutes: true }), '01:01');
+  assert.equal(formatDuration(3660000, { padMinutes: true }), '1:01:00');
+});
