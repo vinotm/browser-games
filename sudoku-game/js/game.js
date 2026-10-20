@@ -137,7 +137,7 @@ function applyManualMode() {
   render();
 }
 let clues = Array(81).fill(0), board = [...clues], selected = -1, matchSource = -1, busy = false, finished = false, started = false, startedAt = 0, elapsed = 0;
-const page = createPageShell({ homeUrl: '../', isActive: () => started && !finished });
+const page = createPageShell({ homeUrl: '../', ready: false, isActive: () => started && !finished });
 const screenAwake = createScreenAwake();
 for (const event of ['pointerdown', 'keydown']) document.addEventListener(event, () => screenAwake.activity(), { passive: true });
 const noteLayer = document.createElement('div');
@@ -311,7 +311,6 @@ let requestedDifficulty = 'easy', chosenDifficulty = null, puzzleDelivery = null
 const difficultyPlay = document.querySelector('#difficulty-play');
 const difficultyScreen = document.querySelector('#difficulty-screen');
 const boardLoader = document.querySelector('#board-loading');
-boardLoader.prepend(document.querySelector('.loading-digits').cloneNode(true));
 function chooseDifficulty(reason = 'restarted') {
   if (busy) return;
   if (analytics.active) { analytics.finish(reason, analyticsProgress()); analytics.flush({ force: true }); }
@@ -378,20 +377,6 @@ async function newPuzzle(autoStart = true, reason = 'restarted') {
   }
 }
 document.querySelector('#puzzle-retry').addEventListener('click', () => newPuzzle());
-async function initialize() {
-  busy = true; render();
-  await analyticsConfig;
-  await wait(Math.max(0, puzzleLoadingDeadline - performance.now()));
-  const loader = document.querySelector('#puzzle-loading');
-  loader.classList.add('is-leaving');
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reduced) await wait(180);
-  loader.hidden = true; document.body.classList.remove('sudoku-loading');
-  document.body.classList.add('sudoku-revealing');
-  document.querySelector('.game-layout').setAttribute('aria-busy', 'false');
-  busy = false; render();
-  setTimeout(() => document.body.classList.remove('sudoku-revealing'), reduced ? 0 : 220);
-}
 function startGame() {
   if (started || busy) return;
   analytics.start(clues, checksActive(), manualMode, puzzleDelivery);
@@ -543,4 +528,6 @@ analyticsConfig.then(config => {
   }
   analytics.flush();
 });
-initialize();
+busy = false; render();
+document.querySelector('.game-layout').setAttribute('aria-busy', 'false');
+void page.reveal();

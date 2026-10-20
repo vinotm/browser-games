@@ -50,6 +50,9 @@ Serve the repository root and open `sudoku-game/`. See the
 
 ## Collection navigation
 
-The current version is `beta-3.2`. The shared page shell supplies theme controls and
+The current version is `beta-4`. The shared page shell supplies theme controls and
 Back to Homepage. Leaving an unfinished puzzle asks for confirmation; the timer
 continues during the in-page dialog. Ready and completed puzzles do not prompt.
+
+Refresh opens directly to the start scene while puzzle caching warms in the
+background. Starting any puzzle uses the in-board loading view, including cache hits.

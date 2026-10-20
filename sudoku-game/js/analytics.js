@@ -71,7 +71,7 @@ export function createRunAnalytics({ endpoint = '', environment = 'unknown', bui
     start(clues, checkConflicts, manualMode = false, delivery = null) {
       if (!endpoint) return;
       foreground = 0; foregroundAt = clock();
-      run = { schema_version: 1, game: 'sudoku', game_version: 'beta-3.2', generator_version: delivery?.generatorVersion || 'unique-v1',
+      run = { schema_version: 1, game: 'sudoku', game_version: 'beta-4', generator_version: delivery?.generatorVersion || 'unique-v1',
         run_id: id(), revision: 0, initial_clues: clues.join(''), clue_count: clues.filter(Boolean).length,
         check_conflicts: checkConflicts, manual_mode: manualMode, environment, build_id: buildId,
         device: typeof device === 'function' ? device() : device, started_at: stamp(),

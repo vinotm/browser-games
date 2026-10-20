@@ -1,18 +1,33 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sudoku</title>
-<script>
-  const puzzleLoadingDeadline = performance.now() + 500 + Math.random() * 500;
-</script>
+
 <script src="../shared/js/theme-init.js"></script>
 <link rel="stylesheet" href="../shared/css/base.css"><link rel="stylesheet" href="../shared/css/components.css"><link rel="stylesheet" href="style.css"></head>
-<body class="game-page sudoku-loading"><main class="game-layout" aria-busy="true">
+<body class="game-page page-entering"><main class="game-layout" aria-busy="true">
       <header class="game-header" data-page-header>
         <span class="mode-slot" aria-live="polite"><span id="manual-label" class="manual-label" hidden>Manual mode ON</span></span>
         <h1 class="game-title">Sudoku<span class="beta-label">beta</span></h1>
 
       </header>
 
-<div id="puzzle-loading" class="puzzle-loading" role="status"><div class="loading-digits" aria-hidden="true"><span>8</span><span>3</span><span>6</span><span>1</span><span>9</span><span>4</span><span>7</span><span>2</span><span>5</span></div><p>Loading Sudoku…</p></div>
+<div class="scores toolbar"><span id="difficulty-label" class="difficulty-label" aria-label="Requested difficulty"></span><div class="menu-anchor"><button id="menu-toggle" class="secondary" aria-expanded="false" aria-controls="game-menu">Menu</button><div id="game-menu" class="game-menu" inert><button id="new">New puzzle</button><button id="solve">Solve puzzle</button><label class="conflict-option"><input id="check-conflicts" type="checkbox" checked><span>Check conflicts</span></label><label class="conflict-option"><input id="manual-mode" type="checkbox" autocomplete="off"><span>Manual mode</span></label></div></div><div class="timer-controls"><button id="undo" class="tool-icon" aria-label="Undo (Ctrl or Command + Z)" title="Undo (Ctrl/⌘ Z)" disabled></button><strong id="timer">0:00</strong><button id="redo" class="tool-icon" aria-label="Redo (Ctrl or Command + Y or Shift + Z)" title="Redo (Ctrl/⌘ Y or Shift Z)" disabled></button></div><div class="checkpoint-tools"><button id="save" class="tool-icon" aria-label="Save checkpoint (S)" title="Save checkpoint (S)"></button><button id="load" class="tool-icon" aria-label="Load checkpoint (L)" title="Load checkpoint (L)" disabled></button><span id="checkpoint-feedback" class="checkpoint-feedback" aria-hidden="true"></span></div><section id="checkpoint-confirm" class="checkpoint-confirm" aria-labelledby="checkpoint-title" hidden><p id="checkpoint-title"></p><p id="checkpoint-detail" hidden>The timer will keep running.</p><div><button id="checkpoint-cancel" class="secondary">Cancel</button><button id="checkpoint-accept">Confirm</button></div></section></div>
+<div class="play-layout"><div class="game-screen">
+<div class="grid" role="group" aria-label="Sudoku board"></div>
+<div id="start-screen" class="overlay"><button id="start">Start</button><button id="privacy-open" class="privacy-link" type="button">Data privacy</button></div>
+<section id="difficulty-screen" class="overlay difficulty-screen" aria-labelledby="difficulty-title" hidden><h2 id="difficulty-title">Choose difficulty</h2><div id="difficulty-start" class="difficulty-picker" role="group" aria-label="Difficulty"><button type="button" data-level="novice" aria-pressed="false">Novice</button><button type="button" data-level="easy" aria-pressed="false">Easy</button><button type="button" data-level="medium" aria-pressed="false">Medium</button><button type="button" data-level="hard" aria-pressed="false">Hard</button></div><button id="difficulty-play" type="button" hidden>Play</button></section>
+<section id="privacy-view" class="overlay privacy-view" aria-labelledby="privacy-title" hidden>
+<h2 id="privacy-title" tabindex="-1">A little data, a better game</h2>
+<p id="privacy-intro">Small, anonymous gameplay reports help improve Sudoku.</p>
+<p id="privacy-details">Reports include the starting puzzle, difficulty, timing, progress and broad device details. Your answers, names, emails and location aren’t collected.</p>
+<p id="privacy-status">Reports are stored privately. Offline reports upload when you’re connected again.</p>
+<button id="privacy-back" class="privacy-link" type="button">← Back to game</button></section>
+<section id="board-loading" class="overlay board-loading" role="status" hidden><div class="loading-digits" aria-hidden="true"><span>8</span><span>3</span><span>6</span><span>1</span><span>9</span><span>4</span><span>7</span><span>2</span><span>5</span></div><p>Loading Sudoku…</p><button id="puzzle-retry" type="button" hidden>Try again</button></section>
+<section id="completion" class="overlay completion" aria-labelledby="completion-title" hidden><h2 id="completion-title">Puzzle Completed!</h2><p id="completion-detail"></p><span class="completion-dismiss">Click anywhere to dismiss</span></section>
+</div>
+<p id="status" class="sr-only" role="status"></p>
+
+<aside class="controls"><div class="number-pad" role="group" aria-label="Enter a number"></div></aside></div>
+<dialog id="confirm" aria-labelledby="confirm-title" aria-describedby="confirm-detail confirm-features confirm-consequence"><button id="confirm-close" type="button" class="icon-button dialog-close" aria-label="Close confirmation"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button><h2 id="confirm-title">Solve this puzzle?</h2><p id="confirm-detail">This will reveal the solution and replace your answers.</p><ul id="confirm-features" class="confirm-features" hidden></ul><p id="confirm-consequence" hidden></p><div class="overlay-actions"><button id="cancel" class="secondary" autofocus>Keep playing</button><button id="confirm-solve">Solve puzzle</button></div></dialog>
 <script>
   (() => {
     const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -25,22 +40,5 @@
     });
   })();
 </script>
-<div class="scores toolbar"><span id="difficulty-label" class="difficulty-label" aria-label="Requested difficulty"></span><div class="menu-anchor"><button id="menu-toggle" class="secondary" aria-expanded="false" aria-controls="game-menu">Menu</button><div id="game-menu" class="game-menu" inert><button id="new">New puzzle</button><button id="solve">Solve puzzle</button><label class="conflict-option"><input id="check-conflicts" type="checkbox" checked><span>Check conflicts</span></label><label class="conflict-option"><input id="manual-mode" type="checkbox" autocomplete="off"><span>Manual mode</span></label></div></div><div class="timer-controls"><button id="undo" class="tool-icon" aria-label="Undo (Ctrl or Command + Z)" title="Undo (Ctrl/⌘ Z)" disabled></button><strong id="timer">0:00</strong><button id="redo" class="tool-icon" aria-label="Redo (Ctrl or Command + Y or Shift + Z)" title="Redo (Ctrl/⌘ Y or Shift Z)" disabled></button></div><div class="checkpoint-tools"><button id="save" class="tool-icon" aria-label="Save checkpoint (S)" title="Save checkpoint (S)"></button><button id="load" class="tool-icon" aria-label="Load checkpoint (L)" title="Load checkpoint (L)" disabled></button><span id="checkpoint-feedback" class="checkpoint-feedback" aria-hidden="true"></span></div><section id="checkpoint-confirm" class="checkpoint-confirm" aria-labelledby="checkpoint-title" hidden><p id="checkpoint-title"></p><p id="checkpoint-detail" hidden>The timer will keep running.</p><div><button id="checkpoint-cancel" class="secondary">Cancel</button><button id="checkpoint-accept">Confirm</button></div></section></div>
-<div class="play-layout"><div class="game-screen">
-<div class="grid" role="group" aria-label="Sudoku board"></div>
-<div id="start-screen" class="overlay"><button id="start">Start</button><button id="privacy-open" class="privacy-link" type="button">Data privacy</button></div>
-<section id="difficulty-screen" class="overlay difficulty-screen" aria-labelledby="difficulty-title" hidden><h2 id="difficulty-title">Choose difficulty</h2><div id="difficulty-start" class="difficulty-picker" role="group" aria-label="Difficulty"><button type="button" data-level="novice" aria-pressed="false">Novice</button><button type="button" data-level="easy" aria-pressed="false">Easy</button><button type="button" data-level="medium" aria-pressed="false">Medium</button><button type="button" data-level="hard" aria-pressed="false">Hard</button></div><button id="difficulty-play" type="button" hidden>Play</button></section>
-<section id="privacy-view" class="overlay privacy-view" aria-labelledby="privacy-title" hidden>
-<h2 id="privacy-title" tabindex="-1">A little data, a better game</h2>
-<p id="privacy-intro">Small, anonymous gameplay reports help improve Sudoku.</p>
-<p id="privacy-details">Reports include the starting puzzle, difficulty, timing, progress and broad device details. Your answers, names, emails and location aren’t collected.</p>
-<p id="privacy-status">Reports are stored privately. Offline reports upload when you’re connected again.</p>
-<button id="privacy-back" class="privacy-link" type="button">← Back to game</button></section>
-<section id="board-loading" class="overlay board-loading" role="status" hidden><p>Loading Sudoku…</p><button id="puzzle-retry" type="button" hidden>Try again</button></section>
-<section id="completion" class="overlay completion" aria-labelledby="completion-title" hidden><h2 id="completion-title">Puzzle Completed!</h2><p id="completion-detail"></p><span class="completion-dismiss">Click anywhere to dismiss</span></section>
-</div>
-<p id="status" class="sr-only" role="status"></p>
 
-<aside class="controls"><div class="number-pad" role="group" aria-label="Enter a number"></div></aside></div>
-<dialog id="confirm" aria-labelledby="confirm-title" aria-describedby="confirm-detail confirm-features confirm-consequence"><button id="confirm-close" type="button" class="icon-button dialog-close" aria-label="Close confirmation"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button><h2 id="confirm-title">Solve this puzzle?</h2><p id="confirm-detail">This will reveal the solution and replace your answers.</p><ul id="confirm-features" class="confirm-features" hidden></ul><p id="confirm-consequence" hidden></p><div class="overlay-actions"><button id="cancel" class="secondary" autofocus>Keep playing</button><button id="confirm-solve">Solve puzzle</button></div></dialog>
 <script type="module" src="js/game.js"></script></main></body></html>

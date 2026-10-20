@@ -52,7 +52,8 @@ if (sudokuEndpoint) {
   if (url.protocol !== 'https:' || url.username || url.password || url.hash) throw new Error('Invalid SUDOKU_ANALYTICS_ENDPOINT');
   sudokuEndpoint = url.href;
 }
-files.push(...sudokuFiles);
+files.push(...sudokuFiles, 'sos-game/index.html', 'sos-game/style.css');
+await collect('sos-game/js', ['.js']);
 // Validate every input before replacing an existing export.
 for (const file of files) {
   const stat = await lstat(join(root, file));

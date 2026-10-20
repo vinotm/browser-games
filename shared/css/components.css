@@ -130,7 +130,7 @@ button:disabled {
   background: transparent;
 }
 @media (hover: hover) and (pointer: fine) {
-  .icon-button:not(#theme):hover {
+  .icon-button:not(#theme):not(.page-home):hover {
     background: var(--secondary);
   }
 }
@@ -207,10 +207,14 @@ button:disabled {
 }
 
 /* Collection navigation and confirmations are shared by every game. */
-.page-navigation { text-align: left; margin: 0 0 8px; line-height: 18px; }
-.page-home { display: inline-block; color: var(--muted); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }
-.page-home:hover, .page-home:active { background: transparent; color: var(--text); }
-.page-home:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.game-header { position: relative; grid-template-columns: 88px minmax(0, 1fr) 88px; }
+.game-header h1 { grid-column: 2; }
+.page-navigation { grid-column: 3; display: flex; align-items: center; justify-content: flex-end; gap: 0; width: 88px; opacity: 0; visibility: hidden; }
+.page-navigation.is-ready { opacity: 1; visibility: visible; }
+.page-navigation .icon-button, .page-navigation .icon-button:hover, .page-navigation .icon-button:active { display: grid; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; background: transparent; color: var(--text); box-shadow: none; filter: none; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.page-navigation .icon-button:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
+@media (max-width: 380px) { .game-header { grid-template-columns: 72px minmax(0, 1fr) 72px; } .page-navigation { width: 72px; } .page-navigation .icon-button { flex-basis: 36px; width: 36px; } }
+.page-entering .game-layout { opacity: 0; visibility: hidden; }
 #theme, #theme:hover, #theme:active { background: transparent; box-shadow: none; filter: none; -webkit-tap-highlight-color: transparent; }
 .leave-dialog { width: min(90vw, 390px); padding: 28px 22px 22px; border: 1px solid var(--key-border); border-radius: 12px; background: var(--board); color: var(--text); text-align: center; }
 .leave-dialog::backdrop { background: rgb(0 0 0 / 45%); }

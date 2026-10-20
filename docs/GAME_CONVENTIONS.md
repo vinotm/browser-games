@@ -2,18 +2,22 @@
 
 ## Shared page controls
 
-Every game uses `shared/js/page-shell.js` to create its theme switcher, underlined
-Back to Homepage link, and leave confirmation. Import shared base and component CSS.
+Every game uses `shared/js/page-shell.js` to create its theme switcher, Home link, and leave confirmation. Import shared base and component CSS.
 Keep a `[data-page-header]` element containing the game title and its left-side
-placeholder or game-specific mode indicator. The shell supplies the theme button.
+placeholder or game-specific mode indicator. The shell supplies matching Home and theme icons grouped on the right of the
+title row, without hover backgrounds. Home retains an accessible name and tooltip. Keep beta labels absolutely positioned beside the title
+so only the game name determines its center.
 Use a homepage URL relative to the game, so repository-subpath hosting works.
 The collection homepage uses the same shell without a home link.
 
 ```js
 const page = createPageShell({
   homeUrl: '../',
+  ready: false,
   isActive: () => started && !finished,
 });
+// After initial game setup (or the initial loading view) finishes:
+void page.reveal();
 // Call after every change to whether unfinished progress exists.
 page.refresh();
 ```
@@ -92,3 +96,10 @@ Use `formatDuration` from `shared/js/clock.js` for live timers and completion
 screens. It displays `m:ss` below one hour and `h:mm:ss` from one hour onward,
 with no day rollover (for example, `25:00:00`). Games own their timing rules;
 use the shared `createClock` when active-play timing with pause/resume is needed.
+
+For initial page entry, all games use `page-entering` on the body to avoid
+painting an incomplete scene. `page.reveal()` waits for page assets and fonts, then
+reveals the initialized scene and navigation in the same frame without fades or
+slides. Navigation stays hidden and inert until then. The homepage theme control
+renders immediately. In-board puzzle-loading feedback remains independent of
+initial entry.
