@@ -39,14 +39,14 @@ class FreshAssetsHandler(SimpleHTTPRequestHandler):
     def public_path(self):
         path = unquote(urlsplit(self.path).path)
         parts = Path(path).parts
-        if any(part == 'private' or part.startswith('.') for part in parts):
+        if any(part == 'private' or part.startswith('.') or '.local.' in part for part in parts):
             return False
         root = Path(self.directory).resolve()
         target = Path(self.translate_path(self.path)).resolve()
         if not target.is_relative_to(root):
             return False
         relative = target.relative_to(root)
-        if any(part == 'private' or part.startswith('.') for part in relative.parts):
+        if any(part == 'private' or part.startswith('.') or '.local.' in part for part in relative.parts):
             return False
         if relative == Path('.') or relative == Path('index.html'):
             return True
@@ -77,33 +77,13 @@ class FreshAssetsHandler(SimpleHTTPRequestHandler):
             self.wfile.write(body)
         return True
 
-    def asset_review(self, head=False):
-        if unquote(urlsplit(self.path).path) not in ('/assets-review/', '/assets-review'):
-            return False
-        page = Path(self.directory) / 'snake-game/private/assets-review/index.html'
-        if not page.is_file():
-            self.send_error(404)
-            return True
-        body = page.read_bytes()
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/html; charset=utf-8')
-        self.send_header('Content-Length', str(len(body)))
-        self.end_headers()
-        if not head:
-            self.wfile.write(body)
-        return True
-
     def do_GET(self):
-        if self.asset_review():
-            return
         if not self.public_path():
             self.send_error(404)
         elif not self.deployment_config():
             super().do_GET()
 
     def do_HEAD(self):
-        if self.asset_review(head=True):
-            return
         if not self.public_path():
             self.send_error(404)
         elif not self.deployment_config(head=True):

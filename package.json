@@ -1,6 +1,8 @@
 {
   "name": "browser-games",
   "private": true,
+  "version": "0.2.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",

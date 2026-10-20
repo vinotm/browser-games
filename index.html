@@ -11,59 +11,9 @@
   </head>
   <body class="game-page">
     <main class="collection">
-      <header class="collection-header">
-        <div><h1>Browser Games</h1></div>
-        <button
-          id="theme"
-          class="icon-button"
-          aria-label="Switch to dark mode"
-          title="Switch to dark mode"
-        >
-          <!-- Lucide sun (ISC); custom crescent moon. -->
-          <svg
-            class="sun-icon"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2" />
-            <path d="M12 20v2" />
-            <path d="m4.93 4.93 1.41 1.41" />
-            <path d="m17.66 17.66 1.41 1.41" />
-            <path d="M2 12h2" />
-            <path d="M20 12h2" />
-            <path d="m6.34 17.66-1.41 1.41" />
-            <path d="m19.07 4.93-1.41 1.41" />
-          </svg>
+      <header class="collection-header" data-page-header>
+        <h1>Browser Games <span class="collection-version">0.2</span></h1>
 
-          <svg
-            class="moon-icon"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path
-              fill="currentColor" stroke="none"
-              transform="rotate(-35 12 12)"
-              d="M14 3.225A9 9 0 1 0 14 20.775A9 9 0 0 1 14 3.225Z"
-            />
-          </svg>
-        </button>
       </header>
       <nav class="game-cards" aria-label="Choose a game">
         <a class="game-card snake-card" href="snake-game/">
@@ -91,8 +41,8 @@
       </nav>
     </main>
     <script type="module">
-      import { createTheme } from './shared/js/theme.js';
-      createTheme({ button: document.querySelector('#theme') }).apply();
+      import { createPageShell } from './shared/js/page-shell.js';
+      createPageShell();
     </script>
   </body>
 </html>

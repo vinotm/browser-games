@@ -2,70 +2,14 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sudoku</title>
 <script>
   const puzzleLoadingDeadline = performance.now() + 500 + Math.random() * 500;
-  // Set the theme before styles paint, while the game modules are still loading.
-  (() => {
-    let saved;
-    try { saved = localStorage.getItem('browser-games-theme'); } catch { /* Storage is optional. */ }
-    const dark = saved === 'dark' || (saved !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  })();
 </script>
+<script src="../shared/js/theme-init.js"></script>
 <link rel="stylesheet" href="../shared/css/base.css"><link rel="stylesheet" href="../shared/css/components.css"><link rel="stylesheet" href="style.css"></head>
 <body class="game-page sudoku-loading"><main class="game-layout" aria-busy="true">
-      <header class="game-header">
+      <header class="game-header" data-page-header>
         <span class="mode-slot" aria-live="polite"><span id="manual-label" class="manual-label" hidden>Manual mode ON</span></span>
-        <h1 class="game-title">Sudoku<span class="beta-label">beta</span></h1>
-        <button
-          id="theme"
-          class="icon-button"
-          aria-label="Switch to dark mode"
-          title="Switch to dark mode"
-        >
-          <!-- Lucide sun (ISC); custom crescent moon. -->
-          <svg
-            class="sun-icon"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2" />
-            <path d="M12 20v2" />
-            <path d="m4.93 4.93 1.41 1.41" />
-            <path d="m17.66 17.66 1.41 1.41" />
-            <path d="M2 12h2" />
-            <path d="M20 12h2" />
-            <path d="m6.34 17.66-1.41 1.41" />
-            <path d="m19.07 4.93-1.41 1.41" />
-          </svg>
+        <h1 class="game-title">Sudoku<span class="beta-label">beta 3.1</span></h1>
 
-          <svg
-            class="moon-icon"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path
-              fill="currentColor" stroke="none"
-              transform="rotate(-35 12 12)"
-              d="M14 3.225A9 9 0 1 0 14 20.775A9 9 0 0 1 14 3.225Z"
-            />
-          </svg>
-        </button>
       </header>
 
 <div id="puzzle-loading" class="puzzle-loading" role="status"><div class="loading-digits" aria-hidden="true"><span>8</span><span>3</span><span>6</span><span>1</span><span>9</span><span>4</span><span>7</span><span>2</span><span>5</span></div><p>Loading Sudoku…</p></div>

@@ -1,5 +1,5 @@
 .collection { width: min(100%, 760px); }
-.collection-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 30px; }
+.collection-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 30px; }
 .collection-header h1 { font-size: clamp(27px, 5vw, 36px); }
 .collection-header .icon-button { flex: 0 0 44px; }
 .game-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
@@ -29,3 +29,5 @@
   .card-details { padding: 18px 20px; }
 }
 @media (prefers-reduced-motion: reduce) { .game-card { transition: none; } .game-card:hover { transform: none; } }
+
+.collection-version { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; white-space: nowrap; }

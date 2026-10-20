@@ -1,32 +1,3 @@
-// A starter puzzle varied by Sudoku-preserving digit and row/column permutations.
-const seed = '530070000600195000098000060800060003400803001700020006060000280000419005000080079';
-function shuffle(values, random) {
-  const copy = [...values];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-export function createPuzzle(random = Math.random) {
-  const digits = [0, ...shuffle([1,2,3,4,5,6,7,8,9], random)];
-  const order = () => shuffle([0,1,2], random).flatMap(b => shuffle([0,1,2], random).map(i => b * 3 + i));
-  const rows = order(), columns = order();
-  const board = rows.flatMap(r => columns.map(c => digits[Number(seed[r * 9 + c])]));
-  const solver = solve(board);
-  while (!solver.next().done) { /* Generate a complete randomized board. */ }
-  let remaining = 81;
-  for (const index of shuffle(Array.from({length: 81}, (_, i) => i), random)) {
-    if (remaining <= 30) break;
-    const value = board[index];
-    board[index] = 0;
-    if (countSolutions(board) === 1) remaining--;
-    else board[index] = value;
-  }
-  if (countSolutions(board) !== 1) throw new Error('Puzzle uniqueness verification failed');
-  return board;
-}
-
 // Search a copy and stop at two: only exactly one solution is acceptable.
 export function countSolutions(input, limit = 2) {
   if (conflicts(input).some(Boolean)) return 0;

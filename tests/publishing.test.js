@@ -10,15 +10,18 @@ test('public export excludes unpublished sources, deployment state and private o
   const temporary = mkdtempSync(join(tmpdir(), 'browser-games-export-'));
   const source = fileURLToPath(new URL('../', import.meta.url));
   try {
-    for (const item of ['index.html', 'shared', 'snake-game', 'sudoku-game', 'scripts', 'preview_server.py']) {
+    for (const item of ['LICENSE', 'index.html', 'shared', 'snake-game', 'sudoku-game', 'scripts', 'preview_server.py']) {
       cpSync(join(source, item), join(temporary, item), {
         recursive: true,
         filter: (path) => !path.split(/[\\/]/).includes('private'),
       });
     }
-    for (const path of ['snake-game/private', 'sudoku-solver', 'analytics', '.git']) {
+    for (const path of ['snake-game/private/prototype-preview', 'snake-game/private/analytics-dashboard',
+      'sudoku-game/private/feature-preview', 'sudoku-solver', 'analytics', '.git']) {
       mkdirSync(join(temporary, path), { recursive: true });
       writeFileSync(join(temporary, path, 'unpublished.txt'), 'not a public asset');
+      writeFileSync(join(temporary, path, 'index.html'), '<p>Private review page</p>');
+      writeFileSync(join(temporary, path, 'dashboard.js'), 'window.privateReview = true;');
     }
     writeFileSync(join(temporary, 'snake-game/js/settings.local.js'), 'local-only');
     const build = (endpoint = '', extra = {}) => spawnSync(process.execPath, ['scripts/build.mjs'], {
@@ -27,7 +30,7 @@ test('public export excludes unpublished sources, deployment state and private o
     });
     let result = build();
     assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['index.html', 'shared', 'snake-game', 'sudoku-game']);
+    assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['LICENSE', 'index.html', 'shared', 'snake-game', 'sudoku-game']);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game')).includes('private'), false);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game/js')).includes('settings.local.js'), false);
     const firstConfig = JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json')));
@@ -49,6 +52,9 @@ import io, json
 from preview_server import FreshAssetsHandler
 h = FreshAssetsHandler.__new__(FreshAssetsHandler)
 h.directory = '.'
+for path in ['/snake-game/private/dashboard/index.html', '/snake-game/js/settings.local.js', '/sudoku-game/private/dev-helpers/legacy-puzzle.js']:
+    h.path = path
+    assert not h.public_path(), path
 h.path = '/snake-game/analytics-config.json'
 h.wfile = io.BytesIO()
 h.send_response = lambda *a: None

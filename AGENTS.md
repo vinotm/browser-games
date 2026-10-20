@@ -2,8 +2,7 @@
 
 ## Privacy notes
 
-Use the privacy view in `snake-game/index.html` and `snake-game/style.css` as the
-reference for new games.
+Keep privacy views consistent across games using the conventions below.
 
 - Keep privacy notes inside the board, with a simple back-to-game link.
 - Left-align the heading, paragraphs, and back link on a shared left edge.
@@ -28,3 +27,24 @@ Suggested structure:
 > Reports are stored privately. Offline reports upload when you’re connected again.
 >
 > ← Back to game
+
+## Public repository content
+
+- Keep collection-wide setup and architecture in the root README. Put game rules,
+  generation details, and analytics schemas in each game's documentation.
+- Track product source, reusable tools, synthetic tests, and contributor-facing
+  documentation. Exclude personal notes, credentials, real gameplay reports,
+  dashboards, prototype pages, simulations, and temporary feature previews.
+- Keep unpublished material in ignored `private/` directories. Never force-add it.
+- Publish only the `dist/` export. Check both Git's tracked files and build output
+  before releasing; a file being ignored does not remove an earlier tracked copy.
+- Preserve required third-party license notices and attribution.
+
+## Integrating games
+
+Follow [game integration conventions](docs/GAME_CONVENTIONS.md) for all new games.
+Use the shared page shell for theme controls, the underlined Back to Homepage link,
+and active-game leave protection, including paused runs. Keep private development
+helpers out of public imports and tests. Version affected games when shared components
+change their behavior. Preserve standard source licensing separately from the
+analytics disclosure described in [privacy](PRIVACY.md).
