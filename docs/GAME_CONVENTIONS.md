@@ -85,3 +85,10 @@ Source fingerprints identify exact asset changes independently of release labels
 Retain required third-party notices. Git author names and emails are ordinary
 contribution attribution; use a no-reply address for future contributions if desired.
 Do not rewrite existing history or remove copyright attribution as routine cleanup.
+
+## Elapsed-time displays
+
+Use `formatDuration` from `shared/js/clock.js` for live timers and completion
+screens. It displays `m:ss` below one hour and `h:mm:ss` from one hour onward,
+with no day rollover (for example, `25:00:00`). Games own their timing rules;
+use the shared `createClock` when active-play timing with pause/resume is needed.

@@ -1,3 +1,4 @@
+import { formatDuration } from '../../shared/js/clock.js';
 import { createScreenAwake } from '../../shared/js/screen-awake.js';
 import { createRunAnalytics } from './analytics.js';
 import { loadDeploymentConfig } from '../../shared/js/config.js';
@@ -182,8 +183,7 @@ document.addEventListener('pointerdown', event => {
 });
 function updateTimer() {
   const ms = started && !finished && !busy ? performance.now() - startedAt + elapsed : elapsed;
-  const seconds = Math.floor(ms / 1000);
-  document.querySelector('#timer').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  document.querySelector('#timer').textContent = formatDuration(ms);
 }
 setInterval(updateTimer, 250);
 const keys = Array.from({ length: 11 }, (_, i) => {
@@ -286,8 +286,7 @@ function enter(n) {
 }
 function showCompletion(revealed) {
   clearTimeout(completionTimeout);
-  const seconds = Math.floor(elapsed / 1000);
-  const time = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  const time = formatDuration(elapsed, { padMinutes: true });
   document.querySelector('#completion-title').textContent = revealed ? 'Puzzle solved' : 'Puzzle Completed!';
   document.querySelector('#completion-detail').textContent = revealed ? 'Solution revealed' : `Time ${time}`;
   grid.classList.toggle('won', !revealed);
