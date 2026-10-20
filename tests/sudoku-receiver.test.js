@@ -98,3 +98,18 @@ test('manual mode is validated, stored, immutable within a run and backward comp
   assert.equal(legacy.post(old).ok, true); assert.equal(legacy.post(old).ok, true);
   assert.equal('manual_mode' in legacy.stored().run, false);
 });
+
+test('difficulty/timing metadata is bounded, immutable, optional for old reports, and retains zero serve time',()=>{
+ const r=receiver(),b=example();Object.assign(b.runs[0],{requested_difficulty:'hard',given_difficulty:'medium',puzzle_generation_ms:904,puzzle_serve_ms:0,difficulty_version:'logic-v1'});
+ assert.equal(r.post(b).ok,true);assert.equal(r.post(b).ok,true);
+ assert.equal(r.stored().run.puzzle_serve_ms,0);assert.equal(r.stored().run.puzzle_generation_ms,904);
+ const next=structuredClone(b);next.runs[0].revision++;next.runs[0].puzzle_serve_ms=1;
+ assert.equal(r.post(next).error,'run_id_conflict');
+ for(const changes of [{given_difficulty:'expert'},{requested_difficulty:'easy',given_difficulty:'hard'},
+ {puzzle_generation_ms:-1},{puzzle_serve_ms:300001},{puzzle_serve_ms:1.5},{difficulty_version:'bad value'}]){
+  const invalid=structuredClone(b);Object.assign(invalid.runs[0],changes);assert.equal(receiver().post(invalid).ok,false);
+ }
+ const partial=example();partial.runs[0].requested_difficulty='hard';assert.equal(receiver().post(partial).ok,false);
+ const old=receiver(),legacy=example();assert.equal(old.post(legacy).ok,true);assert.equal(old.post(legacy).ok,true);
+ assert.equal('requested_difficulty' in old.stored().run,false);
+});

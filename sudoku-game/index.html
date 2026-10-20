@@ -68,7 +68,7 @@
         </button>
       </header>
 
-<div id="puzzle-loading" class="puzzle-loading" role="status"><div class="loading-digits" aria-hidden="true"><span>8</span><span>3</span><span>6</span><span>1</span><span>9</span><span>4</span><span>7</span><span>2</span><span>5</span></div><p>Loading the puzzle…</p></div>
+<div id="puzzle-loading" class="puzzle-loading" role="status"><div class="loading-digits" aria-hidden="true"><span>8</span><span>3</span><span>6</span><span>1</span><span>9</span><span>4</span><span>7</span><span>2</span><span>5</span></div><p>Loading Sudoku…</p></div>
 <script>
   (() => {
     const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -85,12 +85,14 @@
 <div class="play-layout"><div class="game-screen">
 <div class="grid" role="group" aria-label="Sudoku board"></div>
 <div id="start-screen" class="overlay"><button id="start">Start</button><button id="privacy-open" class="privacy-link" type="button">Data privacy</button></div>
+<section id="difficulty-screen" class="overlay difficulty-screen" aria-labelledby="difficulty-title" hidden><h2 id="difficulty-title">Choose difficulty</h2><div id="difficulty-start" class="difficulty-picker" role="group" aria-label="Difficulty"><button type="button" data-level="easy" aria-pressed="false">Easy</button><button type="button" data-level="medium" aria-pressed="false">Medium</button><button type="button" data-level="hard" aria-pressed="false">Hard</button></div><button id="difficulty-play" type="button" hidden>Play</button></section>
 <section id="privacy-view" class="overlay privacy-view" aria-labelledby="privacy-title" hidden>
 <h2 id="privacy-title" tabindex="-1">A little data, a better game</h2>
-<p id="privacy-intro">Small, anonymous gameplay summaries help improve Sudoku.</p>
-<p id="privacy-details">Reports include the starting puzzle, progress, timing, feature-use counts and broad device details. We don’t collect your answers, names, emails or location, or identify you across games.</p>
-<p id="privacy-status">Reports are stored privately. Unsent reports stay in your browser and retry when connected.</p>
+<p id="privacy-intro">Small, anonymous gameplay reports help improve Sudoku.</p>
+<p id="privacy-details">Reports include the starting puzzle, difficulty, timing, progress and broad device details. Your answers, names, emails and location aren’t collected.</p>
+<p id="privacy-status">Reports are stored privately. Offline reports upload when you’re connected again.</p>
 <button id="privacy-back" class="privacy-link" type="button">← Back to game</button></section>
+<section id="board-loading" class="overlay board-loading" role="status" hidden><p>Loading Sudoku…</p><button id="puzzle-retry" type="button" hidden>Try again</button></section>
 <section id="completion" class="overlay completion" aria-labelledby="completion-title" hidden><h2 id="completion-title">Puzzle Completed!</h2><p id="completion-detail"></p><span class="completion-dismiss">Click anywhere to dismiss</span></section>
 </div>
 <p id="status" class="sr-only" role="status"></p>

@@ -4,18 +4,95 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Browser Games</title>
+    <script src="shared/js/theme-init.js"></script>
     <link rel="stylesheet" href="shared/css/base.css" />
     <link rel="stylesheet" href="shared/css/components.css" />
+    <link rel="stylesheet" href="shared/css/home.css" />
   </head>
   <body class="game-page">
-    <main class="game-layout">
-      <h1>Browser Games</h1>
-      <p><a href="snake-game/">Snake</a></p>
-      <p><a href="sudoku-game/">Sudoku</a></p>
+    <main class="collection">
+      <header class="collection-header">
+        <div><h1>Browser Games</h1></div>
+        <button
+          id="theme"
+          class="icon-button"
+          aria-label="Switch to dark mode"
+          title="Switch to dark mode"
+        >
+          <!-- Lucide sun (ISC); custom crescent moon. -->
+          <svg
+            class="sun-icon"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2" />
+            <path d="M12 20v2" />
+            <path d="m4.93 4.93 1.41 1.41" />
+            <path d="m17.66 17.66 1.41 1.41" />
+            <path d="M2 12h2" />
+            <path d="M20 12h2" />
+            <path d="m6.34 17.66-1.41 1.41" />
+            <path d="m19.07 4.93-1.41 1.41" />
+          </svg>
+
+          <svg
+            class="moon-icon"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              fill="currentColor" stroke="none"
+              transform="rotate(-35 12 12)"
+              d="M14 3.225A9 9 0 1 0 14 20.775A9 9 0 0 1 14 3.225Z"
+            />
+          </svg>
+        </button>
+      </header>
+      <nav class="game-cards" aria-label="Choose a game">
+        <a class="game-card snake-card" href="snake-game/">
+          <div class="game-art" aria-hidden="true">
+            <svg viewBox="0 0 240 144" fill="none">
+              <path class="preview-grid" d="M24 24H216M24 48H216M24 72H216M24 96H216M24 120H216M24 24V120M48 24V120M72 24V120M96 24V120M120 24V120M144 24V120M168 24V120M192 24V120M216 24V120"/>
+              <path class="preview-snake" d="M60 108V60H108V84H156V60"/>
+              <rect class="preview-head" x="146" y="38" width="20" height="22" rx="6"/>
+              <circle class="preview-eye" cx="160" cy="44" r="2"/>
+              <circle class="preview-food" cx="192" cy="48" r="8"/>
+            </svg>
+          </div>
+          <div class="card-details"><div><h2>Snake <span class="card-beta">beta</span></h2></div></div>
+        </a>
+        <a class="game-card sudoku-card" href="sudoku-game/">
+          <div class="game-art" aria-hidden="true">
+            <svg viewBox="0 0 240 144" fill="none">
+              <rect class="preview-cell" x="102" y="54" width="36" height="36" rx="4"/>
+              <path class="preview-sudoku-grid" d="M66 18H174V126H66ZM102 18V126M138 18V126M66 54H174M66 90H174"/>
+              <g class="preview-digits" text-anchor="middle"><text x="84" y="44">1</text><text x="156" y="44">9</text><text x="120" y="80">5</text><text x="84" y="116">7</text><text x="156" y="116">3</text></g>
+            </svg>
+          </div>
+          <div class="card-details"><div><h2>Sudoku <span class="card-beta">beta</span></h2></div></div>
+        </a>
+      </nav>
     </main>
     <script type="module">
       import { createTheme } from './shared/js/theme.js';
-      createTheme().apply();
+      createTheme({ button: document.querySelector('#theme') }).apply();
     </script>
   </body>
 </html>

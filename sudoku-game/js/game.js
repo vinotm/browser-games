@@ -1,7 +1,7 @@
 import { createRunAnalytics } from './analytics.js';
 import { loadDeploymentConfig } from '../../shared/js/config.js';
 import { describeDevice } from '../../shared/js/device.js';
-import { createPuzzleQueue } from './puzzle-queue.js';
+import { createPuzzleClient } from './puzzle-client.js';
 import { createTheme } from '../../shared/js/theme.js';
 import { createStorage } from '../../shared/js/storage.js';
 import { conflicts, solve, enteredValue } from './puzzle.js';
@@ -135,7 +135,7 @@ function applyManualMode() {
   // Preserve the conflict-check preference; Manual mode only temporarily suppresses it.
   render();
 }
-let clues, board, selected = -1, matchSource = -1, busy = false, finished = false, started = false, startedAt = 0, elapsed = 0;
+let clues = Array(81).fill(0), board = [...clues], selected = -1, matchSource = -1, busy = false, finished = false, started = false, startedAt = 0, elapsed = 0;
 const noteLayer = document.createElement('div');
 noteLayer.className = 'note-layer';
 document.querySelector('.game-screen').append(noteLayer);
@@ -189,6 +189,14 @@ const keys = Array.from({ length: 11 }, (_, i) => {
   button.type = 'button'; button.textContent = n || '';
   if (i === 9) button.innerHTML = icon('<path d="M9 5h13v14H9l-7-7 7-7Z"/><path d="m12 9 6 6m0-6-6 6"/>');
   if (i === 10) { button.className = 'pencil'; button.innerHTML = icon('<path d="m16 3 5 5-12 12-6 1 1-6L16 3Z"/><path d="m13 6 5 5"/>'); }
+  if (n) {
+    const dots = document.createElement('span');
+    dots.className = 'digit-progress'; dots.hidden = true; dots.setAttribute('aria-hidden', 'true');
+    dots.append(...Array.from({ length: 9 }, () => {
+      const dot = document.createElement('span'); dot.className = 'digit-dot'; return dot;
+    }));
+    button.append(dots);
+  }
   if (i === 9) button.className = 'erase';
   button.addEventListener('click', () => i === 10 ? togglePencil() : enter(n));
   document.querySelector('.number-pad').append(button);
@@ -213,8 +221,14 @@ function render(active = -1) {
     const digit = i + 1;
     const positions = board.flatMap((n, index) => n === digit ? [index] : []);
     const complete = digit <= 9 && positions.length === 9 && positions.every(index => !invalid[index]);
+    const dots = key.querySelector('.digit-progress');
+    const count = Math.min(9, positions.length);
+    if (dots) {
+      dots.hidden = manualMode || !started;
+      [...dots.children].forEach((dot, index) => dot.classList.toggle('filled', index < count));
+    }
     key.classList.toggle('complete', complete);
-    key.setAttribute('aria-label', i === 10 ? 'Pencil notes (P)' : i === 9 ? 'Delete' : `${digit}${complete ? ', complete' : ''}`);
+    key.setAttribute('aria-label', i === 10 ? 'Pencil notes (P)' : i === 9 ? 'Delete' : `${digit}${started && !manualMode ? `, ${count} of 9 placed` : ''}${complete ? ', complete' : ''}`);
     if (i === 10) { key.classList.toggle('active', pencil); key.setAttribute('aria-pressed', String(pencil)); }
     key.disabled = !started || busy || finished || complete;
   });
@@ -224,6 +238,7 @@ function render(active = -1) {
   loadButton.disabled = manualMode || !checkpoint || !started || busy || finished;
   checkToggle.disabled = busy || manualMode;
   checkToggle.checked = checksActive();
+  menuToggle.disabled = busy;
   manualToggle.disabled = busy; manualToggle.checked = manualMode;
   document.querySelector('#manual-label').hidden = !manualMode;
   solveButton.disabled = !started || busy || finished; newButton.disabled = !started || busy;
@@ -282,79 +297,103 @@ document.addEventListener('keydown', event => {
   if (['Escape', 'Enter', ' '].includes(event.key)) dismissCompletion(event);
 }, true);
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-function generatePuzzle() {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('./generator-worker.js', import.meta.url), { type: 'module' });
-    worker.onmessage = ({data}) => { worker.terminate(); data.error ? reject(new Error(data.error)) : resolve(data.puzzle); };
-    worker.onerror = event => { worker.terminate(); reject(new Error(event.message)); };
-    worker.postMessage(null);
-  });
-}
-const puzzleQueue = createPuzzleQueue(generatePuzzle, 10);
-async function newPuzzle(autoStart = false, reason = 'restarted') {
+const puzzleClient = createPuzzleClient();
+puzzleClient.setVisible(!document.hidden);
+puzzleClient.warmup();
+let requestedDifficulty = 'easy', chosenDifficulty = null, puzzleDelivery = null;
+const difficultyPlay = document.querySelector('#difficulty-play');
+const difficultyScreen = document.querySelector('#difficulty-screen');
+const boardLoader = document.querySelector('#board-loading');
+boardLoader.prepend(document.querySelector('.loading-digits').cloneNode(true));
+function chooseDifficulty(reason = 'restarted') {
   if (busy) return;
   if (analytics.active) { analytics.finish(reason, analyticsProgress()); analytics.flush({ force: true }); }
-  busy = true;
-  clearTimeout(checkpointFeedbackTimer);
-  checkpointFeedback.classList.remove('visible');
-  const loader = document.querySelector('#puzzle-loading');
-  let deadline = autoStart ? 0 : puzzleLoadingDeadline;
-  const showLoader = () => {
-    loader.hidden = false;
-    loader.classList.remove('is-leaving');
-    document.body.classList.remove('sudoku-revealing');
-    document.body.classList.add('sudoku-loading');
-    document.querySelector('.game-layout').setAttribute('aria-busy', 'true');
-    if (autoStart) deadline = performance.now() + 500 + Math.random() * 500;
-  };
-  const loadingTimeout = autoStart ? setTimeout(showLoader, 200) : null;
-  if (!autoStart) showLoader();
-  let puzzle;
-  try {
-    const result = await Promise.all([puzzleQueue.take(), analyticsConfig]);
-    puzzle = result[0];
-  }
-  catch (error) {
-    clearTimeout(loadingTimeout);
-    loader.querySelector('p').textContent = 'Could not generate a puzzle. Please refresh to retry.';
-    showLoader();
-    console.error(error);
-    return;
-  }
-  clearTimeout(loadingTimeout);
-  await wait(Math.max(0, deadline - performance.now()));
-  clearTimeout(completionTimeout);
-  completion.hidden = true;
-  clues = puzzle;
+  started = false; finished = false; elapsed = 0;
+  selected = -1; matchSource = -1; puzzleDelivery = null;
+  clues = Array(81).fill(0); board = [...clues];
+  notes = Array.from({length:81}, () => []); checkpoint = null; pencil = false;
   undoHistory = []; redoHistory = [];
-  notes = Array.from({length:81}, () => []); checkpoint = null; pencil = false; closeCheckpoint(); closeMenu();
-  board = [...clues]; selected = -1; matchSource = -1; finished = false;
-  started = false; elapsed = 0; status.textContent = '';
-  grid.classList.remove('won');
-  document.querySelector('#start-screen').hidden = false;
-  busy = false;
-  if (deadline) {
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    loader.classList.add('is-leaving');
-    if (!reduced) await wait(180);
-    loader.hidden = true;
-    document.body.classList.add('sudoku-revealing');
-    document.body.classList.remove('sudoku-loading');
-    document.querySelector('.game-layout').setAttribute('aria-busy', 'false');
-    setTimeout(() => document.body.classList.remove('sudoku-revealing'), reduced ? 0 : 220);
+  clearTimeout(completionTimeout); completion.hidden = true;
+  clearTimeout(checkpointFeedbackTimer); checkpointFeedback.classList.remove('visible');
+  closeMenu(); closeCheckpoint();
+  privacy.hidden = true; document.querySelector('#start-screen').hidden = true;
+  boardLoader.hidden = true; document.querySelector('.game-screen').classList.remove('awaiting-puzzle');
+  grid.classList.remove('won'); grid.removeAttribute('aria-busy'); status.textContent = '';
+  chosenDifficulty = null; difficultyPlay.hidden = true;
+  difficultyScreen.querySelectorAll('[data-level]').forEach(button => button.setAttribute('aria-pressed', 'false'));
+  difficultyScreen.hidden = false; render();
+  difficultyScreen.querySelector(`[data-level="${requestedDifficulty}"]`).focus({ preventScroll: true });
+}
+document.querySelectorAll('#difficulty-start [data-level]').forEach(button => button.addEventListener('click', () => {
+  chosenDifficulty = button.dataset.level;
+  difficultyScreen.querySelectorAll('[data-level]').forEach(option => option.setAttribute('aria-pressed', String(option === button)));
+  difficultyPlay.hidden = false;
+}));
+difficultyPlay.addEventListener('click', () => {
+  if (!chosenDifficulty || busy || difficultyScreen.hidden) return;
+  requestedDifficulty = chosenDifficulty; newPuzzle();
+});
+async function newPuzzle(autoStart = true, reason = 'restarted') {
+  if (busy) return;
+  if (analytics.active) { analytics.finish(reason, analyticsProgress()); analytics.flush({ force: true }); }
+  busy = true; started = false; elapsed = 0;
+  difficultyScreen.hidden = true;
+  clearTimeout(completionTimeout); completion.hidden = true;
+  privacy.hidden = true; document.querySelector('#start-screen').hidden = true;
+  clearTimeout(checkpointFeedbackTimer); checkpointFeedback.classList.remove('visible');
+  closeMenu(); closeCheckpoint();
+  const screen = document.querySelector('.game-screen');
+  screen.classList.add('awaiting-puzzle'); grid.setAttribute('aria-busy', 'true');
+  boardLoader.classList.remove('is-leaving'); boardLoader.hidden = false;
+  boardLoader.querySelector('p').textContent = 'Loading Sudoku…';
+  document.querySelector('#puzzle-retry').hidden = true;
+  render();
+  const loadingDeadline = performance.now() + 500 + Math.random() * 500;
+  try {
+    puzzleDelivery = await puzzleClient.take(requestedDifficulty);
+    await wait(Math.max(0, loadingDeadline - performance.now()));
+    boardLoader.classList.add('is-leaving');
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) await wait(180);
+    clues = [...puzzleDelivery.puzzle]; board = [...clues];
+    undoHistory = []; redoHistory = [];
+    notes = Array.from({length:81}, () => []); checkpoint = null; pencil = false;
+    selected = -1; matchSource = -1; finished = false; elapsed = 0; status.textContent = '';
+    grid.classList.remove('won');
+    boardLoader.hidden = true; screen.classList.remove('awaiting-puzzle');
+    grid.removeAttribute('aria-busy'); busy = false;
+    if (autoStart) startGame(); else { document.querySelector('#start-screen').hidden = false; render(); }
+  } catch (error) {
+    boardLoader.classList.remove('is-leaving'); boardLoader.hidden = false;
+    boardLoader.querySelector('p').textContent = 'Could not load a puzzle. Please try again.';
+    document.querySelector('#puzzle-retry').hidden = false;
+    grid.removeAttribute('aria-busy'); busy = false; render();
+    console.error(error);
   }
-  if (autoStart) startGame();
-  else render();
+}
+document.querySelector('#puzzle-retry').addEventListener('click', () => newPuzzle());
+async function initialize() {
+  busy = true; render();
+  await analyticsConfig;
+  await wait(Math.max(0, puzzleLoadingDeadline - performance.now()));
+  const loader = document.querySelector('#puzzle-loading');
+  loader.classList.add('is-leaving');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduced) await wait(180);
+  loader.hidden = true; document.body.classList.remove('sudoku-loading');
+  document.body.classList.add('sudoku-revealing');
+  document.querySelector('.game-layout').setAttribute('aria-busy', 'false');
+  busy = false; render();
+  setTimeout(() => document.body.classList.remove('sudoku-revealing'), reduced ? 0 : 220);
 }
 function startGame() {
   if (started || busy) return;
-  analytics.start(clues, checksActive(), manualMode);
+  analytics.start(clues, checksActive(), manualMode, puzzleDelivery);
   analytics.visibility(!document.hidden);
   analytics.flush();
   started = true; startedAt = performance.now();
   document.querySelector('#start-screen').hidden = true; render();
 }
-document.querySelector('#start').addEventListener('click', startGame);
+document.querySelector('#start').addEventListener('click', () => chooseDifficulty());
 function confirmAction(action) {
   closeMenu(); closeCheckpoint();
   pendingAction = action;
@@ -383,6 +422,7 @@ function confirmAction(action) {
       ['Checkpoints (save / restore)', !pendingManual],
       ['Conflict checks', !pendingManual && checkEnabled],
       ['Matching-number highlights', !pendingManual],
+      ['Digit progress dots', !pendingManual],
     ].map(([label, enabled]) => {
       const item = document.createElement('li');
       const marker = document.createElement('span');
@@ -438,11 +478,11 @@ document.querySelector('#confirm-solve').addEventListener('click', async () => {
   if (pendingAction === 'manual') {
     const restart = started && !finished;
     applyManualMode();
-    if (restart) newPuzzle(true, 'settings_changed');
+    if (restart) chooseDifficulty('settings_changed');
     return;
   }
-  if (pendingAction === 'checks') { applyConflictPreference(); newPuzzle(true, 'settings_changed'); return; }
-  if (pendingAction === 'new') { newPuzzle(true); return; }
+  if (pendingAction === 'checks') { applyConflictPreference(); chooseDifficulty('settings_changed'); return; }
+  if (pendingAction === 'new') { chooseDifficulty(); return; }
   analytics.finish('solver_revealed', analyticsProgress()); analytics.flush({ force: true });
   elapsed += performance.now() - startedAt; busy = true; selected = -1; matchSource = -1; board = [...clues]; notes = Array.from({length:81}, () => []);
   status.textContent = ''; grid.setAttribute('aria-busy', 'true'); render();
@@ -469,9 +509,11 @@ function reportProgress(options) {
 setInterval(() => reportProgress(), 60000);
 document.addEventListener('visibilitychange', () => {
   analytics.visibility(!document.hidden);
+  puzzleClient.setVisible(!document.hidden);
   reportProgress({ keepalive: document.hidden });
 });
-window.addEventListener('pagehide', () => reportProgress({ keepalive: true }));
+window.addEventListener('pagehide', () => { puzzleClient.setVisible(false); reportProgress({ keepalive: true }); });
+window.addEventListener('pageshow', () => puzzleClient.setVisible(!document.hidden));
 window.addEventListener('online', () => reportProgress({ force: true }));
 const privacy = document.querySelector('#privacy-view');
 function closePrivacy() {
@@ -493,4 +535,4 @@ analyticsConfig.then(config => {
   }
   analytics.flush();
 });
-newPuzzle();
+initialize();
