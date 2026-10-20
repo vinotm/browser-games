@@ -1,3 +1,5 @@
+import { DIFFICULTY_VERSION } from './difficulty.js';
+import { levels } from './difficulty-pool.js';
 // Cumulative summaries only: no selected cells, answers, notes or move history.
 export const COUNTERS = ['entries', 'erases', 'note_edits', 'pencil_toggles', 'undos', 'redos',
   'checkpoint_saves', 'checkpoint_restores', 'conflict_entries'];
@@ -69,19 +71,19 @@ export function createRunAnalytics({ endpoint = '', environment = 'unknown', bui
     start(clues, checkConflicts, manualMode = false, delivery = null) {
       if (!endpoint) return;
       foreground = 0; foregroundAt = clock();
-      run = { schema_version: 1, game: 'sudoku', game_version: 'beta-2', generator_version: delivery?.generatorVersion || 'unique-v1',
+      run = { schema_version: 1, game: 'sudoku', game_version: 'beta-3', generator_version: delivery?.generatorVersion || 'unique-v1',
         run_id: id(), revision: 0, initial_clues: clues.join(''), clue_count: clues.filter(Boolean).length,
         check_conflicts: checkConflicts, manual_mode: manualMode, environment, build_id: buildId,
         device: typeof device === 'function' ? device() : device, started_at: stamp(),
         filled: 0, peak_filled: 0, elapsed_ms: 0, wall_elapsed_ms: 0, foreground_ms: 0,
         counters: Object.fromEntries(COUNTERS.map(key => [key, 0])) };
-      if (delivery && ['easy', 'medium', 'hard'].includes(delivery.requestedDifficulty) &&
-          ['easy', 'medium', 'hard'].indexOf(delivery.givenDifficulty) >= 0 &&
-          ['easy', 'medium', 'hard'].indexOf(delivery.givenDifficulty) <= ['easy', 'medium', 'hard'].indexOf(delivery.requestedDifficulty) &&
+      if (delivery && levels.includes(delivery.requestedDifficulty) &&
+          levels.indexOf(delivery.givenDifficulty) >= 0 &&
+          levels.indexOf(delivery.givenDifficulty) <= levels.indexOf(delivery.requestedDifficulty) &&
           [delivery.generationMs, delivery.serveMs].every(value => Number.isFinite(value) && value >= 0 && value <= 300000)) {
         Object.assign(run, { requested_difficulty: delivery.requestedDifficulty, given_difficulty: delivery.givenDifficulty,
           puzzle_generation_ms: Math.round(delivery.generationMs), puzzle_serve_ms: Math.round(delivery.serveMs),
-          difficulty_version: 'logic-v1' });
+          difficulty_version: delivery.difficultyVersion || DIFFICULTY_VERSION });
       }
       snapshot();
     },

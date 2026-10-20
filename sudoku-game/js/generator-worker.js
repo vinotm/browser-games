@@ -1,5 +1,6 @@
 import { createPuzzleService } from './puzzle-service.js';
-const service = createPuzzleService();
+import { createPuzzleStore } from './puzzle-store.js';
+const service = createPuzzleService({ store: createPuzzleStore() });
 self.onmessage = ({ data }) => {
   if (data?.type === 'warmup') { service.warmup(); return; }
   if (data?.type === 'visibility') { service.setPaused(!data.visible); return; }

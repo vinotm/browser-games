@@ -160,7 +160,7 @@ function validateBatch_(input) {
     }
     const puzzleFields = ['requested_difficulty', 'given_difficulty', 'puzzle_generation_ms', 'puzzle_serve_ms', 'difficulty_version'];
     if (puzzleFields.some(field => run[field] !== undefined)) {
-      const levels = ['easy', 'medium', 'hard'];
+      const levels = ['novice', 'easy', 'medium', 'hard'];
       require_(levels.includes(run.requested_difficulty) && levels.includes(run.given_difficulty) &&
         levels.indexOf(run.given_difficulty) <= levels.indexOf(run.requested_difficulty), 'invalid_difficulty');
       require_(integer_(run.puzzle_generation_ms, 300000) && integer_(run.puzzle_serve_ms, 300000), 'invalid_puzzle_timing');

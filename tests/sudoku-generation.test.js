@@ -107,3 +107,19 @@ test('incremental search resumes to the same result and supports cooperative can
   assert.throws(()=>generate('easy',1,{onCandidate:42}),/candidate callback/);
   assert.throws(()=>generate('easy',1,{shouldStop:42}),/stop callback/);
 });
+
+test('Novice generation is unique, keeps 45 clues, and needs only naked singles', () => {
+  const puzzles = new Set();
+  for (let seed = 1; seed <= 30; seed++) {
+    const result = generate('novice', seed);
+    assert.equal(result.status, 'success');
+    assert.equal(result.puzzle.filter(Boolean).length, 45);
+    assert.equal(countSolutions(result.puzzle), 1);
+    const grade = gradePuzzle(result.puzzle, {maxLevel:'novice'});
+    assert.equal(grade.difficulty, 'novice');
+    assert.deepEqual(Object.keys(grade.counts), ['naked-single']);
+    assert.equal(gradePuzzle(result.puzzle).difficulty, 'novice');
+    puzzles.add(result.puzzle.join(''));
+  }
+  assert.equal(puzzles.size, 30);
+});

@@ -98,8 +98,13 @@ milliseconds can therefore have a zero serve time later. The receiver accepts
 integer timings from 0 to 300,000 ms and prevents these fields changing within a run.
 No per-candidate log, cache inventory, complete solution or generation seed is uploaded.
 
-New reports use `game_version: beta-2` and `generator_version: guided-v1`.
+New reports use `game_version: beta-3` and `generator_version: guided-v2`.
 Older reports remain valid with the difficulty/timing group entirely absent; their
 retry hashes remain unchanged. Missing fields mean unknown, not Easy or zero.
 The new metadata group is validated together, with given difficulty never higher
 than requested. Current difficulty and fallback notices are not displayed in play.
+
+Beta 3 adds `novice` below `easy`, with `difficulty_version: logic-v2`. The
+requested-level label uses the requested value; actual delivery remains analytics
+metadata. Deploy the updated Apps Script receiver before publishing Novice games,
+so its difficulty allowlist accepts all four levels.
