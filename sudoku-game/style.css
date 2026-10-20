@@ -1,13 +1,7 @@
 
 .game-title { position: relative; width: fit-content; justify-self: center; }
 .beta-label { position: absolute; top: 0; left: calc(100% + 5px); font-size: 11px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
-.sudoku-loading .scores, .sudoku-loading .play-layout { display: none; }
-.sudoku-loading #theme { visibility: hidden; }
-.puzzle-loading { min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 20px; gap: 22px; transition: opacity 180ms ease-out; }
-.puzzle-loading.is-leaving { opacity: 0; }
-.sudoku-revealing .scores, .sudoku-revealing .play-layout { animation: puzzle-reveal 220ms ease-out both; }
-@keyframes puzzle-reveal { from { opacity: 0; } to { opacity: 1; } }
-.puzzle-loading p { margin: 0; color: var(--muted); font-size: 15px; }
+
 .loading-digits { display: grid; grid-template-columns: repeat(3, 24px); gap: 9px; color: var(--primary); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .loading-digits span { animation: loading-digit 1800ms ease-in-out infinite; }
 .loading-digits span:nth-child(2) { animation-delay: -1200ms; }
@@ -19,7 +13,6 @@
 .loading-digits span:nth-child(8) { animation-delay: -600ms; }
 .loading-digits span:nth-child(9) { animation-delay: -1400ms; }
 @keyframes loading-digit { 0%, 100% { opacity: .15; transform: translateY(2px); } 35%, 55% { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .loading-digits span, .sudoku-revealing .scores, .sudoku-revealing .play-layout { animation: none; } .puzzle-loading { transition: none; } }
 .grid { display: grid; grid-template-columns: repeat(9, 1fr); border: 2px solid var(--edge); background: var(--board); }
 .cell { width: 100%; min-width: 0; min-height: 0; aspect-ratio: 1; border: 0; border-right: 1px solid var(--key-border); border-bottom: 1px solid var(--key-border); border-radius: 0; padding: 0; text-align: center; font: 500 clamp(18px, 5vw, 25px)/1 sans-serif; background: var(--board); color: var(--text); caret-color: transparent; }
 .cell:nth-child(3n) { border-right: 2px solid var(--edge); }
@@ -261,7 +254,6 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 .mode-slot { justify-self: start; }
 .manual-label { display: inline-block; padding: 5px 6px; border-radius: 6px; white-space: nowrap; font-size: 10px; font-weight: 650; letter-spacing: .02em; color: #365c98; background: #e5edf8; }
 :root[data-theme='dark'] .manual-label { color: #bbd3f5; background: #293c56; }
-.sudoku-loading .manual-label { visibility: hidden; }
 #confirm-consequence { font-size: 13px; margin-top: -8px; }
 
 .confirm-features { display: grid; gap: 10px; list-style: none; padding: 0; margin: 0 0 24px; text-align: left; }
@@ -317,3 +309,11 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
   .difficulty-picker { gap: 6px; }
   .difficulty-picker button { min-height: 36px; padding-block: 6px; }
 }
+
+
+/* Fit the board and all three pad rows on short portrait phone screens. */
+@media (max-width: 759px) and (max-height: 650px) {
+  .game-layout { width: min(100%, max(270px, calc(100svh - 292px))); }
+}
+
+@media (prefers-reduced-motion: reduce) { .loading-digits span { animation: none; } }

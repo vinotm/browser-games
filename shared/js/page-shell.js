@@ -1,8 +1,7 @@
+import './theme-button.js';
 import { createTheme } from './theme.js';
 import { createLeaveGuard } from './leave-guard.js';
 
-// Sun icon: Lucide (ISC); see snake-game/LUCIDE-LICENSE. Crescent is custom.
-const themeIcons = `<svg class="sun-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><svg class="moon-icon" aria-hidden="true" viewBox="0 0 24 24"><path fill="currentColor" transform="rotate(-35 12 12)" d="M14 3.225A9 9 0 1 0 14 20.775A9 9 0 0 1 14 3.225Z"/></svg>`;
 
 function createLeaveDialog() {
   const dialog = document.createElement('dialog');
@@ -45,20 +44,34 @@ function createLeaveDialog() {
 }
 
 export function createPageShell({ header = document.querySelector('[data-page-header]'),
-  homeUrl, isActive = () => false, onPrompt, legacyStorage, onThemeChange } = {}) {
-  const themeButton = document.createElement('button');
-  themeButton.id = 'theme'; themeButton.type = 'button'; themeButton.className = 'icon-button';
-  themeButton.innerHTML = themeIcons;
+  homeUrl, ready = true, isActive = () => false, onPrompt, legacyStorage, onThemeChange } = {}) {
+  const themeButton = header.querySelector('#theme') || globalThis.createCollectionThemeButton();
   header.append(themeButton);
   const theme = createTheme({ button: themeButton, legacyStorage, onChange: onThemeChange });
   theme.apply();
   if (!homeUrl) return { theme, refresh() {}, isConfirming: () => false };
 
   const home = document.createElement('a');
-  home.className = 'page-home'; home.href = homeUrl; home.textContent = 'Back to Homepage';
-  // A short separate line keeps the title and game controls centered on small screens.
+  home.className = 'page-home icon-button'; home.href = homeUrl;
+  home.setAttribute('aria-label', 'Back to Homepage'); home.title = 'Back to Homepage';
+  // Lucide house (ISC); see snake-game/LUCIDE-LICENSE.
+  home.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-8H9v8H4a1 1 0 0 1-1-1z"/></svg>';
+  // Compact title-row controls share one appearance and reserve their width.
   const nav = document.createElement('nav'); nav.className = 'page-navigation';
-  nav.setAttribute('aria-label', 'Collection'); nav.append(home); header.before(nav);
+  nav.setAttribute('aria-label', 'Collection'); nav.append(home, themeButton); header.append(nav);
+  nav.inert = true;
+  let revealPromise;
+  function reveal() {
+    return revealPromise ||= (async () => {
+      if (document.readyState !== 'complete') await new Promise(resolve => window.addEventListener('load', resolve, { once: true }));
+      await document.fonts?.ready;
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      nav.inert = false; nav.classList.add('is-ready');
+      // Reveal the initialized scene and its controls together, without animation.
+      document.body.classList.remove('page-entering');
+    })();
+  }
+  if (ready) void reveal();
   const modal = createLeaveDialog();
   const guard = createLeaveGuard({ isActive, confirmLeave: modal.confirm, onPrompt,
     navigate: url => window.location.assign(url) });
@@ -75,7 +88,7 @@ export function createPageShell({ header = document.querySelector('[data-page-he
   }
   document.addEventListener('click', followLink);
   guard.refresh();
-  return { theme, refresh: guard.refresh, isConfirming: modal.isOpen,
+  return { theme, reveal, refresh: guard.refresh, isConfirming: modal.isOpen,
     dispose() { guard.dispose(); theme.dispose(); modal.dispose(); nav.remove();
       themeButton.remove(); document.removeEventListener('click', followLink); } };
 }

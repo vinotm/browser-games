@@ -50,7 +50,7 @@ class FreshAssetsHandler(SimpleHTTPRequestHandler):
             return False
         if relative == Path('.') or relative == Path('index.html'):
             return True
-        return (relative.parts[0] in ('snake-game', 'sudoku-game', 'shared') and
+        return (relative.parts[0] in ('snake-game', 'sudoku-game', 'sos-game', 'shared') and
                 (target.is_dir() or target.suffix in ('.html', '.css', '.js', '.json')))
 
     def deployment_config(self, head=False):

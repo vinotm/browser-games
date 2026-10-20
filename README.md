@@ -10,6 +10,8 @@ common controls, themes, storage, and other utilities.
 | Snake | `snake-game/` | [Overview](snake-game/README.md) · [Rules](snake-game/RULES.md) · [Analytics](snake-game/analytics/README.md) |
 | Sudoku | `sudoku-game/` | [Overview and rules](sudoku-game/README.md) · [Puzzle generation](sudoku-game/DIFFICULTY.md) · [Analytics](sudoku-game/analytics/README.md) |
 
+| SOS | `sos-game/` | [Overview and rules](sos-game/README.md) |
+
 ## Run locally
 
 Use Python 3.9 or newer:
@@ -73,6 +75,7 @@ index.html                 Collection homepage
 shared/                    Reusable browser utilities and styles
 snake-game/                Snake source, rules, and analytics receiver
 sudoku-game/               Sudoku source, generation docs, and analytics receiver
+sos-game/                  SOS rules, local play, and computer opponent
 tests/                     Automated tests using synthetic fixtures
 scripts/                   Static export and source fingerprint tools
 preview_server.py          Restricted local development server
@@ -86,7 +89,7 @@ Third-party icon attribution is in [Snake's icon license](snake-game/LUCIDE-LICE
 
 ## Development conventions
 
-The collection is version `0.2`. Shared navigation, theme controls, leave protection,
+The collection is version `0.4`. Shared navigation, theme controls, leave protection,
 private tooling, and analytics disclosure follow the
 [game integration conventions](docs/GAME_CONVENTIONS.md). New games should use the
 shared page shell instead of implementing those controls independently.

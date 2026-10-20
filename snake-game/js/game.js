@@ -117,7 +117,7 @@ function expireFoodCombo() {
 const frames = createFrameScheduler(loop);
 const overlayView = createOverlay({ element: overlay, title: overlayTitle,
   detail: overlayDetail, action: overlayAction });
-const page = createPageShell({ homeUrl: '../', legacyStorage: storage,
+const page = createPageShell({ homeUrl: '../', ready: false, legacyStorage: storage,
   isActive: () => ['playing', 'paused'].includes(state),
   onPrompt() { const wasPlaying = state === 'playing'; if (wasPlaying) pause();
     return () => { if (wasPlaying && state === 'paused') resume(); }; },
@@ -906,6 +906,8 @@ function start() {
 // Keyboard and touch input.
 
 function handleKeyDown(event) {
+  // Preserve browser navigation and other OS/browser shortcuts.
+  if (event.altKey || event.metaKey || event.ctrlKey) return;
   if (page.isConfirming()) return;
   if (isEditableTarget(event.target)) return;
   if (state === 'privacy') {
@@ -962,3 +964,5 @@ page.theme.apply();
 reset();
 showOverlay('', '', 'Start');
 void analytics.flush();
+
+void page.reveal();

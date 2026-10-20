@@ -43,8 +43,30 @@ Suggested structure:
 ## Integrating games
 
 Follow [game integration conventions](docs/GAME_CONVENTIONS.md) for all new games.
-Use the shared page shell for theme controls, the underlined Back to Homepage link,
+Use the shared page shell for theme controls, the Home icon link,
 and active-game leave protection, including paused runs. Keep private development
 helpers out of public imports and tests. Version affected games when shared components
 change their behavior. Preserve standard source licensing separately from the
 analytics disclosure described in [privacy](PRIVACY.md).
+
+## Shared navigation design
+
+- Group Home and theme icons to the right of the centered game title. Use the
+  shared page shell; keep beta labels outside the title’s centering width.
+- Both icons must remain transparent on hover, press, and touch: no background
+  shade, shadow, or brightness effect. Retain visible keyboard focus outlines.
+- Explicitly exclude navigation icons from generic desktop icon hover rules;
+  verify computed styles with a real mouse hover, since selector specificity can
+  override a later transparent rule.
+- Initial game entry has no fade or slide animation. Reveal the fully initialized
+  scene and navigation together through the shared shell; do not reveal controls
+  ahead of the board. Puzzle-loading feedback inside a running page is separate.
+- Check short phone viewports for vertical clipping as well as horizontal overflow,
+  and honor reduced-motion preferences.
+
+## Keyboard shortcuts
+
+Game input handlers must leave Alt-, Command/Meta-, and Control-modified keys
+untouched unless implementing an explicit game shortcut. In particular, never
+prevent browser Back/Forward arrow shortcuts or interpret them as moves. Active
+and paused games rely on the shared leave guard for native navigation warnings.

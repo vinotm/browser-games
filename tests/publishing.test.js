@@ -10,14 +10,14 @@ test('public export excludes unpublished sources, deployment state and private o
   const temporary = mkdtempSync(join(tmpdir(), 'browser-games-export-'));
   const source = fileURLToPath(new URL('../', import.meta.url));
   try {
-    for (const item of ['LICENSE', 'index.html', 'shared', 'snake-game', 'sudoku-game', 'scripts', 'preview_server.py']) {
+    for (const item of ['LICENSE', 'index.html', 'shared', 'snake-game', 'sudoku-game', 'sos-game', 'scripts', 'preview_server.py']) {
       cpSync(join(source, item), join(temporary, item), {
         recursive: true,
         filter: (path) => !path.split(/[\\/]/).includes('private'),
       });
     }
     for (const path of ['snake-game/private/prototype-preview', 'snake-game/private/analytics-dashboard',
-      'sudoku-game/private/feature-preview', 'sudoku-solver', 'analytics', '.git']) {
+      'sos-game/private/feature-preview', 'sudoku-game/private/feature-preview', 'sudoku-solver', 'analytics', '.git']) {
       mkdirSync(join(temporary, path), { recursive: true });
       writeFileSync(join(temporary, path, 'unpublished.txt'), 'not a public asset');
       writeFileSync(join(temporary, path, 'index.html'), '<p>Private review page</p>');
@@ -30,9 +30,11 @@ test('public export excludes unpublished sources, deployment state and private o
     });
     let result = build();
     assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['LICENSE', 'index.html', 'shared', 'snake-game', 'sudoku-game']);
+    assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['LICENSE', 'index.html', 'shared', 'snake-game', 'sos-game', 'sudoku-game']);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game')).includes('private'), false);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game/js')).includes('settings.local.js'), false);
+    assert.equal(readdirSync(join(temporary, 'dist/sos-game')).includes('private'), false);
+    assert.ok(readFileSync(join(temporary, 'dist/sos-game/js/opponent-worker.js')).length);
     const firstConfig = JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json')));
     assert.match(firstConfig.buildId, /^sha256-[a-f0-9]{16}$/);
     assert.deepEqual(firstConfig,
