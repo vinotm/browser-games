@@ -30,7 +30,7 @@ test('background fills all level queues, hidden tabs pause, and memory hits pres
  let calls=0,clock=0;
  function* generate(level,{onCandidate,shouldStop}){
   calls++;
-  for(const d of ['easy','medium','hard']){
+  for(const d of ['novice','easy','medium','hard']){
    if(shouldStop?.())return {status:'exhausted'};
    clock+=5;onCandidate({...candidate(d,300),sourceId:1});
    if(d===level)return {status:'success'};
@@ -61,7 +61,7 @@ test('warmup fills bounded queues before the first game, respects visibility, an
  let calls=0;
  function* generate(level,{onCandidate}) {
   calls++;
-  for(const d of ['easy','medium','hard']) onCandidate({...candidate(d,40),sourceId:d});
+  for(const d of ['novice','easy','medium','hard']) onCandidate({...candidate(d,40),sourceId:d});
   return {status:'success'};
  }
  const s=createPuzzleService({generate,verify:()=>1,capacity:2});
@@ -85,4 +85,21 @@ test('client warms one worker without requesting a game and retries failed start
  const retry=createPuzzleClient({createWorker:()=>{if(++tries===1)throw Error('Unavailable');return worker;}});
  retry.warmup();const next=retry.take('medium');const last=messages.at(-1);
  worker.onmessage({data:{id:last.id,result:{cacheHit:true}}});await next;assert.equal(tries,2);retry.close();
+});
+test('persistent cache restores across service lifetimes and claims prevent reuse across tabs', async () => {
+ const p = {...candidate('easy', 123, 'saved-origin'), puzzle: Array(81).fill(0)};
+ let rows = [p], generations = 0;
+ const store = { async load() { return structuredClone(rows); }, async offer(c) { rows.push(c); },
+   async claim(c) { const found = rows.some(r => r.origin === c.origin); rows = rows.filter(r => r.origin !== c.origin); return found; } };
+ function* generate(level, {onCandidate}) { generations++; onCandidate({...p, sourceId:1}); }
+ const first = createPuzzleService({store,generate,verify:()=>1}); first.setPaused(true);
+ const second = createPuzzleService({store,generate,verify:()=>1}); second.setPaused(true);
+ const a = await first.request('easy'); assert.equal(a.cacheHit,true); assert.equal(a.generationMs,123);
+ const b = await second.request('easy'); assert.equal(b.cacheHit,false); assert.equal(generations,1);
+ first.close(); second.close();
+});
+test('unavailable persistent storage falls back to fresh generation', async () => {
+ const s = createPuzzleService({store:{async load(){throw Error('Storage denied');}},verify:()=>1,
+  generate:function*(level,{onCandidate}){onCandidate({...candidate(level,10),sourceId:1});}});
+ s.setPaused(true);assert.equal((await s.request('easy')).givenDifficulty,'easy');s.close();
 });

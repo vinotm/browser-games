@@ -75,7 +75,7 @@ test('requested and given difficulty plus generation and serve time remain separ
   const s=setup();
   s.collector.start(clues,true,false,{requestedDifficulty:'hard',givenDifficulty:'medium',generationMs:721,serveMs:2034,generatorVersion:'guided-v1'});
   const initial=s.latest();
-  assert.equal(initial.game_version,'beta-2'); assert.equal(initial.generator_version,'guided-v1');
+  assert.equal(initial.game_version,'beta-3'); assert.equal(initial.generator_version,'guided-v1');
   assert.equal(initial.requested_difficulty,'hard'); assert.equal(initial.given_difficulty,'medium');
   assert.equal(initial.puzzle_generation_ms,721);assert.equal(initial.puzzle_serve_ms,2034);
   s.tick(1000);s.collector.checkpoint({elapsed_ms:1000});
@@ -83,4 +83,8 @@ test('requested and given difficulty plus generation and serve time remain separ
   s.collector.finish('restarted',{});
   s.collector.start(clues,true,false,{requestedDifficulty:'easy',givenDifficulty:'easy',generationMs:932,serveMs:0,generatorVersion:'guided-v1'});
   assert.equal(s.latest().puzzle_serve_ms,0); assert.equal(s.latest().puzzle_generation_ms,932);
+});
+test('Novice delivery metadata is retained in analytics', () => {
+ const s=setup();s.collector.start(clues,true,false,{requestedDifficulty:'novice',givenDifficulty:'novice',generationMs:15,serveMs:0,generatorVersion:'guided-v2',difficultyVersion:'logic-v2'});
+ const run=s.latest();assert.equal(run.requested_difficulty,'novice');assert.equal(run.given_difficulty,'novice');assert.equal(run.difficulty_version,'logic-v2');
 });

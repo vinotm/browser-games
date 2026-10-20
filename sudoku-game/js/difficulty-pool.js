@@ -1,4 +1,4 @@
-export const levels = ['easy','medium','hard'];
+export const levels = ['novice','easy','medium','hard'];
 export class PuzzlePool {
   constructor(capacity = 5) {
     this.capacity = capacity;

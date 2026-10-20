@@ -2,8 +2,8 @@
 import { gradePuzzle } from './difficulty.js';
 import { countSolutions } from './puzzle.js';
 
-export const DIFFICULTY_GENERATOR_VERSION = 'guided-v1';
-const levels = ['easy', 'medium', 'hard'];
+export const DIFFICULTY_GENERATOR_VERSION = 'guided-v2';
+const levels = ['novice', 'easy', 'medium', 'hard'];
 const cells = Array.from({ length: 81 }, (_, i) => i);
 const boxOf = i => Math.floor(i / 27) * 3 + Math.floor(i % 9 / 3);
 function shuffled(input, random) {
@@ -59,7 +59,7 @@ function completeGrid(random, stop, stats) {
  * finish just beyond the time limit. Run this in a worker, not on the UI thread.
  */
 export function* createDifficultySearch(difficulty, {
-  random = Math.random, maxTimeMs = 10_000, maxPasses = 100, maxChecks = 6000, maxClues = 36,
+  random = Math.random, maxTimeMs = 10_000, maxPasses = 100, maxChecks = 6000, maxClues = difficulty === 'novice' ? 45 : 36,
   onCandidate = null, shouldStop = null
 } = {}) {
   if (!levels.includes(difficulty)) throw new Error('Unknown difficulty level');

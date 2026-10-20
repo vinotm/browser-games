@@ -1,3 +1,4 @@
+import { createScreenAwake } from '../../shared/js/screen-awake.js';
 import { createRunAnalytics } from './analytics.js';
 import { loadDeploymentConfig } from '../../shared/js/config.js';
 import { describeDevice } from '../../shared/js/device.js';
@@ -136,6 +137,8 @@ function applyManualMode() {
   render();
 }
 let clues = Array(81).fill(0), board = [...clues], selected = -1, matchSource = -1, busy = false, finished = false, started = false, startedAt = 0, elapsed = 0;
+const screenAwake = createScreenAwake();
+for (const event of ['pointerdown', 'keydown']) document.addEventListener(event, () => screenAwake.activity(), { passive: true });
 const noteLayer = document.createElement('div');
 noteLayer.className = 'note-layer';
 document.querySelector('.game-screen').append(noteLayer);
@@ -203,6 +206,10 @@ const keys = Array.from({ length: 11 }, (_, i) => {
   return button;
 });
 function render(active = -1) {
+  screenAwake.setActive(started && !finished && !busy);
+  const difficultyLabel = document.querySelector('#difficulty-label');
+  const level = puzzleDelivery?.requestedDifficulty;
+  difficultyLabel.textContent = started && level ? level[0].toUpperCase() + level.slice(1) : '';
   const invalid = conflicts(board);
   const matchingDigit = !manualMode && started && !busy && matchSource >= 0 ? board[matchSource] : 0;
   cells.forEach((cell, i) => {
@@ -508,12 +515,13 @@ function reportProgress(options) {
 }
 setInterval(() => reportProgress(), 60000);
 document.addEventListener('visibilitychange', () => {
+  screenAwake.setVisible(!document.hidden);
   analytics.visibility(!document.hidden);
   puzzleClient.setVisible(!document.hidden);
   reportProgress({ keepalive: document.hidden });
 });
-window.addEventListener('pagehide', () => { puzzleClient.setVisible(false); reportProgress({ keepalive: true }); });
-window.addEventListener('pageshow', () => puzzleClient.setVisible(!document.hidden));
+window.addEventListener('pagehide', () => { screenAwake.setVisible(false); puzzleClient.setVisible(false); reportProgress({ keepalive: true }); });
+window.addEventListener('pageshow', () => { screenAwake.setVisible(!document.hidden); puzzleClient.setVisible(!document.hidden); });
 window.addEventListener('online', () => reportProgress({ force: true }));
 const privacy = document.querySelector('#privacy-view');
 function closePrivacy() {

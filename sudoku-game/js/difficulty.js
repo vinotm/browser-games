@@ -2,7 +2,7 @@
 // Levels describe the easiest path found by this fixed, versioned technique order.
 import { candidates, conflicts } from './puzzle.js';
 
-export const DIFFICULTY_VERSION = 'logic-v1';
+export const DIFFICULTY_VERSION = 'logic-v2';
 const digits = [1,2,3,4,5,6,7,8,9];
 const rows = digits.map((_, r) => digits.map((_, c) => r * 9 + c));
 const columns = digits.map((_, c) => digits.map((_, r) => r * 9 + c));
@@ -14,7 +14,7 @@ const peers = Array.from({ length: 81 }, (_, i) =>
 const bit = n => 1 << (n - 1);
 const values = mask => digits.filter(n => mask & bit(n));
 const size = mask => { let n = 0; for (; mask; mask &= mask - 1) n++; return n; };
-const levels = { easy: 1, medium: 2, hard: 3 };
+const levels = { novice: 0, easy: 1, medium: 2, hard: 3 };
 const techniques = [
   ['naked-single', 'easy'], ['hidden-single', 'easy'],
   ['locked-candidates', 'medium'], ['naked-pair', 'medium'], ['hidden-pair', 'medium'],
@@ -112,7 +112,9 @@ export function gradePuzzle(input, { maxLevel = 'hard', includeSteps = false } =
   let hardest = 0, hardestTechnique = null, hardestRank = -1;
   const finish = status => ({
     version: DIFFICULTY_VERSION, status,
-    difficulty: status === 'solved' ? (Object.keys(levels).find(level => levels[level] === (hardest || 1))) : null,
+    difficulty: status === 'solved' ? (input.filter(Boolean).length >= 45 && !counts['hidden-single'] &&
+      Object.keys(counts).every(name => name === 'naked-single') ? 'novice' :
+      Object.keys(levels).find(level => levels[level] === (hardest || 1))) : null,
     hardestTechnique, counts, remaining: board.filter(n => !n).length,
     ...(includeSteps ? { steps, board: [...board] } : {})
   });
@@ -134,7 +136,7 @@ export function gradePuzzle(input, { maxLevel = 'hard', includeSteps = false } =
     if (board.every(Boolean)) return finish('solved');
     let found = false;
     for (const [technique, level] of techniques) {
-      if (levels[level] > levels[maxLevel]) break;
+      if (maxLevel === 'novice' ? technique !== 'naked-single' : levels[level] > levels[maxLevel]) break;
       const step = findLogicalStep(board, masks, technique);
       if (!step) continue;
       if (step.placement) {

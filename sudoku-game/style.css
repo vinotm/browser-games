@@ -306,3 +306,14 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
   .digit-progress { right: 6px; bottom: 6px; grid-template-columns: repeat(3, 4px); }
   .digit-dot { width: 4px; height: 4px; }
 }
+
+/* Keep the requested difficulty prominent and centered above the timer. */
+.toolbar { padding-top: 30px; }
+.difficulty-label { position: absolute; top: 0; left: 50%; transform: translateX(-50%); color: #28634b; font-size: 15px; line-height: 22px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+:root[data-theme='dark'] .difficulty-label { color: #88c9a9; }
+.difficulty-label:empty { visibility: hidden; }
+@media (max-width: 400px) {
+  .difficulty-screen { gap: 10px; padding: 12px; }
+  .difficulty-picker { gap: 6px; }
+  .difficulty-picker button { min-height: 36px; padding-block: 6px; }
+}

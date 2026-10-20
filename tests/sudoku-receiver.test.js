@@ -113,3 +113,9 @@ test('difficulty/timing metadata is bounded, immutable, optional for old reports
  const old=receiver(),legacy=example();assert.equal(old.post(legacy).ok,true);assert.equal(old.post(legacy).ok,true);
  assert.equal('requested_difficulty' in old.stored().run,false);
 });
+test('Novice reports are accepted and cannot fall forward to a harder level', () => {
+ const b=example();Object.assign(b.runs[0],{requested_difficulty:'novice',given_difficulty:'novice',puzzle_generation_ms:15,puzzle_serve_ms:0,difficulty_version:'logic-v2'});
+ assert.equal(receiver().post(b).ok,true);
+ b.runs[0].given_difficulty='easy';assert.equal(receiver().post(b).error,'invalid_difficulty');
+ b.runs[0].requested_difficulty='easy';b.runs[0].given_difficulty='novice';assert.equal(receiver().post(b).ok,true);
+});

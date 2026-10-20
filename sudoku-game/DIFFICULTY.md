@@ -1,10 +1,11 @@
 # Difficulty and puzzle preparation
 
-Start or confirm a new game, select Easy, Medium, or Hard on the board, then press
+Start or confirm a new game, select Novice, Easy, Medium, or Hard on the board, then press
 Play. Play appears only after a selection; each new setup starts unselected.
 Restarts caused by changing game settings use the same difficulty-selection screen.
-Difficulty is a setup choice, not a badge during play. The actual served rating is
-recorded in optional analytics; a fallback does not display a notice.
+The requested level appears above the timer during play. The actual served rating
+is recorded in optional analytics; a fallback does not change the label or display
+a notice.
 
 ## Logical rating
 
@@ -13,13 +14,14 @@ singles after each step. Candidate eliminations remain in effect. It never guess
 
 | Level | Supported techniques |
 | --- | --- |
+| Novice | Naked singles only, with at least 45 starting clues (45 by default) |
 | Easy | Naked singles, hidden singles |
 | Medium | Easy techniques, pointing/claiming locked candidates, naked and hidden pairs |
 | Hard | Medium techniques, naked and hidden triples, row/column X-Wing |
 
 `gradePuzzle(board)` accepts 81 integers with zero for empty cells. It leaves the
 input unchanged and returns `status`, `difficulty`, `hardestTechnique`, technique
-counts, remaining empty cells, and rating version `logic-v1`. Status is `solved`,
+counts, remaining empty cells, and rating version `logic-v2`. Status is `solved`,
 `unclassified`, or `invalid`; malformed input throws. Unclassified does not mean
 Expert or non-unique. Optional `maxLevel` restricts techniques and `includeSteps`
 returns deductions and the final working board.
@@ -36,9 +38,12 @@ set. A removal that prevents that solver from finishing is restored. Promising
 intermediate boards can be revisited before starting another fresh grid.
 
 A direct success must match the requested rating and contain at most 36 clues by
-default. The independent solution counter must confirm exactly one solution.
+default for Easy, Medium and Hard. Novice stops at 45 clues and permits only naked
+singles; these are cells with a single remaining legal digit. Existing Easy,
+Medium and Hard generation rules are unchanged. The independent solution counter must confirm exactly one solution.
 Clue count varies with the search and does not define difficulty. There is no
-stored seed puzzle, puzzle bank, server, or persistent puzzle cache in this path.
+stored seed puzzle, puzzle bank, or server in the generator itself. The game
+locally caches freshly generated puzzles for later play.
 
 `createDifficultyPuzzle(level, options)` returns a success with puzzle, grade and
 statistics, or an explicit exhausted result without a fallback. Default library
@@ -74,8 +79,12 @@ solution at another difficulty. Generation time is a retention tiebreaker, not a
 human difficulty score.
 
 Background work yields roughly every 12 ms and pauses while the tab is hidden.
-It resumes when visible and stops when all queues are full. Refreshing discards
-all prepared puzzles. Queues need not be full before playing; Hard can remain
+It resumes when visible and stops when all queues are full. IndexedDB retains
+up to five puzzles per level across refreshes and browser sessions. The worker
+restores them before generating replacements. Generator or grader version changes
+invalidate old records. Serving removes a grid and its related masks in a
+transaction, preventing two tabs from claiming the same stored entry. If storage
+is unavailable, the queues operate in memory. Queues need not be full before playing; Hard can remain
 underfilled and may require fallback.
 
 Every new game uses the loading animation inside the board, preserving toolbar
@@ -83,7 +92,7 @@ and pad positions, including cached puzzles. It stays visible for a random
 500–1000 ms or until the puzzle is ready, whichever takes longer, then fades out.
 Decorative loading and
 fade durations are excluded from puzzle serve analytics. There is no visible
-current-difficulty or fallback label during play.
+actual-difficulty or fallback label during play; only the requested level is shown.
 
 ## Timing definitions
 
@@ -96,3 +105,15 @@ A memory hit has `serveMs: 0`, even though worker messaging takes a small amount
 of real time. A search or fallback records request-to-result latency, including
 worker startup and verification, but excluding loading-animation minimums and
 fades. See [analytics](analytics/README.md) for archived field names and compatibility.
+
+
+## Screen awake
+
+During an unfinished puzzle, the game requests a screen wake lock for up to five
+minutes since the last pointer or keyboard interaction. Interaction renews that
+window. After five idle minutes the lock is released and the device's normal
+screen timeout applies; this cannot set the operating system timeout to exactly
+five minutes. Finishing a puzzle or hiding/leaving the page releases the lock.
+Returning to a visible puzzle reacquires it only if the interaction window has
+not expired. Unsupported browsers, insecure contexts and battery restrictions
+fall back to ordinary device behavior without interrupting play.
