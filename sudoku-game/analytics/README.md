@@ -7,7 +7,7 @@ visitor identifier is created.
 Each attempt receives a random run ID. A summary contains the initial puzzle as an
 81-character row-major string (`0` means no clue), clue count, generator/game versions,
 source build fingerprint, environment, coarse device category, conflict-check setting,
-Manual mode flag,
+Manual mode flag, requested and given difficulty, puzzle generation and serve timings,
 UTC timestamps, elapsed/foreground time, current and peak filled editable cells, outcome,
 and feature counters. Counters cover entries, erases, note edits, pencil toggles,
 undo/redo, checkpoint saves/restores, and conflicting entries when checking is enabled.
@@ -78,3 +78,28 @@ checkpoints, conflict checking and matching-number highlights, while retaining p
 and the solver. A confirmed change during play starts a new attempt with outcome
 `settings_changed` for the previous run. The conflict-check preference remains unchanged.
 Reports predating the mode field are interpreted as standard mode.
+
+## Difficulty and puzzle loading (beta 2)
+
+Each played run additionally contains:
+
+| Field | Meaning |
+| --- | --- |
+| `requested_difficulty` | Player's setup choice: `easy`, `medium`, or `hard` |
+| `given_difficulty` | Actual logical grade; may be lower after a bounded search |
+| `puzzle_generation_ms` | Elapsed work on the candidate's source grid through creation and logical grading, before queue residence |
+| `puzzle_serve_ms` | Zero for an in-memory hit; otherwise request-to-result latency, including worker startup and verification |
+| `difficulty_version` | Versioned grading rules, currently `logic-v1` |
+
+Generation time includes attempts on that source grid and cooperative yields, not
+unrelated earlier grids or time spent ready in the queue. Serve time excludes the
+page's decorative loading minimum and fades. A puzzle generated in hundreds of
+milliseconds can therefore have a zero serve time later. The receiver accepts
+integer timings from 0 to 300,000 ms and prevents these fields changing within a run.
+No per-candidate log, cache inventory, complete solution or generation seed is uploaded.
+
+New reports use `game_version: beta-2` and `generator_version: guided-v1`.
+Older reports remain valid with the difficulty/timing group entirely absent; their
+retry hashes remain unchanged. Missing fields mean unknown, not Easy or zero.
+The new metadata group is validated together, with given difficulty never higher
+than requested. Current difficulty and fallback notices are not displayed in play.

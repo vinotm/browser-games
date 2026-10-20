@@ -42,6 +42,9 @@ function doPost(e) {
           require_(previous[field] === run[field], 'run_id_conflict');
         }
         require_((previous.manual_mode ?? false) === (run.manual_mode ?? false), 'run_id_conflict');
+        for (const field of ['requested_difficulty', 'given_difficulty', 'puzzle_generation_ms', 'puzzle_serve_ms', 'difficulty_version']) {
+          require_(previous[field] === run[field], 'run_id_conflict');
+        }
         if (previous.revision > run.revision) continue;
         if (previous.revision === run.revision) {
           require_(stored.payload_sha256 === digest, 'revision_conflict'); continue;
@@ -154,6 +157,15 @@ function validateBatch_(input) {
     if (run.manual_mode !== undefined) {
       require_(typeof run.manual_mode === 'boolean' && (!run.manual_mode || !run.check_conflicts), 'invalid_mode');
       result.manual_mode = run.manual_mode;
+    }
+    const puzzleFields = ['requested_difficulty', 'given_difficulty', 'puzzle_generation_ms', 'puzzle_serve_ms', 'difficulty_version'];
+    if (puzzleFields.some(field => run[field] !== undefined)) {
+      const levels = ['easy', 'medium', 'hard'];
+      require_(levels.includes(run.requested_difficulty) && levels.includes(run.given_difficulty) &&
+        levels.indexOf(run.given_difficulty) <= levels.indexOf(run.requested_difficulty), 'invalid_difficulty');
+      require_(integer_(run.puzzle_generation_ms, 300000) && integer_(run.puzzle_serve_ms, 300000), 'invalid_puzzle_timing');
+      require_(typeof run.difficulty_version === 'string' && /^[A-Za-z0-9][A-Za-z0-9._+-]{0,79}$/.test(run.difficulty_version), 'invalid_version');
+      for (const field of puzzleFields) result[field] = run[field];
     }
     require_(['production', 'preview', 'development', 'unknown'].includes(run.environment), 'invalid_environment'); result.environment = run.environment;
     require_(run.build_id === 'unknown' || typeof run.build_id === 'string' && /^sha256-[a-f0-9]{16}$/.test(run.build_id), 'invalid_build'); result.build_id = run.build_id;

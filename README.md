@@ -7,7 +7,8 @@ Play the Sudoku beta at `sudoku-game/`: fill the grid yourself, or confirm
 “Solve puzzle” to watch the solution appear. Puzzles are generated in the browser,
 verified to have exactly one solution, and queued in the background. Pencil notes,
 checkpoints and undo/redo support regular play; Manual mode turns off selected helpers.
-Difficulty grading is planned.
+Choose Easy, Medium, or Hard at setup. A [logical grader and fresh generator](sudoku-game/DIFFICULTY.md)
+prepare five puzzles per level in memory; bounded searches can serve a lower-level fallback.
 
 Play Snake at `snake-game/`. See [the rules](snake-game/RULES.md) for scoring,
 pickups, combos, and wall progression.
