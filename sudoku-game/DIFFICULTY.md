@@ -39,8 +39,8 @@ intermediate boards can be revisited before starting another fresh grid.
 
 A direct success must match the requested rating and contain at most 36 clues by
 default for Easy, Medium and Hard. Novice stops at 45 clues and permits only naked
-singles; these are cells with a single remaining legal digit. Existing Easy,
-Medium and Hard generation rules are unchanged. The independent solution counter must confirm exactly one solution.
+singles; these are cells with a single remaining legal digit. An independent
+solution counter must confirm exactly one solution.
 Clue count varies with the search and does not define difficulty. There is no
 stored seed puzzle, puzzle bank, or server in the generator itself. The game
 locally caches freshly generated puzzles for later play.
@@ -105,7 +105,6 @@ A memory hit has `serveMs: 0`, even though worker messaging takes a small amount
 of real time. A search or fallback records request-to-result latency, including
 worker startup and verification, but excluding loading-animation minimums and
 fades. See [analytics](analytics/README.md) for archived field names and compatibility.
-
 
 ## Screen awake
 

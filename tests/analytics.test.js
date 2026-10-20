@@ -5,8 +5,8 @@ import { createContext, runInContext } from 'node:vm';
 import { createHash } from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
 
-const source = readFileSync(new URL('../analytics/apps-script/Code.gs', import.meta.url), 'utf8');
-const example = JSON.parse(readFileSync(new URL('../analytics/apps-script/example-batch.json', import.meta.url)));
+const source = readFileSync(new URL('../snake-game/analytics/apps-script/Code.gs', import.meta.url), 'utf8');
+const example = JSON.parse(readFileSync(new URL('../snake-game/analytics/apps-script/example-batch.json', import.meta.url)));
 
 function receiver({ configured = true, busy = false, broken = false, writeFailure = false, initialized = true } = {}) {
   const files = new Map();
@@ -45,7 +45,7 @@ function receiver({ configured = true, busy = false, broken = false, writeFailur
     } },
   });
   runInContext(source, context);
-  runInContext(readFileSync(new URL('../analytics/apps-script/Setup.gs', import.meta.url), 'utf8'), context);
+  runInContext(readFileSync(new URL('../snake-game/analytics/apps-script/Setup.gs', import.meta.url), 'utf8'), context);
   const post = (data = example) => JSON.parse(context.doPost({ postData: {
     contents: typeof data === 'string' ? data : JSON.stringify(data) } }).body);
   return { context, files, properties, post, stats: () => ({ releases, reads, locked }) };

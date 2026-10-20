@@ -49,6 +49,7 @@
   text-align: center;
 }
 .game-header {
+  min-height: 44px;
   display: grid;
   grid-template-columns: 44px 1fr 44px;
   align-items: center;

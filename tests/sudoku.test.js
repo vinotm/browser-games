@@ -1,10 +1,16 @@
+import { createDifficultyPuzzle } from '../sudoku-game/js/difficulty-generator.js';
+const createPuzzle = (random = Math.random) => {
+  const result = createDifficultyPuzzle('easy', { random });
+  if (result.status !== 'success') throw new Error('Test puzzle generation failed');
+  return result.puzzle;
+};
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPuzzle, conflicts, solve, enteredValue, countSolutions } from '../sudoku-game/js/puzzle.js';
+import { conflicts, solve, enteredValue, countSolutions } from '../sudoku-game/js/puzzle.js';
 test('generated puzzles are unique and solve to valid complete boards', () => {
   for (let run = 0; run < 30; run++) {
     const board = createPuzzle(), original = [...board];
-    assert.ok(board.filter(Boolean).length >= 30);
+    assert.ok(board.filter(Boolean).length <= 36);
     assert.equal(countSolutions(board), 1);
     assert.equal(conflicts(board).some(Boolean), false);
     const solver = solve(board);

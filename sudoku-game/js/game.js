@@ -3,10 +3,9 @@ import { createRunAnalytics } from './analytics.js';
 import { loadDeploymentConfig } from '../../shared/js/config.js';
 import { describeDevice } from '../../shared/js/device.js';
 import { createPuzzleClient } from './puzzle-client.js';
-import { createTheme } from '../../shared/js/theme.js';
+import { createPageShell } from '../../shared/js/page-shell.js';
 import { createStorage } from '../../shared/js/storage.js';
 import { conflicts, solve, enteredValue } from './puzzle.js';
-createTheme({ button: document.querySelector('#theme') }).apply();
 const analyticsConfig = loadDeploymentConfig(new URL('../analytics-config.json', import.meta.url));
 let analytics = createRunAnalytics();
 const grid = document.querySelector('.grid');
@@ -41,7 +40,7 @@ function recordChange(previous) {
   undoHistory.push(previous); redoHistory = [];
 }
 function historyMove(redo = false) {
-  if (manualMode || !started || busy || finished || dialog.open || !checkpointPanel.hidden || !completion.hidden) return;
+  if (page.isConfirming() || manualMode || !started || busy || finished || dialog.open || !checkpointPanel.hidden || !completion.hidden) return;
   const from = redo ? redoHistory : undoHistory, to = redo ? undoHistory : redoHistory;
   if (!from.length) return;
   to.push(snapshot()); const state = from.pop();
@@ -71,7 +70,7 @@ function showCheckpointFeedback(message) {
 }
 function closeCheckpoint() { checkpointPanel.hidden = true; }
 function checkpointRequest(action) {
-  if (manualMode || !started || busy || finished || (action === 'load' && !checkpoint)) return;
+  if (page.isConfirming() || manualMode || !started || busy || finished || (action === 'load' && !checkpoint)) return;
   closeMenu();
   clearTimeout(checkpointFeedbackTimer);
   checkpointFeedback.classList.remove('visible');
@@ -137,6 +136,7 @@ function applyManualMode() {
   render();
 }
 let clues = Array(81).fill(0), board = [...clues], selected = -1, matchSource = -1, busy = false, finished = false, started = false, startedAt = 0, elapsed = 0;
+const page = createPageShell({ homeUrl: '../', isActive: () => started && !finished });
 const screenAwake = createScreenAwake();
 for (const event of ['pointerdown', 'keydown']) document.addEventListener(event, () => screenAwake.activity(), { passive: true });
 const noteLayer = document.createElement('div');
@@ -173,8 +173,8 @@ document.addEventListener('pointerdown', event => {
   if (!event.target.closest('.menu-anchor')) closeMenu();
   if (!event.target.closest('.checkpoint-tools, .checkpoint-confirm')) closeCheckpoint();
   // Game controls preserve the selected cell.
-  if (dialog.open || grid.contains(event.target) ||
-      event.target.closest('.number-pad, #theme, .toolbar')) return;
+  if (page.isConfirming() || dialog.open || grid.contains(event.target) ||
+      event.target.closest('.number-pad, #theme, .toolbar, .page-home, .leave-dialog')) return;
   if (selected < 0 && matchSource < 0) return;
   selected = -1; matchSource = -1;
   if (grid.contains(document.activeElement)) document.activeElement.blur();
@@ -206,6 +206,7 @@ const keys = Array.from({ length: 11 }, (_, i) => {
   return button;
 });
 function render(active = -1) {
+  page.refresh();
   screenAwake.setActive(started && !finished && !busy);
   const difficultyLabel = document.querySelector('#difficulty-label');
   const level = puzzleDelivery?.requestedDifficulty;
@@ -255,12 +256,12 @@ function togglePencil() { if (!started || busy || finished) return; pencil = !pe
 document.addEventListener('keydown', event => {
   if (event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.key === 'Escape') { closeMenu(); closeCheckpoint(); return; }
-  if (dialog.open || !checkpointPanel.hidden || !completion.hidden) return;
+  if (page.isConfirming() || dialog.open || !checkpointPanel.hidden || !completion.hidden) return;
   const action = { p: togglePencil, s: () => checkpointRequest('save'), l: () => checkpointRequest('load') }[event.key.toLowerCase()];
   if (action) { event.preventDefault(); action(); }
 });
 function enter(n) {
-  if (dialog.open || !checkpointPanel.hidden || !started || busy || finished || selected < 0 || clues[selected]) { render(); return; }
+  if (page.isConfirming() || dialog.open || !checkpointPanel.hidden || !started || busy || finished || selected < 0 || clues[selected]) { render(); return; }
   const previous = snapshot();
   if (pencil && n) {
     if (!board[selected]) { const values = notes[selected]; notes[selected] = values.includes(n) ? values.filter(value => value !== n) : [...values, n].sort(); }

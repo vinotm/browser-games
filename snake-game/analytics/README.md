@@ -1,14 +1,14 @@
-# Optional gameplay analytics receiver
+# Snake analytics
 
 This Google Apps Script web app accepts JSON event batches and writes immutable,
 gzip-compressed archives to a private Google Drive folder. It does not provide a
-public endpoint for reading archived data. The games can run with analytics disabled.
+public endpoint for reading archived data. Snake runs with analytics disabled by default.
 
 ## Setup
 
 1. Create a private Drive folder for reports.
-2. Create an Apps Script project and add [Code.gs](Code.gs) and [Setup.gs](Setup.gs).
-3. Enable the manifest editor and use [appsscript.json](appsscript.json).
+2. Create an Apps Script project and add [Code.gs](apps-script/Code.gs) and [Setup.gs](apps-script/Setup.gs).
+3. Enable the manifest editor and use [appsscript.json](apps-script/appsscript.json).
 4. In project settings, add script property `DESTINATION_FOLDER_ID` containing the
    destination folder's ID. Keep this setting out of browser code and version control.
 5. Set script property `INGEST_ENABLED` to `false`. For a **new, empty folder** only,
@@ -54,8 +54,8 @@ prevent incoming requests from consuming Apps Script execution quotas.
 
 ## Event format
 
-See [schema 2](example-batch-v2.json) for the current format and
-[schema 1](example-batch.json) for legacy compatibility.
+See [schema 2](apps-script/example-batch-v2.json) for the current format and
+[schema 1](apps-script/example-batch.json) for legacy compatibility.
 
 Each batch includes `schema_version`, `game`, `game_version`, `batch_id`, `sent_at`,
 and a `runs` array. Each run has a stable random `run_id`, start/end timestamps,
@@ -176,3 +176,17 @@ an end-to-end submission from its own hosting origin and private Drive readback.
 - [ContentService](https://developers.google.com/apps-script/guides/content)
 - [Utilities: gzip and ungzip](https://developers.google.com/apps-script/reference/utilities/utilities)
 - [Apps Script quotas](https://developers.google.com/apps-script/guides/services/quotas)
+
+## Browser configuration
+
+Build with `SNAKE_ANALYTICS_ENDPOINT` set to the public deployment URL. The build
+exports it in `snake-game/analytics-config.json`; it is not an authentication secret.
+For local preview, an ignored `snake-game/private/analytics-config.json` may contain
+`{"analyticsEndpoint":"https://example.com/exec"}`. Only the endpoint is exposed.
+The build does not read this private override.
+
+The preview server labels reports `development`. Static exports default to
+`production`; Cloudflare Pages branches other than `main` default to `preview`.
+Set `SNAKE_ENVIRONMENT=development|preview|production` to override the build label.
+Other source servers report `unknown` unless configured. No hostname, branch name
+or local path is included in reports.

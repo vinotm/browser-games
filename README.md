@@ -1,43 +1,39 @@
 # Browser Games
 
-Browser games built with HTML, CSS, and JavaScript modules. Snake runs entirely in
-the browser without a game server, framework, external assets, or npm dependencies.
+A collection of browser games built with HTML, CSS, and native JavaScript modules.
+Gameplay runs locally in the browser without a game server, framework, or runtime
+package dependencies. Each game owns its rules and state; shared modules provide
+common controls, themes, storage, and other utilities.
 
-Play the Sudoku beta at `sudoku-game/`: fill the grid yourself, or confirm
-“Solve puzzle” to watch the solution appear. Puzzles are generated in the browser,
-verified to have exactly one solution, and queued in the background. Pencil notes,
-checkpoints and undo/redo support regular play; Manual mode turns off selected helpers.
-Choose Novice, Easy, Medium, or Hard at setup. A [logical grader and fresh generator](sudoku-game/DIFFICULTY.md)
-prepare five puzzles per level, cached locally across browser sessions; bounded searches
-can serve a lower-level fallback. During play, a screen wake lock extends thinking
-time for up to five minutes since the last interaction on supported browsers.
-
-Play Snake at `snake-game/`. See [the rules](snake-game/RULES.md) for scoring,
-pickups, combos, and wall progression.
+| Game | Play path | Documentation |
+| --- | --- | --- |
+| Snake | `snake-game/` | [Overview](snake-game/README.md) · [Rules](snake-game/RULES.md) · [Analytics](snake-game/analytics/README.md) |
+| Sudoku | `sudoku-game/` | [Overview and rules](sudoku-game/README.md) · [Puzzle generation](sudoku-game/DIFFICULTY.md) · [Analytics](sudoku-game/analytics/README.md) |
 
 ## Run locally
 
-Use Python 3.9 or newer to start the preview server:
+Use Python 3.9 or newer:
 
 ```sh
 python3 preview_server.py --port 8000
 ```
 
-Open `http://localhost:8000/`. Serve the project over HTTP: native JavaScript modules
-are not intended to run by opening an HTML file directly. The preview serves game
-assets, disables caching, and blocks private directories and repository files.
+Open `http://localhost:8000/`. Native JavaScript modules require HTTP serving rather
+than opening HTML files directly. The preview server binds to loopback, disables
+asset caching, and restricts served paths. It is a development tool, not a
+production web server.
 
 ## Test
 
-With Node.js 18 or newer:
+With Node.js 18 or newer, run:
 
 ```sh
 npm test
 ```
 
-The tests cover controls, scoring, effects, wall safety, pickup scheduling, device
-categories, configuration, analytics delivery, and archive validation. They run
-without network access or credentials.
+Tests cover game logic, puzzle generation, shared utilities, analytics validation
+and delivery, and the public export. They use synthetic data without network access
+or credentials. No package installation is required.
 
 ## Publish
 
@@ -45,72 +41,58 @@ without network access or credentials.
 npm run build
 ```
 
-Publish **only `dist/`** to a static host, such as GitHub Pages or Cloudflare Pages.
-The export contains the homepage, Snake, Sudoku, shared browser assets, and icon attribution.
-Paths support hosting at a domain root or a repository subpath. Tests, receiver
-source, scripts, and private files are excluded from the deployed site.
+Deploy **only `dist/`** to a static host such as GitHub Pages or Cloudflare Pages.
+The export contains game pages, shared browser assets, and required icon attribution.
+Repository documentation, tests, receiver sources, development tools, and private
+files are excluded. Relative asset paths support domain-root and subpath hosting.
 
-Gameplay works without network access once its assets are loaded. Loading a hosted
-site while offline requires an additional caching strategy; no service worker is
-included.
+Gameplay works without a network connection once assets are loaded. Opening a
+hosted site while offline requires an additional caching strategy; the collection
+does not include a service worker.
 
 ## Optional analytics
 
-Analytics are disabled by default. Gameplay, preferences, and personal bests work
-without them. To enable reports, deploy the optional
-[Apps Script receiver](analytics/apps-script/README.md), then build with its public URL:
+Analytics are disabled in public clones and are independent for each game.
+See each game's analytics documentation for its report format, receiver setup,
+storage limits, and privacy behavior.
 
-```sh
-SNAKE_ANALYTICS_ENDPOINT='https://example.com/analytics' npm run build
-```
+| Game | Public endpoint build setting | Optional environment override |
+| --- | --- | --- |
+| Snake | `SNAKE_ANALYTICS_ENDPOINT` | `SNAKE_ENVIRONMENT` |
+| Sudoku | `SUDOKU_ANALYTICS_ENDPOINT` | `SUDOKU_ENVIRONMENT` |
 
-The URL becomes visible in the exported `snake-game/analytics-config.json` file.
-It is public configuration, not an authentication credential. Never put keys,
-passwords, access tokens, or private storage identifiers in browser configuration.
-The in-game privacy statement reflects whether analytics are enabled.
-
-Enabled reports contain game events, timestamps, scores, and broad device categories.
-They contain no names, email addresses, raw user agents, exact viewport dimensions,
-or precise location. Uploads are acknowledged, retried, and stored privately by the
-receiver; game logic does not depend on successful uploads.
-
-For the preview server, an optional ignored `snake-game/private/analytics-config.json`
-can supply the same `analyticsEndpoint` setting. The server exposes only that public
-setting through the normal configuration URL; it does not serve the private file.
-The build uses its environment setting, not private preview overrides.
-
-Reports distinguish releases with Snake's `game_version` and a `summary.build_id`
-fingerprint of public HTML, CSS, and JavaScript. The fingerprint changes when those
-assets change, including uncommitted edits; private files and Git history are excluded.
-`summary.environment` is `development` for the preview server, `production` for
-static exports, and `preview` for Cloudflare Pages branches other than `main`.
-Set `SNAKE_ENVIRONMENT=development|preview|production` to override a build's label.
-No hostname, URL, branch name, or local path is collected. Other static servers
-serving source files directly report `unknown` unless given deployment configuration.
+Endpoint URLs are public configuration. Never include credentials, access tokens,
+or private storage identifiers in browser code or build settings exported to the
+site. Upload failures do not block gameplay. Each game's in-board privacy view
+reflects whether analytics are enabled.
 
 ## Source layout
 
 ```text
-index.html                 Game collection homepage
-shared/css/                Common themes, layouts, and controls
-shared/js/                 Theme, storage, input, clock, configuration, and analytics
-snake-game/                Snake page, rules, rendering, and gameplay modules
-sudoku-game/               Sudoku beta, puzzle logic, and animated solver
-analytics/apps-script/     Optional receiver and event format examples
-tests/                     Automated regression tests
-scripts/build.mjs          Public site export
-preview_server.py          Restricted development server
+index.html                 Collection homepage
+shared/                    Reusable browser utilities and styles
+snake-game/                Snake source, rules, and analytics receiver
+sudoku-game/               Sudoku source, generation docs, and analytics receiver
+tests/                     Automated tests using synthetic fixtures
+scripts/                   Static export and source fingerprint tools
+preview_server.py          Restricted local development server
 ```
 
-Each game owns its state, rules, and rendering. Shared modules provide independent
-utilities; they do not impose a common game engine. Game pages import only the
-helpers they use. Keep deployment overrides and unpublished material in ignored
-`private/` directories. Git ignore rules do not provide HTTP access control; use the
-public export when deploying.
+Keep deployment overrides, real gameplay reports, analysis output, and unpublished
+review assets in ignored `private/` directories. Ignore rules do not provide HTTP
+access control; deploy the static export rather than the source directory.
 
-Snake's icon attribution is in [LUCIDE-LICENSE](snake-game/LUCIDE-LICENSE).
+Third-party icon attribution is in [Snake's icon license](snake-game/LUCIDE-LICENSE).
 
-Sudoku's optional summary analytics use a separate receiver and
-`SUDOKU_ANALYTICS_ENDPOINT` build setting. See [Sudoku analytics](sudoku-game/analytics/README.md)
-for the data collected, privacy behavior and setup. Its source fingerprint and environment
-labels are independent of Snake's settings.
+## Development conventions
+
+The collection is version `0.2`. Shared navigation, theme controls, leave protection,
+private tooling, and analytics disclosure follow the
+[game integration conventions](docs/GAME_CONVENTIONS.md). New games should use the
+shared page shell instead of implementing those controls independently.
+
+## License and privacy
+
+Project source is available under the [MIT license](LICENSE). Third-party assets
+retain their own attribution and terms. Analytics-enabled deployments disclose their
+small anonymous gameplay reports separately; see [privacy](PRIVACY.md).

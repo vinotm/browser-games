@@ -1,6 +1,6 @@
 # Snake rules and mechanics
 
-This is the current Snake specification. All logic runs in the browser. Temporary effect durations and critical statistics are hidden during play; this document records them for development and balancing.
+This is the current Snake specification. All logic runs in the browser. Temporary effect durations and critical statistics are hidden during play; the rules below specify their effects and limits.
 
 ## A run
 

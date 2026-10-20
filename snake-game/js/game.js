@@ -15,7 +15,7 @@ import { createStorage } from '../../shared/js/storage.js?v=beta-public-1';
 import { createAnalytics } from '../../shared/js/analytics.js?v=beta-public-1';
 import { describeDevice } from '../../shared/js/device.js?v=beta-public-1';
 import { createClock, formatDuration } from '../../shared/js/clock.js?v=beta-public-1';
-import { createTheme } from '../../shared/js/theme.js?v=beta-public-1';
+import { createPageShell } from '../../shared/js/page-shell.js';
 import { createFrameScheduler } from '../../shared/js/animation.js?v=beta-public-1';
 import { createOverlay } from '../../shared/js/overlay.js?v=beta-public-1';
 import { bindSwipe, bindDirectionButtons, bindVisibilityPause, isEditableTarget } from '../../shared/js/input.js?v=beta-public-1';
@@ -28,7 +28,6 @@ const screen = document.querySelector('.game-screen');
 const scoreLabel = document.querySelector('#score');
 const bestLabel = document.querySelector('#best');
 const timerLabel = document.querySelector('#timer');
-const themeButton = document.querySelector('#theme');
 const status = document.querySelector('#status');
 const startButton = document.querySelector('#start');
 const pauseButton = document.querySelector('#pause');
@@ -118,7 +117,11 @@ function expireFoodCombo() {
 const frames = createFrameScheduler(loop);
 const overlayView = createOverlay({ element: overlay, title: overlayTitle,
   detail: overlayDetail, action: overlayAction });
-const theme = createTheme({ button: themeButton, legacyStorage: storage, onChange(dark) {
+const page = createPageShell({ homeUrl: '../', legacyStorage: storage,
+  isActive: () => ['playing', 'paused'].includes(state),
+  onPrompt() { const wasPlaying = state === 'playing'; if (wasPlaying) pause();
+    return () => { if (wasPlaying && state === 'paused') resume(); }; },
+  onThemeChange(dark) {
   palette = getPalette(dark);
   if (snake) draw();
 } });
@@ -699,7 +702,7 @@ function showOverlay(title, detail, action) {
 
 function openPrivacy() {
   if (state !== 'ready') return;
-  state = 'privacy';
+  state = 'privacy'; page.refresh();
   overlayView.hide();
   privacyView.hidden = false;
   canvas.inert = true;
@@ -708,7 +711,7 @@ function openPrivacy() {
 
 function closePrivacy() {
   if (state !== 'privacy') return;
-  state = 'ready';
+  state = 'ready'; page.refresh();
   privacyView.hidden = true;
   canvas.inert = false;
   showOverlay('', '', 'Start');
@@ -730,11 +733,11 @@ function gameOver(won = false) {
   startButton.textContent = 'Play again';
   status.textContent = won ? 'You win!' : 'Game over';
   if (won || motionPreference.matches) {
-    state = won ? 'won' : 'over';
+    state = won ? 'won' : 'over'; page.refresh();
     showOverlay(status.textContent, `Score ${score}`, 'Play again');
     overlayView.focus();
   } else {
-    state = 'dying';
+    state = 'dying'; page.refresh();
     deathStarted = performance.now();
     screen.classList.add('impact');
     schedule();
@@ -831,7 +834,7 @@ function loop(time) {
     const elapsed = Math.max(0, Math.min(1, (time - deathStarted) / 650));
     draw(elapsed);
     if (elapsed >= 1) {
-      state = 'over';
+      state = 'over'; page.refresh();
       screen.classList.remove('impact');
       showOverlay('Game over', `Score ${score}`, 'Play again');
       overlayView.focus();
@@ -859,7 +862,7 @@ function pause() {
   progress = frozenElapsed / step;
   freezeTimer();
   report('paused');
-  state = 'paused';
+  state = 'paused'; page.refresh();
   stopFrame();
   draw();
   status.textContent = 'Paused';
@@ -869,7 +872,7 @@ function pause() {
 
 function resume() {
   if (state !== 'paused' || document.hidden) return;
-  state = 'playing';
+  state = 'playing'; page.refresh();
   updateDirectionControls();
   lastTick = clock.start() - frozenElapsed;
   report('resumed');
@@ -884,7 +887,7 @@ function resume() {
 function start() {
   const firstStart = state === 'ready';
   stopFrame();
-  state = 'playing';
+  state = 'playing'; page.refresh();
   updateDirectionControls();
   screen.classList.remove('impact');
   overlayView.hide();
@@ -903,6 +906,7 @@ function start() {
 // Keyboard and touch input.
 
 function handleKeyDown(event) {
+  if (page.isConfirming()) return;
   if (isEditableTarget(event.target)) return;
   if (state === 'privacy') {
     if (event.key === 'Escape') { event.preventDefault(); closePrivacy(); }
@@ -954,7 +958,7 @@ function registerControls() {
 best = storage.number('best');
 bestLabel.textContent = best;
 registerControls();
-theme.apply();
+page.theme.apply();
 reset();
 showOverlay('', '', 'Start');
 void analytics.flush();
