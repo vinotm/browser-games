@@ -1,4 +1,5 @@
 import { chooseMove } from './opponent.js';
+import { allowedLetters } from './rules.js';
 export const LEVELS = {
   easy: { depth: 1, maxNodes: 500 },
   medium: { depth: 2, maxNodes: 3000 },
@@ -9,7 +10,8 @@ export function computerMove(state, difficulty = 'medium', random = Math.random)
   if (difficulty === 'easy' && random() < .45) {
     const empty = state.cells.flatMap((cell, index) => cell ? [] : [index]);
     const index = empty[Math.min(empty.length - 1, Math.floor(random() * empty.length))];
-    return { index, letter: random() < .5 ? 'S' : 'O' };
+    const letters = allowedLetters(state);
+    return { index, letter: letters[Math.min(letters.length - 1, Math.floor(random() * letters.length))] };
   }
   return chooseMove(state, { ...(LEVELS[difficulty] || LEVELS.medium), random });
 }

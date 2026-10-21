@@ -8,6 +8,13 @@
 .game-art { padding: 16px 24px; background: color-mix(in srgb, var(--primary) 7%, var(--board)); }
 .game-art svg { display: block; width: 100%; height: auto; }
 .sudoku-card .game-art { background: color-mix(in srgb, #5185ba 10%, var(--board)); }
+.sos-card .game-art { background: color-mix(in srgb, #7b6389 8%, var(--board)); }
+.preview-s { fill: #426e58; }
+.preview-o { fill: #956b43; }
+.preview-strike { stroke: #526b86; stroke-width: 3px; stroke-linecap: round; opacity: .8; }
+:root[data-theme='dark'] .preview-s { fill: #83c9a4; }
+:root[data-theme='dark'] .preview-o { fill: #e2b17a; }
+:root[data-theme='dark'] .preview-strike { stroke: #8fb4f0; }
 .card-details { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px; }
 .card-details h2 { margin: 0; font-size: 23px; letter-spacing: -.4px; }
 .card-beta { margin-left: 5px; font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--muted); vertical-align: super; }

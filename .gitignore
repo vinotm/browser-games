@@ -17,6 +17,7 @@ credentials*.json
 
 # Generated site, dependencies and caches.
 /dist/
+/.wrangler/
 node_modules/
 __pycache__/
 *.py[cod]

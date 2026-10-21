@@ -12,13 +12,22 @@
 <body class="game-page page-entering">
 <main class="game-layout">
   <header class="game-header" data-page-header><span></span><h1>SOS <span class="beta-label">beta</span></h1></header>
-  <div class="scoreboard" aria-label="Score"><span id="player-one" class="player-name">P1</span><strong id="score-one">0</strong><span class="score-divider">–</span><strong id="score-two">0</strong><span id="player-two" class="player-name">Computer</span></div>
+  <p id="game-difficulty" class="difficulty-label" aria-label="Computer difficulty" hidden></p>
+  <div class="scoreboard is-waiting" aria-label="Score">
+    <div class="player-side player-side-one"><span id="player-one" class="player-name" dir="auto">P1</span><strong id="score-one">0</strong><span id="streak-one" class="letter-streak" role="status" aria-live="polite"></span></div>
+    <div class="player-side player-side-two"><strong id="score-two">0</strong><span id="player-two" class="player-name" dir="auto">Computer</span><span id="streak-two" class="letter-streak" role="status" aria-live="polite"></span></div>
+  </div>
+  <div class="game-panel">
   <div class="game-screen">
     <div id="board" role="group" aria-label="SOS board"></div>
     <svg id="lines" aria-hidden="true"></svg>
     <section id="setup" class="overlay">
       <label for="mode">Game mode</label>
       <span class="select-wrap"><select id="mode"><option value="computer">vs Computer</option><option value="local">Multiplayers</option></select></span>
+      <label for="name-one" class="name-field-label">P1 name</label>
+      <div class="name-field"><input id="name-one" class="name-input" dir="auto" type="text" value="P1" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-describedby="name-one-warning name-one-count" /><div class="name-feedback"><span id="name-one-warning" class="name-warning" role="status" hidden>Name will be trimmed</span><span id="name-one-count" class="name-count" hidden></span></div></div>
+      <label for="name-two" id="name-two-label" class="name-field-label">P2 name</label>
+      <div class="name-field" id="name-two-field"><input id="name-two" class="name-input" dir="auto" type="text" value="P2" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-describedby="name-two-warning name-two-count" /><div class="name-feedback"><span id="name-two-warning" class="name-warning" role="status" hidden>Name will be trimmed</span><span id="name-two-count" class="name-count" hidden></span></div></div>
       <label for="size">Board size</label>
       <span class="select-wrap"><select id="size"><option value="4">4 × 4</option><option value="6" selected>6 × 6</option><option value="8">8 × 8</option><option value="10">10 × 10</option></select></span>
       <label for="difficulty" id="difficulty-label">Difficulty</label>
@@ -27,8 +36,10 @@
     </section>
     <section id="result" class="overlay" hidden><h2 id="result-title" class="overlay-title"></h2><p id="result-score" class="overlay-detail"></p><button id="again">Play again</button></section>
   </div>
-  <p id="status" role="status" aria-live="polite"></p>
-  <dialog id="letter-picker" aria-label="Place a letter"><button class="picker-close" aria-label="Cancel placement">×</button><div class="picker-letters"><button data-letter="S">S</button><button data-letter="O">O</button></div></dialog>
+  <div class="board-actions" hidden><button id="new-game" type="button">New game</button></div>
+  </div>
+  <p id="status" class="sr-only" role="status" aria-live="polite"></p>
+  <dialog id="letter-picker" aria-label="Place a letter"><div class="picker-letters"><button data-letter="S">S</button><button data-letter="O">O</button></div></dialog>
 </main>
 <script type="module" src="js/game.js"></script>
 </body>

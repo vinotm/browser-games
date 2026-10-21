@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, play } from '../sos-game/js/rules.js';
+import { createGame, play, allowedLetters } from '../sos-game/js/rules.js';
 import { chooseMove } from '../sos-game/js/opponent.js';
 
 test('SOS scores all four directions and grants another turn', () => {
@@ -49,5 +49,66 @@ test('all difficulty settings return legal moves for either starting player', as
     const state = createGame(4); state.player = player;
     const move = computerMove(state, difficulty, () => .2);
     assert.ok(play(state, move.index, move.letter));
+  }
+});
+
+test('letter limit tracks each player independently and resets only their streak', () => {
+  for (const letter of ['S', 'O']) {
+    let state = createGame(4);
+    const other = letter === 'S' ? 'O' : 'S';
+    // Separate rows avoid scoring extra turns in this sequence.
+    for (const [index, value] of [[0, letter], [4, other], [1, letter], [5, other]]) {
+      const before = structuredClone(state);
+      const next = play(state, index, value);
+      assert.deepEqual(state, before); // Nested histories must remain immutable.
+      state = next;
+    }
+    assert.equal(state.player, 0);
+    assert.deepEqual(state.letterStreaks, [{ letter, count: 2 }, { letter: other, count: 2 }]);
+    const before = structuredClone(state);
+    assert.equal(play(state, 2, letter), null);
+    assert.deepEqual(state, before);
+    assert.deepEqual(allowedLetters(state), [other]);
+    state = play(state, 2, other);
+    assert.deepEqual(state.letterStreaks[0], { letter: other, count: 1 });
+    assert.deepEqual(state.letterStreaks[1], { letter: other, count: 2 });
+    assert.equal(state.player, 1);
+    assert.deepEqual(allowedLetters(state), [letter]);
+    assert.equal(play(state, 6, other), null);
+    state = play(state, 6, letter);
+    assert.deepEqual(state.letterStreaks[1], { letter, count: 1 });
+  }
+  assert.deepEqual(createGame().letterStreaks.map(streak => streak.count), [0, 0]);
+});
+
+test('two players may each place the same letter twice before their own restriction', () => {
+  let state = createGame(4);
+  for (const index of [0, 4, 1, 5]) state = play(state, index, 'S');
+  assert.ok(state);
+  assert.deepEqual(state.letterStreaks, [{ letter: 'S', count: 2 }, { letter: 'S', count: 2 }]);
+  assert.equal(play(state, 2, 'S'), null);
+});
+
+test('scoring extra turns retain the scoring player’s letter limit', () => {
+  let state = createGame(4);
+  for (const [index, letter] of [[0, 'S'], [1, 'O'], [2, 'S']]) state = play(state, index, letter);
+  assert.equal(state.scores[0], 1); assert.equal(state.player, 0);
+  assert.equal(state.letterStreaks[0].count, 2);
+  assert.equal(play(state, 3, 'S'), null);
+  assert.ok(play(state, 3, 'O'));
+});
+
+test('every computer level respects its own restricted letters in search and random play', async () => {
+  const { computerMove } = await import('../sos-game/js/difficulty.js');
+  for (const letter of ['S', 'O']) for (const player of [0, 1]) {
+    const state = createGame(4);
+    state.player = player;
+    state.letterStreaks[player] = { letter, count: 2 };
+    state.letterStreaks[1 - player] = { letter: letter === 'S' ? 'O' : 'S', count: 2 };
+    for (const difficulty of ['easy', 'medium', 'hard']) for (const random of [() => .1, () => .9]) {
+      const move = computerMove(state, difficulty, random);
+      assert.notEqual(move.letter, letter);
+      assert.ok(play(state, move.index, move.letter));
+    }
   }
 });

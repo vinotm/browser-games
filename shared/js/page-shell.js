@@ -3,12 +3,18 @@ import { createTheme } from './theme.js';
 import { createLeaveGuard } from './leave-guard.js';
 
 
-function createLeaveDialog() {
+export function createConfirmationDialog({ id = 'leave', title = 'Leave this game?',
+  detail = 'Your current progress will be lost.', confirmLabel = 'Leave game',
+  cancelLabel = 'Keep playing' } = {}) {
   const dialog = document.createElement('dialog');
   dialog.className = 'leave-dialog';
-  dialog.setAttribute('aria-labelledby', 'leave-title');
-  dialog.setAttribute('aria-describedby', 'leave-detail');
-  dialog.innerHTML = `<button type="button" class="leave-close" aria-label="Close">×</button><h2 id="leave-title">Leave this game?</h2><p id="leave-detail">Your current progress will be lost.</p><div class="leave-actions"><button type="button" data-stay>Keep playing</button><button type="button" class="secondary" data-leave>Leave game</button></div>`;
+  dialog.setAttribute('aria-labelledby', `${id}-title`);
+  dialog.setAttribute('aria-describedby', `${id}-detail`);
+  dialog.innerHTML = `<button type="button" class="leave-close" aria-label="Close">×</button><h2 id="${id}-title"></h2><p id="${id}-detail"></p><div class="leave-actions"><button type="button" data-stay></button><button type="button" class="secondary" data-leave></button></div>`;
+  dialog.querySelector('h2').textContent = title;
+  dialog.querySelector('p').textContent = detail;
+  dialog.querySelector('[data-stay]').textContent = cancelLabel;
+  dialog.querySelector('[data-leave]').textContent = confirmLabel;
   document.body.append(dialog);
   let finish;
   function close(value = false) {
@@ -72,7 +78,7 @@ export function createPageShell({ header = document.querySelector('[data-page-he
     })();
   }
   if (ready) void reveal();
-  const modal = createLeaveDialog();
+  const modal = createConfirmationDialog();
   const guard = createLeaveGuard({ isActive, confirmLeave: modal.confirm, onPrompt,
     navigate: url => window.location.assign(url) });
   function followLink(event) {
