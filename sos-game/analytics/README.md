@@ -13,7 +13,7 @@ Schema 2 stores one cumulative run record with:
   environment (`development`, `preview`, `production`, or `unknown`), and coarse device
   category/input/viewport bands.
 - Separate rows and columns (3–20 each), computer or local multiplayer mode, computer difficulty (null for local
-  games), and randomized starting player (`0` is P1, `1` is P2 or Computer).
+  games), and randomized starting player (`0` is P1, `1` is P2 or SOS Bot).
 - Explicit UTC start/update/end timestamps, elapsed milliseconds and foreground time.
 - Outcome: `in_progress`, `completed`, or an explicitly confirmed `restarted` match.
 - Compact moves: `[cell_index, letter_code, elapsed_ms]`. Cells use row-major indices (`row * columns + column`);

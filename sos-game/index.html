@@ -13,10 +13,10 @@
 <body class="game-page page-entering">
 <main class="game-layout">
   <header class="game-header" data-page-header><span></span><h1>SOS <span class="beta-label">beta</span></h1></header>
-  <p id="game-difficulty" class="difficulty-label" aria-label="Computer difficulty" hidden></p>
+  <p id="game-difficulty" class="difficulty-label" aria-label="Bot difficulty" hidden></p>
   <div class="scoreboard is-waiting" aria-label="Score">
     <div class="player-side player-side-one"><span id="player-one" class="player-name" dir="auto">P1</span><strong id="score-one">0</strong><span id="streak-one" class="letter-streak" role="status" aria-live="polite"></span></div>
-    <div class="player-side player-side-two"><strong id="score-two">0</strong><span id="player-two" class="player-name" dir="auto">Computer</span><span id="streak-two" class="letter-streak" role="status" aria-live="polite"></span></div>
+    <div class="player-side player-side-two"><strong id="score-two">0</strong><span id="player-two" class="player-name" dir="auto">SOS Bot</span><span id="streak-two" class="letter-streak" role="status" aria-live="polite"></span></div>
   </div>
   <div class="game-panel">
   <div class="game-screen">
@@ -26,7 +26,7 @@
     </div></div>
     <section id="setup" class="overlay">
       <label for="mode">Game mode</label>
-      <span class="select-wrap"><select id="mode"><option value="computer">vs Computer</option><option value="local">Multiplayers</option></select></span>
+      <span class="select-wrap"><select id="mode"><option value="computer">vs Bot</option><option value="local">Multiplayers</option></select></span>
       <label for="difficulty" id="difficulty-label">Difficulty</label>
       <span class="select-wrap" id="difficulty-wrap"><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></span>
       <label for="size">Board size</label>

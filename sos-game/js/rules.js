@@ -1,4 +1,4 @@
-export const VERSION = 'beta-4';
+export const VERSION = 'beta-4.1';
 export const WINNING_SCORE = 999;
 const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
 export function validDimensions(rows, columns) {

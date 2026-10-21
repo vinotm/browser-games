@@ -76,14 +76,14 @@ $('#new-game').addEventListener('click', async () => {
   }
   showSetup();
 });
-function name(player) { return mode === 'computer' && player === 1 ? 'Computer' : playerNames[player]; }
+function name(player) { return mode === 'computer' && player === 1 ? 'SOS Bot' : playerNames[player]; }
 function fitPlayerNames() {
   for (const label of document.querySelectorAll('.player-name')) {
     label.style.removeProperty('font-size');
     // Keep full Unicode names on at most two lines, without ellipsis.
     const text = document.createElement('span');
     text.textContent = label.textContent; text.style.display = 'block';
-    // Short labels such as Computer should shrink onto one line, not split off a letter.
+    // Short labels such as SOS Bot should shrink onto one line, not split off a letter.
     const singleLine = [...text.textContent].length <= 10;
     if (singleLine) text.style.whiteSpace = 'nowrap';
     label.replaceChildren(text);
@@ -210,7 +210,7 @@ function render() {
     }
   }
   fitPlayerNames();
-  $('#status').textContent = !started ? '' : thinking ? 'Computer is thinking…' : `${name(state.player)}’s turn`;
+  $('#status').textContent = !started ? '' : thinking ? 'SOS Bot is thinking…' : `${name(state.player)}’s turn`;
   if (state.finished) {
     $('#status').textContent = state.cells.every(Boolean) ? 'Board complete' : 'Game complete';
     const [a, b] = state.scores;

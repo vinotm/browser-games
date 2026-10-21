@@ -1,8 +1,8 @@
 # SOS
 
-Version: `beta-4`.
+Version: `beta-4.1`.
 
-A finite-board SOS game with a computer opponent or two players sharing one device.
+A finite-board SOS game against SOS Bot (“vs Bot”) or two players sharing one device.
 The default board is 6 × 6; 8 × 8 and 10 × 10 are also available.
 Custom boards accept 3–20 rows and columns independently, including rectangles.
 Setup orders Game mode, Difficulty (computer only), Board size, P1 name and P2 name
