@@ -22,7 +22,7 @@ export function createRunAnalytics({ endpoint = '', environment = 'unknown', bui
       for (const key of storage.list()) {
         try {
           const value = JSON.parse(storage.get(key));
-          if (key.startsWith(PREFIX) && value?.schema_version === 1 && value.game === 'sos' &&
+          if (key.startsWith(PREFIX) && [1, 2].includes(value?.schema_version) && value.game === 'sos' &&
               typeof value.run_id === 'string' && Number.isSafeInteger(value.revision) && value.revision > 0 &&
               typeof value.updated_at === 'string' && bytes(value) < MAX_BATCH_BYTES - 1000) records.push({ key, value });
         } catch { /* One malformed record must not block other uploads. */ }
@@ -52,7 +52,7 @@ export function createRunAnalytics({ endpoint = '', environment = 'unknown', bui
     if (!endpoint || !fetcher || sending || !force && now() < retryAt) return false;
     sending = true;
     try {
-      const records = [], batch = { schema_version: 1, game: 'sos', batch_id: id(), sent_at: stamp(), runs: [] };
+      const records = [], batch = { schema_version: 2, game: 'sos', batch_id: id(), sent_at: stamp(), runs: [] };
       for (const record of pending()) {
         batch.runs.push(record.value);
         if (bytes(batch) > MAX_BATCH_BYTES) { batch.runs.pop(); break; }
@@ -75,13 +75,13 @@ export function createRunAnalytics({ endpoint = '', environment = 'unknown', bui
     } finally { sending = false; }
   }
   return {
-    start({ size, mode, difficulty, firstPlayer }) {
+    start({ size, rows = size, columns = size, mode, difficulty, firstPlayer }) {
       if (!endpoint) return;
       startedAt = foregroundAt = clock(); foreground = 0;
-      run = { schema_version: 1, game: 'sos', game_version: VERSION, rules_version: 'per-player-limit-v1',
+      run = { schema_version: 2, game: 'sos', game_version: VERSION, rules_version: 'rectangular-v2',
         run_id: id(), revision: 0, environment, build_id: buildId,
         device: typeof device === 'function' ? device() : device,
-        size, mode, difficulty: mode === 'computer' ? difficulty : null, first_player: firstPlayer,
+        rows, columns, mode, difficulty: mode === 'computer' ? difficulty : null, first_player: firstPlayer,
         started_at: stamp(), updated_at: stamp(), ended_at: null, outcome: 'in_progress',
         elapsed_ms: 0, foreground_ms: 0, moves: [],
         ai: { decisions: 0, search_ms: 0, nodes: 0, budget_hits: 0, random_moves: 0 } };

@@ -17,14 +17,15 @@ export function createFrameScheduler(callback) {
 
 // Animate a floating panel without moving surrounding content. Closing makes it
 // inert immediately; rapid toggles continue from the current visual position.
-export function createPopupMotion(element) {
+export function createPopupMotion(element, { offset = () => -6 } = {}) {
   let open = false, animation, revision = 0;
   element.hidden = true;
   element.inert = true;
   async function setOpen(next) {
     if (next === open) return false;
     const current = ++revision;
-    const from = element.hidden ? { opacity: 0, transform: 'translateY(-6px) scaleY(.96)' }
+    const collapsed = `translateY(${offset()}px) scaleY(.96)`;
+    const from = element.hidden ? { opacity: 0, transform: collapsed }
       : { opacity: getComputedStyle(element).opacity, transform: getComputedStyle(element).transform };
     animation?.cancel();
     open = next;
@@ -32,7 +33,7 @@ export function createPopupMotion(element) {
     element.inert = !next;
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
       animation = element.animate([from, next ? { opacity: 1, transform: 'none' }
-        : { opacity: 0, transform: 'translateY(-6px) scaleY(.96)' }],
+        : { opacity: 0, transform: collapsed }],
       { duration: next ? 180 : 140, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
       try { await animation.finished; } catch { /* Superseded by another toggle. */ }
     }

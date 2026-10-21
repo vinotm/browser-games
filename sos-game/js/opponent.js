@@ -1,3 +1,4 @@
+import { chooseLargeMove } from './opponent-large.js';
 import { play, scoringLines, allowedLetters } from './rules.js';
 
 function moves(state) {
@@ -6,8 +7,7 @@ function moves(state) {
   state.cells.forEach((cell, index) => {
     if (cell) return;
     for (const letter of letters) {
-      const cells = [...state.cells]; cells[index] = letter;
-      result.push({ index, letter, gain: scoringLines(cells, state.size, index).length });
+      result.push({ index, letter, gain: scoringLines(state.cells, state.columns, index, state.rows, letter).length });
     }
   });
   return result.sort((a, b) => b.gain - a.gain);
@@ -16,6 +16,7 @@ function moves(state) {
 // maximizing/minimizing player rather than blindly alternating search roles.
 export function chooseMove(state, { maxNodes = 7000, depth = 3, random = Math.random, onStats = () => {} } = {}) {
   if (state.finished) return null;
+  if (state.cells.length > 100) return chooseLargeMove(state, { maxNodes, depth, random, onStats });
   const root = state.player;
   let nodes = 0, visited = 0, budgetHit = false;
   function evaluate(position) {

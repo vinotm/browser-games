@@ -7,13 +7,16 @@ import { describeDevice } from '../../shared/js/device.js';
 import { enhanceSelect } from '../../shared/js/select.js';
 import { createStorage } from '../../shared/js/storage.js';
 import { limitName, setupNameInput } from './player-names.js';
+import { createBoardSettings } from './board-settings.js';
+import { createBoardNavigation } from '../../shared/js/board-navigation.js';
 
 const $ = selector => document.querySelector(selector);
 const analyticsConfig = loadDeploymentConfig(new URL('../analytics-config.json', import.meta.url));
 let analytics = createRunAnalytics();
 const settingsStorage = createStorage('sos');
+let saved = {};
 try {
-  const saved = JSON.parse(settingsStorage.get('settings', '{}'));
+  saved = JSON.parse(settingsStorage.get('settings', '{}')) || {};
   for (const id of ['mode', 'size', 'difficulty']) {
     const select = $(`#${id}`);
     const value = String(saved?.[id]);
@@ -24,6 +27,8 @@ try {
   }
 } catch { /* Invalid or unavailable storage leaves the built-in defaults intact. */ }
 document.querySelectorAll('#setup select').forEach(enhanceSelect);
+const boardSettings = createBoardSettings($('#size'), saved);
+function configuredGame() { const { rows, columns } = boardSettings.dimensions(); return createGame(rows, columns); }
 document.querySelectorAll('.name-input').forEach(input => setupNameInput(input, count => {
   const counter = $(`#${input.id}-count`);
   counter.textContent = `${count}/20`;
@@ -39,7 +44,7 @@ $('#setup').addEventListener('pointerdown', event => {
 document.querySelectorAll('.name-input').forEach(input => input.addEventListener('keydown', event => {
   if (event.key === 'Escape') input.blur();
 }));
-let state = createGame(Number($('#size').value)), started = false, mode = $('#mode').value,
+let state = configuredGame(), started = false, mode = $('#mode').value,
   difficulty = $('#difficulty').value, selected = null, thinking = false, requestId = 0;
 let resultTimer;
 let lastFilled = -1;
@@ -63,7 +68,7 @@ try {
 const page = createPageShell({ homeUrl: '../', ready: false, isActive: () => started && !state.finished });
 const newGameDialog = createConfirmationDialog({ id: 'new-game', title: 'Start a new game?',
   detail: 'Your current progress will be lost.', confirmLabel: 'New game' });
-const isConfirming = () => page.isConfirming() || newGameDialog.isOpen();
+const isConfirming = () => page.isConfirming() || newGameDialog.isOpen() || boardSettings.isOpen();
 $('#new-game').addEventListener('click', async () => {
   if (isConfirming()) return;
   if (started && !state.finished && !await newGameDialog.confirm()) {
@@ -75,15 +80,29 @@ function name(player) { return mode === 'computer' && player === 1 ? 'Computer' 
 function fitPlayerNames() {
   for (const label of document.querySelectorAll('.player-name')) {
     label.style.removeProperty('font-size');
-    label.style.removeProperty('letter-spacing');
-    if (label.scrollWidth <= label.clientWidth) continue;
-    label.style.letterSpacing = '-.025em';
-    const base = parseFloat(getComputedStyle(label).fontSize);
-    if (label.scrollWidth > label.clientWidth) {
-      label.style.fontSize = `${Math.max(14, base * label.clientWidth / label.scrollWidth)}px`;
+    // Keep full Unicode names on at most two lines, without ellipsis.
+    const text = document.createElement('span');
+    text.textContent = label.textContent; text.style.display = 'block';
+    // Short labels such as Computer should shrink onto one line, not split off a letter.
+    const singleLine = [...text.textContent].length <= 10;
+    if (singleLine) text.style.whiteSpace = 'nowrap';
+    label.replaceChildren(text);
+    let size = parseFloat(getComputedStyle(label).fontSize);
+    while ((singleLine ? text.scrollWidth > label.clientWidth :
+      text.getBoundingClientRect().height > 2 * parseFloat(getComputedStyle(label).lineHeight) + .5) && size > 8) {
+      size -= .5; label.style.fontSize = `${size}px`;
     }
   }
 }
+const boardNavigation = createBoardNavigation({
+  viewport: $('#board-viewport'), stage: $('#board-stage'), host: $('.game-screen'),
+  geometry: () => {
+    const cell = ($('#board-viewport').clientWidth - 8) / (Math.max(state.rows, state.columns) > 10 ? 10.5 : Math.max(state.rows, state.columns));
+    return { width: cell * state.columns, height: cell * state.rows };
+  },
+  canExplore: () => started && !state.finished && !isConfirming(),
+  onSelect: selectCell, onNavigate: () => closePicker(false),
+});
 function render() {
   $('#game-difficulty').hidden = !started || mode !== 'computer';
   $('#game-difficulty').textContent = difficulty[0].toUpperCase() + difficulty.slice(1);
@@ -97,14 +116,16 @@ function render() {
     button.setAttribute('aria-label', button.disabled ? `${button.dataset.letter} unavailable: two consecutive placements` : `Place ${button.dataset.letter}`);
   }
   const board = $('#board');
-  board.style.setProperty('--size', state.size);
+  board.style.setProperty('--size', state.columns);
+  board.style.setProperty('--rows', state.rows);
+  boardNavigation.layout();
   // Preserve placed glyphs across turn/status renders so their entrance finishes.
   if (board.children.length !== state.cells.length) {
     board.replaceChildren(...state.cells.map((_, index) => {
       const button = document.createElement('button');
       button.type = 'button'; button.dataset.index = index;
-      // Pointer selection happens on press; keyboard/assistive clicks act here.
-      button.addEventListener('click', event => { if (event.detail === 0) selectCell(index); });
+      // Pointer selection happens on release; keyboard/assistive clicks act here.
+      button.addEventListener('click', event => { if (event.detail === 0) void boardNavigation.select(index); });
       return button;
     }));
   }
@@ -123,7 +144,7 @@ function render() {
         }
       }
     }
-    button.setAttribute('aria-label', `Row ${Math.floor(index / state.size) + 1}, column ${index % state.size + 1}${cell ? `: ${cell}` : ': empty'}${index === lastFilled ? ', latest placement' : ''}`);
+    button.setAttribute('aria-label', `Row ${Math.floor(index / state.columns) + 1}, column ${index % state.columns + 1}${cell ? `: ${cell}` : ': empty'}${index === lastFilled ? ', latest placement' : ''}`);
     button.disabled = !started || state.finished || thinking;
     button.tabIndex = cell ? -1 : 0;
     if (cell) button.setAttribute('aria-disabled', 'true');
@@ -132,7 +153,7 @@ function render() {
     button.classList.toggle('letter-s', cell === 'S');
     button.classList.toggle('letter-o', cell === 'O');
   });
-  const svg = $('#lines'); svg.setAttribute('viewBox', `0 0 ${state.size} ${state.size}`);
+  const svg = $('#lines'); svg.setAttribute('viewBox', `0 0 ${state.columns} ${state.rows}`);
   if (!state.lines.length) svg.replaceChildren();
   const existing = new Set([...svg.children].map(line => line.dataset.key));
   let newLines = 0;
@@ -141,7 +162,7 @@ function render() {
     if (existing.has(key)) continue;
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     const first = indices[0], last = indices[2];
-    for (const [key, value] of Object.entries({ x1: first % state.size + .5, y1: Math.floor(first / state.size) + .5, x2: last % state.size + .5, y2: Math.floor(last / state.size) + .5 })) line.setAttribute(key, value);
+    for (const [key, value] of Object.entries({ x1: first % state.columns + .5, y1: Math.floor(first / state.columns) + .5, x2: last % state.columns + .5, y2: Math.floor(last / state.columns) + .5 })) line.setAttribute(key, value);
     line.dataset.key = key;
     line.classList.add(`player-${player}`);
     line.setAttribute('pathLength', '1');
@@ -191,9 +212,9 @@ function render() {
   fitPlayerNames();
   $('#status').textContent = !started ? '' : thinking ? 'Computer is thinking…' : `${name(state.player)}’s turn`;
   if (state.finished) {
-    $('#status').textContent = 'Board complete';
+    $('#status').textContent = state.cells.every(Boolean) ? 'Board complete' : 'Game complete';
     const [a, b] = state.scores;
-    $('#result-title').textContent = a === b ? 'A draw!' : mode === 'computer' ? a > b ? 'You win!' : 'You lose!' : `${name(a > b ? 0 : 1)} wins!`;
+    $('#result-title').textContent = a === b ? 'Draw!' : mode === 'computer' ? a > b ? 'You win!' : 'You lose!' : `${name(a > b ? 0 : 1)} wins!`;
     $('#result-score').textContent = `${a} – ${b}`;
     if (!resultTimer && $('#result').hidden) {
       // Let a final scoring strike finish before covering the board.
@@ -232,22 +253,25 @@ function place(index, value, stats = null) {
   const gained = next.lines.length - state.lines.length;
   analytics.move(index, value, stats);
   if (next.finished) { analytics.finish('completed'); void analytics.flush({ force: true }); }
+  const computerPlaced = mode === 'computer' && state.player === 1;
   state = next; lastFilled = index; render();
+  if (computerPlaced) revealCell(index);
   if (gained && !state.finished) $('#status').textContent = `${name(state.player)} +${gained} · play again`;
   computerTurn(gained ? 700 : 0);
 }
 $('#start').addEventListener('click', () => {
-  lastFilled = -1; requestId++; state = createGame(Number($('#size').value)); mode = $('#mode').value; difficulty = $('#difficulty').value; state.player = Math.random() < .5 ? 0 : 1; started = true;
+  lastFilled = -1; requestId++; state = configuredGame(); mode = $('#mode').value; difficulty = $('#difficulty').value; state.player = Math.random() < .5 ? 0 : 1; started = true;
   playerNames = ['name-one', 'name-two'].map((id, index) => {
     const input = $(`#${id}`);
     input.value = limitName(input.value.trim()) || `P${index + 1}`;
     return input.value;
   });
-  settingsStorage.set('settings', JSON.stringify({ mode, size: state.size, difficulty, names: playerNames }));
-  analytics.start({ size: state.size, mode, difficulty, firstPlayer: state.player });
+  settingsStorage.set('settings', JSON.stringify({ mode, size: $('#size').value, difficulty, names: playerNames, ...boardSettings.preferences() }));
+  analytics.start({ rows: state.rows, columns: state.columns, mode, difficulty, firstPlayer: state.player });
   analytics.visibility(!document.hidden);
   void analytics.flush();
   $('#setup').hidden = true; $('#result').hidden = true; render();
+  boardNavigation.reset();
   computerTurn();
   if (!thinking) $('#board button:enabled')?.focus({ preventScroll: true });
 });
@@ -255,8 +279,8 @@ function showSetup() {
   if (analytics.active) { analytics.finish('restarted'); void analytics.flush({ force: true }); }
   closePicker(false, true);
   clearTimeout(resultTimer); resultTimer = null;
-  lastFilled = -1; started = false; thinking = false; requestId++; state = createGame(Number($('#size').value));
-  $('#result').hidden = true; $('#setup').hidden = false; render(); $('#start').focus();
+  lastFilled = -1; started = false; thinking = false; requestId++; state = configuredGame();
+  $('#result').hidden = true; $('#setup').hidden = false; boardNavigation.reset(); render(); $('#start').focus();
 }
 $('#again').addEventListener('click', showSetup);
 const picker = $('#letter-picker');
@@ -283,7 +307,7 @@ function closePicker(restoreFocus = true, immediate = false) {
 function positionPicker() {
   if (selected === null) return;
   const cell = $(`[data-index="${selected}"]`).getBoundingClientRect();
-  const board = $('#board').getBoundingClientRect();
+  const board = $('#board-viewport').getBoundingClientRect();
   const width = picker.offsetWidth, height = picker.offsetHeight;
   const left = Math.max(board.left + 4, Math.min(cell.left + cell.width / 2 - width / 2, board.right - width - 4));
   const preferredTop = cell.bottom + 5 + height <= board.bottom ? cell.bottom + 5 : cell.top - height - 5;
@@ -320,12 +344,7 @@ function commitLetter(value) {
 picker.addEventListener('click', event => {
   if (event.target.dataset.letter) commitLetter(event.target.dataset.letter);
 });
-// Nonmodal selection lets a tap switch directly to another board square.
-$('#board').addEventListener('pointerdown', event => {
-  const cell = event.target.closest('[data-index]');
-  if (!cell || cell.disabled) return;
-  event.preventDefault(); selectCell(Number(cell.dataset.index));
-});
+// Board navigation handles pointer taps, drags and pinch gestures.
 document.addEventListener('pointerdown', event => {
   if (selected === null || event.target.closest('#board, #letter-picker')) return;
   if (event.target.closest('button, a, input, select, label, [role="combobox"]')) return;
@@ -338,6 +357,15 @@ document.addEventListener('keydown', event => {
     event.preventDefault(); commitLetter(event.key.toUpperCase());
   }
 });
+function revealCell(index) {
+  const viewport = $('#board-viewport'), cell = $(`[data-index="${index}"]`);
+  const v = viewport.getBoundingClientRect(), r = cell.getBoundingClientRect();
+  if (r.left >= v.left && r.right <= v.right && r.top >= v.top && r.bottom <= v.bottom) return;
+  viewport.scrollTo({ left: viewport.scrollLeft + r.left - v.left + r.width / 2 - v.width / 2,
+    top: viewport.scrollTop + r.top - v.top + r.height / 2 - v.height / 2,
+    behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+}
+new ResizeObserver(positionPicker).observe($('#board-viewport'));
 window.addEventListener('resize', positionPicker);
 new ResizeObserver(fitPlayerNames).observe($('.scoreboard'));
 window.addEventListener('scroll', positionPicker, { passive: true });

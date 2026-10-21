@@ -25,7 +25,7 @@ export function enhanceSelect(select) {
   list.setAttribute('role', 'listbox');
   if (label) list.setAttribute('aria-labelledby', label.id);
   list.hidden = true;
-  const motion = createPopupMotion(list);
+  const motion = createPopupMotion(list, { offset: () => list.dataset.placement === 'above' ? 6 : -6 });
   trigger.setAttribute('aria-controls', list.id);
   const options = [...select.options].map((option, index) => {
     const item = document.createElement('div');
@@ -38,6 +38,39 @@ export function enhanceSelect(select) {
     return item;
   });
   let active = select.selectedIndex;
+  function position() {
+    const viewport = window.visualViewport;
+    let top = viewport?.offsetTop ?? 0;
+    let bottom = top + (viewport?.height ?? window.innerHeight);
+    // Respect every clipping ancestor, not just the browser window.
+    for (let parent = wrap.parentElement; parent; parent = parent.parentElement) {
+      if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(parent).overflowY)) continue;
+      const rect = parent.getBoundingClientRect();
+      top = Math.max(top, rect.top + parent.clientTop);
+      bottom = Math.min(bottom, rect.top + parent.clientTop + parent.clientHeight);
+    }
+    const rect = wrap.getBoundingClientRect(), gap = 5, inset = 4;
+    const above = Math.max(0, rect.top - top - gap - inset);
+    const below = Math.max(0, bottom - rect.bottom - gap - inset);
+    // A collapsed measurement avoids expanding the ancestor's scrollable area.
+    const previousVisibility = list.style.visibility, wasHidden = list.hidden;
+    list.style.visibility = 'hidden'; list.hidden = false; list.style.maxHeight = '0px';
+    const height = list.scrollHeight;
+    const upward = height > below && above > below;
+    list.dataset.placement = upward ? 'above' : 'below';
+    list.style.top = upward ? 'auto' : `calc(100% + ${gap}px)`;
+    list.style.bottom = upward ? `calc(100% + ${gap}px)` : 'auto';
+    list.style.maxHeight = `${upward ? above : below}px`;
+    list.hidden = wasHidden;
+    list.style.visibility = previousVisibility;
+  }
+  function revealActive() {
+    const option = options[active];
+    if (option.offsetTop < list.scrollTop) list.scrollTop = option.offsetTop;
+    else if (option.offsetTop + option.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = option.offsetTop + option.offsetHeight - list.clientHeight;
+    }
+  }
   function sync() {
     value.textContent = select.selectedOptions[0].textContent;
     options.forEach((option, index) => option.setAttribute('aria-selected', String(index === select.selectedIndex)));
@@ -46,6 +79,7 @@ export function enhanceSelect(select) {
     active = index;
     options.forEach((option, i) => option.classList.toggle('is-active', i === active));
     trigger.setAttribute('aria-activedescendant', options[active].id);
+    revealActive();
   }
   function close() {
     if (!motion.isOpen()) return;
@@ -58,6 +92,7 @@ export function enhanceSelect(select) {
   function open() {
     trigger.focus({ preventScroll: true });
     wrap.classList.remove('is-closing');
+    position();
     void motion.show();
     trigger.setAttribute('aria-expanded', 'true');
     wrap.classList.add('is-open');
@@ -97,6 +132,12 @@ export function enhanceSelect(select) {
   // Keep focus on the combobox until an option has been selected.
   list.addEventListener('pointerdown', event => event.preventDefault());
   select.addEventListener('change', sync);
+  select.addEventListener('optionschange', sync);
+  const reposition = () => { if (motion.isOpen()) { position(); revealActive(); } };
+  window.addEventListener('resize', reposition);
+  window.visualViewport?.addEventListener('resize', reposition);
+  window.visualViewport?.addEventListener('scroll', reposition);
+  document.addEventListener('scroll', event => { if (event.target !== list) reposition(); }, true);
   select.hidden = true;
   wrap.append(trigger, list);
   sync();

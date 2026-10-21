@@ -7,16 +7,16 @@ included in reports.
 
 ## Report format
 
-Schema 1 stores one cumulative run record with:
+Schema 2 stores one cumulative run record with:
 
 - Random run ID and increasing revision; game/rules version, source build fingerprint,
   environment (`development`, `preview`, `production`, or `unknown`), and coarse device
   category/input/viewport bands.
-- Board size, computer or local multiplayer mode, computer difficulty (null for local
+- Separate rows and columns (3–20 each), computer or local multiplayer mode, computer difficulty (null for local
   games), and randomized starting player (`0` is P1, `1` is P2 or Computer).
 - Explicit UTC start/update/end timestamps, elapsed milliseconds and foreground time.
 - Outcome: `in_progress`, `completed`, or an explicitly confirmed `restarted` match.
-- Compact moves: `[cell_index, letter_code, elapsed_ms]`. Cells use row-major indices;
+- Compact moves: `[cell_index, letter_code, elapsed_ms]`. Cells use row-major indices (`row * columns + column`);
   `0` means S and `1` means O. The elapsed value is measured from match start, including
   hidden-tab time. Reconstruct approximate UTC event timestamps by adding it to
   `started_at`; wall-clock adjustments can cause differences from update timestamps.
@@ -25,7 +25,7 @@ Schema 1 stores one cumulative run record with:
   Artificial presentation delays and moves discarded after a restart are excluded.
 
 The initial board is empty. Player ownership, points, strikes, winner, scoring-move
-counts and multi-line moves can be reconstructed by replaying `per-player-limit-v1`:
+counts and multi-line moves can be reconstructed by replaying `rectangular-v2`:
 score one point per new SOS line, retain the turn after scoring, and allow no more than
 two consecutive placements of the same letter by each individual player. Scores and
 strikes are not duplicated as events. Streak length/point summaries are not collected.
@@ -33,6 +33,11 @@ strikes are not duplicated as events. Streak length/point summaries are not coll
 Names, free text, emails, accounts, location, referrers, URLs, raw user agents, exact
 screen dimensions, picker interactions and pointer movements are excluded. Random run
 IDs deduplicate uploads; they do not identify a tester across matches.
+
+Schema 1 square-board reports remain accepted: they use a single `size` (4, 6, 8,
+10) and `per-player-limit-v1`. Older queued reports can share a batch with new reports;
+existing archives retain their original schema, and a run cannot change schemas or
+dimensions between revisions. Schema 2 has at most 400 moves per report.
 
 ## Delivery and retention
 
