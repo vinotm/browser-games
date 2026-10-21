@@ -103,3 +103,14 @@ reveals the initialized scene and navigation in the same frame without fades or
 slides. Navigation stays hidden and inert until then. The homepage theme control
 renders immediately. In-board puzzle-loading feedback remains independent of
 initial entry.
+
+## Scrollable boards
+
+Use `shared/js/board-navigation.js` with `shared/css/board-navigation.css` for finite
+boards that need panning and zooming. Supply the viewport, board stage, control host,
+default geometry and game-specific selection/availability callbacks. The component
+provides touch and mouse dragging, pinch zoom, Ctrl/Cmd + wheel zoom around the
+pointer inside an active board, an accessible zoom slider, persistent
+position bars for overflowing axes, and a return to playing size before selection.
+Keep a visible outline on the actual grid boundary so it remains recognizable while
+panning. Game coordinates and scoring must remain independent of display zoom.

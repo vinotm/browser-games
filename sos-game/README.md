@@ -1,9 +1,14 @@
 # SOS
 
-Version: `beta-3`.
+Version: `beta-4`.
 
 A finite-board SOS game with a computer opponent or two players sharing one device.
-The default board is 6 × 6; 4 × 4, 8 × 8, and 10 × 10 are also available.
+The default board is 6 × 6; 8 × 8 and 10 × 10 are also available.
+Custom boards accept 3–20 rows and columns independently, including rectangles.
+Setup orders Game mode, Difficulty (computer only), Board size, P1 name and P2 name
+(local multiplayer only). Choosing Custom opens a compact dialog; invalid or out-of-range
+values show a warning and disable OK. Cancel keeps the previous size. An applied custom
+size appears as Custom (rows × columns) and is remembered with other game preferences.
 The last applied game mode, board size, and computer difficulty are remembered in
 the browser after starting a game. Invalid or unavailable storage uses defaults;
 an unfinished board is not saved.
@@ -29,6 +34,8 @@ an unfinished board is not saved.
   The current player's unavailable letter is disabled in the picker and its
   keyboard shortcut.
 - The game ends when the board is full. The higher score wins; equal scores draw.
+  An internal safeguard also ends play immediately when a player reaches or exceeds
+  999 points; this threshold is not shown in the game UI.
 - The starting player is chosen randomly for each game.
 - Tab and Enter select a square; S and O keys choose a letter while the picker is open.
 
@@ -46,7 +53,8 @@ Turn and scoring announcements remain available to screen readers without
 visible status text below the board.
 New strikes draw across their three cells without replaying existing lines. The
 final scoring animation finishes before the result covers the board. Dropdown
-panels animate open and closed, dimming only the board behind the open options;
+panels open upward or downward to fit the board, scrolling only their own options
+when necessary. They animate open and closed, dimming only the board behind the open options;
 reduced-motion preferences skip these animations.
 
 New game in the board's attached footer returns to the game settings. This footer
@@ -54,10 +62,10 @@ appears only during an active game, leaving setup and results with one main acti
 An unfinished game asks for
 confirmation first; Keep playing, Escape, the close icon, or an outside click
 preserves it. The computer waits while this confirmation is open.
-The square board also accounts for viewport height so the green New game button
+The square board viewport also accounts for viewport height so the green New game button
 fits in short phone and desktop windows.
 
-Name fields appear directly below Game mode in setup (native 20-character input limit, accepting Unicode letters and symbols).
+Name fields appear after Board size in setup (native 20-character input limit, accepting Unicode letters and symbols).
 P2's field appears only for local multiplayer, directly below P1's field.
 Blank names default to P1 and P2; the computer keeps its own label. Names are saved
 with the last applied settings in this browser when a game starts.
@@ -76,15 +84,38 @@ not a guarantee of perfect play.
 A worker runs depth-limited minimax with alpha-beta pruning, ordered by immediate
 scoring opportunities. Evaluation combines score difference with the next player's
 best immediate score. Extra turns preserve the current player throughout the search.
-Every search branch and Easy's random moves obey the shared letter limit.
+Every search branch and Easy's random moves obey the per-player letter limit.
 Equal choices are randomized. A fixed work budget is divided among legal first
 moves; this is a bounded tactical opponent, not an unbeatable solver. When workers
 are unavailable, the selected search runs on the main thread.
+On grids larger than 100 cells, a global tactical index checks all cells for immediate
+scores and updates only lines within two cells of each new move. Cluster-ranked
+shortlists include candidates from separate board regions. Iterative deepening retains
+the last completed search depth; Easy/Medium/Hard use computation budgets of about
+50/110/220 ms as well as node limits. Hard can search up to four plies, but the completed
+depth depends on position and device. These budgets bound search effort, not the
+quality of every decision.
+
+Boards exceeding ten rows or columns scroll inside the fixed viewport. Square cells
+use a minimum size of viewport width / 10.5, leaving a partial next row/column as a
+visual cue. Persistent custom scrollbars show each overflowing axis and allow position
+adjustment. A distinct outline marks the actual grid boundary. Touch drags, mouse
+drags, trackpad and wheel scrolling pan the board; dragging never selects a square.
+Two-finger pinch gestures and a translucent magnifier's slider adjust board zoom.
+On desktop, Ctrl/Cmd + scroll over the board zooms around the pointer; ordinary
+scrolling still pans, and browser zoom remains available outside the board.
+Selecting a square returns smoothly to the default playing size around that square
+before opening the picker; reduced motion skips the transition. Smaller rectangles
+fit and center without distortion. Setup, results and the New game footer remain
+stationary. Offscreen computer placements pan smoothly into view; reduced motion
+uses immediate scrolling. Full player names wrap into two lines, adjusting type size
+when needed instead of replacing characters with an ellipsis.
+
 Computer responses wait at least 450–650 ms, or 700 ms following a scoring move,
 so placements and strikes remain readable; longer computation can extend the wait.
 
 Rules and search are independent of the DOM. The shared page shell supplies theme
-controls, navigation, and active-game leave protection. No analytics are collected.
+controls, navigation, and active-game leave protection. Analytics are optional as described below.
 There are no network dependencies during play after the assets load.
 
 Name fields use native maxlength="20" and block ordinary extra typing without

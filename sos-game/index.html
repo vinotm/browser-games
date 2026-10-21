@@ -7,6 +7,7 @@
   <script src="../shared/js/theme-init.js"></script>
   <link rel="stylesheet" href="../shared/css/base.css" />
   <link rel="stylesheet" href="../shared/css/components.css" />
+  <link rel="stylesheet" href="../shared/css/board-navigation.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="game-page page-entering">
@@ -19,19 +20,21 @@
   </div>
   <div class="game-panel">
   <div class="game-screen">
-    <div id="board" role="group" aria-label="SOS board"></div>
-    <svg id="lines" aria-hidden="true"></svg>
+    <div id="board-viewport" tabindex="-1" aria-label="Scrollable SOS board"><div id="board-stage">
+      <div id="board" role="group" aria-label="SOS board"></div>
+      <svg id="lines" aria-hidden="true"></svg>
+    </div></div>
     <section id="setup" class="overlay">
       <label for="mode">Game mode</label>
       <span class="select-wrap"><select id="mode"><option value="computer">vs Computer</option><option value="local">Multiplayers</option></select></span>
+      <label for="difficulty" id="difficulty-label">Difficulty</label>
+      <span class="select-wrap" id="difficulty-wrap"><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></span>
+      <label for="size">Board size</label>
+      <span class="select-wrap"><select id="size"><option value="6" selected>6 × 6</option><option value="8">8 × 8</option><option value="10">10 × 10</option><option value="custom">Custom</option></select></span>
       <label for="name-one" class="name-field-label">P1 name</label>
       <div class="name-field"><input id="name-one" class="name-input" dir="auto" type="text" value="P1" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-describedby="name-one-warning name-one-count" /><div class="name-feedback"><span id="name-one-warning" class="name-warning" role="status" hidden>Name will be trimmed</span><span id="name-one-count" class="name-count" hidden></span></div></div>
       <label for="name-two" id="name-two-label" class="name-field-label">P2 name</label>
       <div class="name-field" id="name-two-field"><input id="name-two" class="name-input" dir="auto" type="text" value="P2" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-describedby="name-two-warning name-two-count" /><div class="name-feedback"><span id="name-two-warning" class="name-warning" role="status" hidden>Name will be trimmed</span><span id="name-two-count" class="name-count" hidden></span></div></div>
-      <label for="size">Board size</label>
-      <span class="select-wrap"><select id="size"><option value="4">4 × 4</option><option value="6" selected>6 × 6</option><option value="8">8 × 8</option><option value="10">10 × 10</option></select></span>
-      <label for="difficulty" id="difficulty-label">Difficulty</label>
-      <span class="select-wrap" id="difficulty-wrap"><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></span>
       <div class="setup-actions"><button id="start">Start game</button><button id="privacy-open" class="privacy-link" type="button">Data privacy</button></div>
     </section>
     <section id="privacy-view" class="overlay privacy-view" aria-labelledby="privacy-title" hidden>
@@ -46,6 +49,13 @@
   <div class="board-actions" hidden><button id="new-game" type="button">New game</button></div>
   </div>
   <p id="status" class="sr-only" role="status" aria-live="polite"></p>
+  <dialog id="custom-size" aria-labelledby="custom-title">
+    <form id="custom-form"><h2 id="custom-title">Custom board</h2>
+      <div class="dimension-fields"><label>Rows<input id="custom-rows" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-describedby="custom-warning" /></label><label>Columns<input id="custom-columns" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-describedby="custom-warning" /></label></div>
+      <p id="custom-warning" role="status"></p>
+      <div class="custom-actions"><button id="custom-cancel" class="secondary" type="button">Cancel</button><button id="custom-ok" type="submit">OK</button></div>
+    </form>
+  </dialog>
   <dialog id="letter-picker" aria-label="Place a letter"><div class="picker-letters"><button data-letter="S">S</button><button data-letter="O">O</button></div></dialog>
 </main>
 <script type="module" src="js/game.js"></script>

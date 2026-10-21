@@ -61,7 +61,7 @@ test('receiver replays legal turns, scoring extra turns and per-player limits ex
   let seed = 42;
   const random = n => { seed = (1664525 * seed + 1013904223) >>> 0; return seed % n; };
   for (const size of [4,6,8,10]) for (let trial = 0; trial < 8; trial++) {
-    const r = receiver(), b = example(), run = b.runs[0]; run.size = size;
+    const r = receiver(), b = example(), run = b.runs[0]; run.rows = run.columns = size;
     run.first_player = trial % 2; run.mode = trial % 2 ? 'computer' : 'local'; run.difficulty = run.mode === 'computer' ? 'hard' : null;
     let state = createGame(size); state.player = run.first_player;
     let computerMoves = 0;
@@ -103,4 +103,27 @@ test('missing budgets fail closed; uncertain writes reserve capacity; setup is i
   state.bytes = 1000000000; full.properties.set('ANALYTICS_BUDGET_V1', JSON.stringify(state));
   assert.equal(full.post(example()).error, 'storage_limit'); assert.equal(full.writes(), 0);
   full.properties.set('INGEST_ENABLED', 'false'); assert.equal(full.post(example()).error, 'disabled');
+});
+
+test('schema 2 rectangular replay, maximum dimensions and schema 1 compatibility', () => {
+  for (const [rows,columns] of [[3,8],[12,20],[20,12],[20,20]]) {
+    const r=receiver(),b=example(),run=b.runs[0]; run.rows=rows;run.columns=columns;
+    let state=createGame(rows,columns);
+    while(!state.finished){
+      const index=state.cells.findIndex(c=>!c),letters=allowedLetters(state),letter=letters[index%letters.length];
+      state=play(state,index,letter);run.moves.push([index,letter==='S'?0:1,0]);
+    }
+    run.outcome='completed';run.ended_at=run.updated_at;
+    assert.equal(r.post(b).ok,true);
+    assert.deepEqual([...r.context.replay_(run).scores],state.scores);
+    assert.equal(r.stored().run.rows,rows);assert.equal(r.stored().run.columns,columns);
+    const wrong=example();wrong.runs[0].rows=21;assert.equal(receiver().post(wrong).error,'invalid_setting');
+  }
+  const r=receiver(),legacy=example(),run=legacy.runs[0];
+  run.schema_version=1;run.rules_version='per-player-limit-v1';run.size=4;delete run.rows;delete run.columns;
+  assert.equal(r.post(legacy).ok,true);assert.equal(r.post(legacy).ok,true);
+  assert.equal(r.stored().run.size,4);assert.equal(r.stored().run.schema_version,1);
+  const changed=structuredClone(legacy);changed.runs[0].revision++;changed.runs[0].schema_version=2;
+  changed.runs[0].rules_version='rectangular-v2';changed.runs[0].rows=4;changed.runs[0].columns=4;
+  assert.equal(r.post(changed).error,'run_id_conflict');
 });

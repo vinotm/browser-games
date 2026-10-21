@@ -6,7 +6,7 @@ const BUDGET_KEY = 'ANALYTICS_BUDGET_V1';
 const MAX_BODY = 60000;
 const MAX_DURATION = 365 * 24 * 60 * 60 * 1000;
 function doGet() {
-  return jsonResponse_({ ok: true, service: 'sos-analytics', schema_version: 1, storage: 'json.gz' });
+  return jsonResponse_({ ok: true, service: 'sos-analytics', schema_version: 2, supported_schemas: [1, 2], storage: 'json.gz' });
 }
 function doPost(e) {
   let lock;
@@ -36,7 +36,7 @@ function doPost(e) {
         const stored = JSON.parse(Utilities.ungzip(file.getBlob()).getDataAsString('UTF-8'));
         const previous = stored.run;
         require_(previous && previous.run_id === run.run_id, 'invalid_existing_archive');
-        for (const field of ['started_at', 'game_version', 'rules_version', 'build_id', 'environment', 'size', 'mode', 'difficulty', 'first_player']) {
+        for (const field of ['schema_version', 'rows', 'columns', 'started_at', 'game_version', 'rules_version', 'build_id', 'environment', 'size', 'mode', 'difficulty', 'first_player']) {
           require_(previous[field] === run[field], 'run_id_conflict');
         }
         require_(JSON.stringify(previous.device) === JSON.stringify(run.device), 'run_id_conflict');
@@ -51,7 +51,7 @@ function doPost(e) {
         for (let i = 0; i < previous.moves.length; i++) require_(JSON.stringify(run.moves[i]) === JSON.stringify(previous.moves[i]), 'invalid_revision');
         for (const field of ['decisions', 'search_ms', 'nodes', 'budget_hits', 'random_moves']) require_(run.ai[field] >= previous.ai[field], 'invalid_revision');
       }
-      const archive = { schema_version: 1, game: 'sos', received_at: new Date(now).toISOString(),
+      const archive = { schema_version: run.schema_version, game: 'sos', received_at: new Date(now).toISOString(),
         payload_sha256: digest, run };
       const blob = Utilities.gzip(Utilities.newBlob(JSON.stringify(archive), 'application/json'), name);
       const size = blob.getBytes().length;
@@ -134,22 +134,26 @@ function timestamp_(value) {
 }
 function integer_(value, max) { return Number.isSafeInteger(value) && value >= 0 && value <= max; }
 function validateBatch_(input) {
-  require_(object_(input) && input.schema_version === 1 && input.game === 'sos', 'invalid_schema');
+  require_(object_(input) && [1, 2].includes(input.schema_version) && input.game === 'sos', 'invalid_schema');
   require_(id_(input.batch_id) && timestamp_(input.sent_at) && Date.parse(input.sent_at) <= Date.now() + 86400000, 'invalid_batch');
   require_(Array.isArray(input.runs) && input.runs.length > 0 && input.runs.length <= 20, 'invalid_runs');
   const ids = new Set();
   return { batch_id: input.batch_id, runs: input.runs.map(run => {
-    require_(object_(run) && run.schema_version === 1 && run.game === 'sos' && id_(run.run_id) && !ids.has(run.run_id), 'invalid_run');
+    require_(object_(run) && [1, 2].includes(run.schema_version) && run.game === 'sos' && id_(run.run_id) && !ids.has(run.run_id), 'invalid_run');
     ids.add(run.run_id);
-    const result = { schema_version: 1, game: 'sos', run_id: run.run_id };
+    const result = { schema_version: run.schema_version, game: 'sos', run_id: run.run_id };
     require_(integer_(run.revision, 10000000) && run.revision > 0, 'invalid_revision'); result.revision = run.revision;
     require_(typeof run.game_version === 'string' && /^[A-Za-z0-9][A-Za-z0-9._+-]{0,79}$/.test(run.game_version), 'invalid_version');
-    require_(run.rules_version === 'per-player-limit-v1', 'invalid_rules');
+    require_(run.rules_version === (run.schema_version === 1 ? 'per-player-limit-v1' : 'rectangular-v2'), 'invalid_rules');
     result.game_version = run.game_version; result.rules_version = run.rules_version;
-    require_([4, 6, 8, 10].includes(run.size) && ['computer', 'local'].includes(run.mode) &&
+    const rows = run.schema_version === 1 ? run.size : run.rows;
+    const columns = run.schema_version === 1 ? run.size : run.columns;
+    require_(run.schema_version === 1 ? [4, 6, 8, 10].includes(run.size) :
+      integer_(rows, 20) && rows >= 3 && integer_(columns, 20) && columns >= 3, 'invalid_setting');
+    require_(['computer', 'local'].includes(run.mode) &&
       (run.mode === 'computer' ? ['easy', 'medium', 'hard'].includes(run.difficulty) : run.difficulty === null) &&
       [0, 1].includes(run.first_player), 'invalid_setting');
-    for (const field of ['size', 'mode', 'difficulty', 'first_player']) result[field] = run[field];
+    for (const field of (run.schema_version === 1 ? ['size'] : ['rows', 'columns']).concat(['mode', 'difficulty', 'first_player'])) result[field] = run[field];
     require_(['production', 'preview', 'development', 'unknown'].includes(run.environment), 'invalid_environment'); result.environment = run.environment;
     require_(run.build_id === 'unknown' || typeof run.build_id === 'string' && /^sha256-[a-f0-9]{16}$/.test(run.build_id), 'invalid_build'); result.build_id = run.build_id;
     require_(object_(run.device) && ['desktop', 'mobile', 'tablet', 'unknown'].includes(run.device.category) &&
@@ -163,17 +167,17 @@ function validateBatch_(input) {
       require_(integer_(run[field], MAX_DURATION), 'invalid_duration'); result[field] = run[field];
     }
     require_(run.foreground_ms <= run.elapsed_ms, 'invalid_duration');
-    require_(Array.isArray(run.moves) && run.moves.length <= run.size * run.size, 'invalid_moves');
+    require_(Array.isArray(run.moves) && run.moves.length <= rows * columns, 'invalid_moves');
     let time = 0;
     result.moves = run.moves.map(move => {
-      require_(Array.isArray(move) && move.length === 3 && integer_(move[0], run.size * run.size - 1) &&
+      require_(Array.isArray(move) && move.length === 3 && integer_(move[0], rows * columns - 1) &&
         [0, 1].includes(move[1]) && integer_(move[2], run.elapsed_ms) && move[2] >= time, 'invalid_move');
       time = move[2]; return [move[0], move[1], move[2]];
     });
     const replay = replay_(result);
-    require_(run.outcome === 'completed' ? replay.full : !replay.full, 'invalid_completion');
+    require_(run.outcome === 'completed' ? replay.finished : !replay.finished, 'invalid_completion');
     require_(object_(run.ai), 'invalid_ai'); result.ai = {};
-    for (const [field, max] of [['decisions', 100], ['search_ms', MAX_DURATION], ['nodes', 100000000], ['budget_hits', 100], ['random_moves', 100]]) {
+    for (const [field, max] of [['decisions', rows * columns], ['search_ms', MAX_DURATION], ['nodes', 100000000], ['budget_hits', rows * columns], ['random_moves', rows * columns]]) {
       require_(integer_(run.ai[field], max), 'invalid_ai'); result.ai[field] = run.ai[field];
     }
     require_(run.ai.decisions === (run.mode === 'computer' ? replay.moves[1] : 0) &&
@@ -184,25 +188,26 @@ function validateBatch_(input) {
   }) };
 }
 
-// Mirrors per-player-limit-v1. Keep synthetic replay parity tests with browser rules.
+// Mirrors per-player-limit-v1 and rectangular-v2. Keep synthetic replay parity tests with browser rules.
 // Internal consistency checks do not authenticate client-reported gameplay.
 function replay_(run) {
-  const size = run.size, cells = Array(size * size).fill(''), scores = [0, 0], moves = [0, 0];
+  const rows = run.rows ?? run.size, columns = run.columns ?? run.size;
+  const cells = Array(rows * columns).fill(''), scores = [0, 0], moves = [0, 0];
   const streaks = [{ letter: '', count: 0 }, { letter: '', count: 0 }];
   let player = run.first_player;
   for (const move of run.moves) {
     const index = move[0], letter = move[1] === 0 ? 'S' : 'O', streak = streaks[player];
-    require_(!cells[index] && !(streak.letter === letter && streak.count >= 2), 'illegal_move');
+    require_(!scores.some(score => score >= 999) && !cells[index] && !(streak.letter === letter && streak.count >= 2), 'illegal_move');
     cells[index] = letter; moves[player]++;
     streak.count = streak.letter === letter ? streak.count + 1 : 1; streak.letter = letter;
     let gain = 0;
-    const row = Math.floor(index / size), col = index % size;
+    const row = Math.floor(index / columns), col = index % columns;
     for (const direction of [[0, 1], [1, 0], [1, 1], [1, -1]]) {
       for (let offset = -2; offset <= 0; offset++) {
         let word = '';
         for (let k = 0; k < 3; k++) {
           const r = row + (offset + k) * direction[0], c = col + (offset + k) * direction[1];
-          if (r >= 0 && r < size && c >= 0 && c < size) word += cells[r * size + c] || '.';
+          if (r >= 0 && r < rows && c >= 0 && c < columns) word += cells[r * columns + c] || '.';
         }
         if (word === 'SOS') gain++;
       }
@@ -210,5 +215,6 @@ function replay_(run) {
     scores[player] += gain;
     if (!gain) player = 1 - player;
   }
-  return { scores, moves, player, full: run.moves.length === size * size };
+  return { scores, moves, player, full: run.moves.length === rows * columns,
+    finished: run.moves.length === rows * columns || scores.some(score => score >= 999) };
 }

@@ -19,7 +19,7 @@ test('does not wrap SOS across rows and rejects invalid moves', () => {
   const state = createGame(4); state.cells[3]='S'; state.cells[4]='O';
   assert.equal(play(state, 5, 'S').lines.length, 0);
   for (const [i,l] of [[-1,'S'],[.5,'O'],[0,'X']]) assert.equal(play(state,i,l),null);
-  assert.throws(() => createGame(11));
+  assert.throws(() => createGame(21));
 });
 test('final move ends game even if it scores', () => {
   const state=createGame(4); state.cells.fill('S'); state.cells[1]='';
@@ -111,4 +111,49 @@ test('every computer level respects its own restricted letters in search and ran
       assert.ok(play(state, move.index, move.letter));
     }
   }
+});
+
+test('rectangular boards score all directions without wrapping and enforce dimension bounds', () => {
+  for (const [rows, columns] of [[3,8],[8,3],[12,20],[20,12]]) {
+    let state = createGame(rows, columns), center = columns + 1;
+    for (const [dr,dc] of [[0,1],[1,0],[1,1],[1,-1]]) {
+      state.cells[center-dr*columns-dc]='S'; state.cells[center+dr*columns+dc]='S';
+    }
+    state = play(state, center, 'O');
+    assert.equal(state.lines.length, 4); assert.equal(state.cells.length, rows*columns);
+    assert.equal(state.scores[0],4); assert.equal(state.player,0);
+    const edge = createGame(rows,columns); edge.cells[columns-1]='S'; edge.cells[columns]='O';
+    assert.equal(play(edge,columns+1,'S').lines.length,0);
+  }
+  for (const dimensions of [[2,10],[10,21],[21,10],[3.5,8],[NaN,6]]) assert.throws(()=>createGame(...dimensions));
+  assert.equal(createGame(20,20).cells.length,400);
+});
+test('large-board computer sees distant scoring clusters and respects letter restrictions', async () => {
+  const {computerMove} = await import('../sos-game/js/difficulty.js');
+  for(const [rows,columns] of [[12,20],[20,12],[20,20]]) {
+    const state=createGame(rows,columns), end=rows*columns-1;
+    state.cells[end-2]='S';state.cells[end-1]='O';
+    const move=computerMove(state,'hard',()=>0);
+    assert.equal(move.index,end);assert.equal(move.letter,'S');
+    state.letterStreaks[0]={letter:'S',count:2};
+    const restricted=computerMove(state,'hard',()=>0);
+    assert.equal(restricted.letter,'O');assert.ok(play(state,restricted.index,restricted.letter));
+  }
+});
+
+test('999-point threshold ends play immediately, including a multi-line overshoot', () => {
+  for (const player of [0, 1]) for (const before of [995, 998]) {
+    const state = createGame(4); state.player = player; state.scores[player] = before;
+    for (const index of [0, 1, 2, 4, 6, 8, 9, 10]) state.cells[index] = 'S';
+    const next = play(state, 5, 'O');
+    assert.equal(next.scores[player], before + 4);
+    assert.ok(next.cells.includes(''));
+    assert.equal(next.finished, true);
+    assert.deepEqual(allowedLetters(next), []);
+    assert.equal(play(next, 3, 'S'), null);
+    assert.equal(chooseMove(next), null);
+  }
+  const state = createGame(4); state.scores[0] = 997;
+  state.cells[0] = 'S'; state.cells[1] = 'O';
+  assert.equal(play(state, 2, 'S').finished, false);
 });

@@ -1,3 +1,4 @@
+import { VERSION } from '../sos-game/js/rules.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRunAnalytics } from '../sos-game/js/analytics.js';
@@ -18,7 +19,7 @@ test('compact moves, AI work and terminal outcomes exclude names and streak summ
   s.a.move(2, 'S', { search_ms: 12.4, nodes: 500, budget_hit: true });
   s.tick(2000); s.a.move(3, 'O'); s.a.finish('restarted');
   const run = s.latest(); assert.deepEqual(run.moves, [[2, 0, 1000], [3, 1, 3000]]);
-  assert.equal(run.game_version, 'beta-3'); assert.equal(run.elapsed_ms, 3000);
+  assert.equal(run.game_version, VERSION); assert.equal(run.elapsed_ms, 3000);
   assert.equal(run.ai.decisions, 1); assert.equal(run.ai.search_ms, 12); assert.equal(run.ai.budget_hits, 1);
   assert.equal(run.ended_at, run.updated_at); assert.equal(run.outcome, 'restarted');
   assert.equal(s.a.active, false); assert.ok(!JSON.stringify(run).includes('secret'));
