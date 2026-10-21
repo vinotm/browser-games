@@ -26,7 +26,7 @@ test('public export excludes unpublished sources, deployment state and private o
     writeFileSync(join(temporary, 'snake-game/js/settings.local.js'), 'local-only');
     const build = (endpoint = '', extra = {}) => spawnSync(process.execPath, ['scripts/build.mjs'], {
       cwd: temporary, env: { ...process.env, CF_PAGES: '', SNAKE_ENVIRONMENT: '',
-        SNAKE_ANALYTICS_ENDPOINT: endpoint, ...extra }, encoding: 'utf8',
+        SNAKE_ANALYTICS_ENDPOINT: endpoint, SOS_ANALYTICS_ENDPOINT: '', SOS_ENVIRONMENT: '', ...extra }, encoding: 'utf8',
     });
     let result = build();
     assert.equal(result.status, 0, result.stderr);
@@ -35,6 +35,16 @@ test('public export excludes unpublished sources, deployment state and private o
     assert.equal(readdirSync(join(temporary, 'dist/snake-game/js')).includes('settings.local.js'), false);
     assert.equal(readdirSync(join(temporary, 'dist/sos-game')).includes('private'), false);
     assert.ok(readFileSync(join(temporary, 'dist/sos-game/js/opponent-worker.js')).length);
+    const sosConfig = JSON.parse(readFileSync(join(temporary, 'dist/sos-game/analytics-config.json')));
+    assert.equal(sosConfig.analyticsEndpoint, '');
+    assert.match(sosConfig.buildId, /^sha256-[a-f0-9]{16}$/);
+    assert.equal(readdirSync(join(temporary, 'dist/sos-game')).includes('analytics'), false);
+    result = build('', { SOS_ANALYTICS_ENDPOINT: 'https://sos.test/exec', SOS_ENVIRONMENT: 'development' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(readFileSync(join(temporary, 'dist/sos-game/analytics-config.json'))).analyticsEndpoint, 'https://sos.test/exec');
+    result = build('', { SOS_ANALYTICS_ENDPOINT: 'http://sos.test/exec' });
+    assert.notEqual(result.status, 0);
+    result = build(); assert.equal(result.status, 0, result.stderr);
     const firstConfig = JSON.parse(readFileSync(join(temporary, 'dist/snake-game/analytics-config.json')));
     assert.match(firstConfig.buildId, /^sha256-[a-f0-9]{16}$/);
     assert.deepEqual(firstConfig,
@@ -51,6 +61,9 @@ test('public export excludes unpublished sources, deployment state and private o
     }));
     const preview = spawnSync(process.env.PYTHON ?? 'python3', ['-c', `
 import io, json
+from pathlib import Path
+from preview_server import source_build_id
+assert source_build_id(Path('.'), 'sos') == '${sosConfig.buildId}'
 from preview_server import FreshAssetsHandler
 h = FreshAssetsHandler.__new__(FreshAssetsHandler)
 h.directory = '.'

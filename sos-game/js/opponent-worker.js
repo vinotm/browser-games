@@ -1,2 +1,2 @@
-import { computerMove } from './difficulty.js';
-self.onmessage = ({ data }) => self.postMessage({ id: data.id, move: computerMove(data.state, data.difficulty) });
+import { measuredComputerMove } from './difficulty.js';
+self.onmessage = ({ data }) => self.postMessage({ id: data.id, ...measuredComputerMove(data.state, data.difficulty) });

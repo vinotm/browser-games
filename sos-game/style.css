@@ -39,6 +39,15 @@
 @media (hover: hover) { .select-option:hover { background: var(--secondary); } }
 @media (prefers-reduced-motion: reduce) { #setup::before { transition: none; } }
 #start { grid-column: 1 / -1; justify-self: center; margin-top: 8px; }
+.setup-actions { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; }
+.privacy-link { text-decoration: underline; text-underline-offset: 4px; background: transparent; color: var(--muted); padding: 6px 10px; font-size: 13px; min-height: 32px; }
+.privacy-link:hover { color: var(--text); background: transparent; }
+.privacy-view { padding: clamp(14px, 4vw, 30px); gap: 10px; background: var(--board); text-align: left; align-items: stretch; overflow: auto; }
+.privacy-view h2 { margin: 0; font-size: clamp(19px, 5vw, 24px); }
+.privacy-view h2:focus { outline: none; }
+.privacy-view p { margin: 0; font-size: clamp(12px, 3.3vw, 14px); line-height: 1.5; color: var(--muted); }
+.privacy-view #privacy-status { font-size: 12px; }
+.privacy-view .privacy-link { align-self: flex-start; padding-left: 0; }
 .board-actions { padding: 8px 12px; border-top: 1px solid var(--key-border); background: var(--page); }
 #new-game { min-width: 140px; background: var(--primary); color: #fff; }
 #new-game:enabled:hover { background: var(--primary-hover); }
@@ -86,6 +95,16 @@
 #setup { overflow-y: auto; align-content: safe center; }
 .name-input { min-width: 0; width: 100%; min-height: 46px; border: 1px solid var(--key-border); border-radius: 8px; padding: 10px 14px; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--text); background: var(--board); }
 .name-input:focus { outline: none; box-shadow: none; border-color: var(--key-border); }
+@media (min-width: 700px) {
+  #setup { row-gap: 20px; }
+  .name-input, .select-trigger, .select-trigger:hover, .select-trigger:active { min-height: 40px; padding-top: 7px; padding-bottom: 7px; }
+}
+@media (max-width: 699px) {
+  #setup { padding: 12px; }
+  .name-input, .select-trigger, .select-trigger:hover, .select-trigger:active { min-height: 44px; padding-top: 8px; padding-bottom: 8px; }
+  .setup-actions { margin-top: -8px; }
+  #start { margin-top: 0; }
+}
 .name-field { position: relative; min-width: 0; }
 .name-field:focus-within { z-index: 3; }
 /* Match input text's 1px border + 14px padding. The rotated chevron extends

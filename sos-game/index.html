@@ -32,7 +32,14 @@
       <span class="select-wrap"><select id="size"><option value="4">4 × 4</option><option value="6" selected>6 × 6</option><option value="8">8 × 8</option><option value="10">10 × 10</option></select></span>
       <label for="difficulty" id="difficulty-label">Difficulty</label>
       <span class="select-wrap" id="difficulty-wrap"><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></span>
-      <button id="start">Start game</button>
+      <div class="setup-actions"><button id="start">Start game</button><button id="privacy-open" class="privacy-link" type="button">Data privacy</button></div>
+    </section>
+    <section id="privacy-view" class="overlay privacy-view" aria-labelledby="privacy-title" hidden>
+      <h2 id="privacy-title" tabindex="-1">A little data, a better game</h2>
+      <p id="privacy-intro">Small, anonymous gameplay reports help improve SOS.</p>
+      <p id="privacy-details">Reports include game settings, moves, timing, results and broad device details. Player names, emails and location aren’t collected.</p>
+      <p id="privacy-status">Reports are stored privately. Offline reports upload when you’re connected again.</p>
+      <button id="privacy-back" class="privacy-link" type="button">← Back to game</button>
     </section>
     <section id="result" class="overlay" hidden><h2 id="result-title" class="overlay-title"></h2><p id="result-score" class="overlay-detail"></p><button id="again">Play again</button></section>
   </div>

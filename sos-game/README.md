@@ -1,6 +1,6 @@
 # SOS
 
-Version: `beta-2`.
+Version: `beta-3`.
 
 A finite-board SOS game with a computer opponent or two players sharing one device.
 The default board is 6 × 6; 4 × 4, 8 × 8, and 10 × 10 are also available.
@@ -102,3 +102,9 @@ Autocorrection and automatic capitalization are disabled as keyboard hints.
 Long scoreboard names use tighter spacing and a modest font reduction (down to
 14px), then ellipsis when necessary. The full name remains available to assistive
 technology and in the name tooltip.
+
+## Analytics
+
+Optional anonymous match reports and the private Apps Script receiver are described in
+[analytics documentation](analytics/README.md). Collection is disabled until a deployment
+configures its endpoint. Player names remain local and are excluded from reports.

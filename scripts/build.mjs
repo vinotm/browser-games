@@ -52,8 +52,22 @@ if (sudokuEndpoint) {
   if (url.protocol !== 'https:' || url.username || url.password || url.hash) throw new Error('Invalid SUDOKU_ANALYTICS_ENDPOINT');
   sudokuEndpoint = url.href;
 }
-files.push(...sudokuFiles, 'sos-game/index.html', 'sos-game/style.css');
+files.push(...sudokuFiles);
+const sosFiles = ['sos-game/index.html', 'sos-game/style.css', 'sos-game/analytics-config.json'];
+const beforeSos = files.length;
 await collect('sos-game/js', ['.js']);
+sosFiles.push(...files.splice(beforeSos));
+const sosBuildId = await sourceBuildId(root, [...sosFiles, ...files.filter(file => file.startsWith('shared/'))]);
+const sosEnvironment = process.env.SOS_ENVIRONMENT || (process.env.CF_PAGES === '1' &&
+  process.env.CF_PAGES_BRANCH !== 'main' ? 'preview' : 'production');
+if (!['development', 'preview', 'production'].includes(sosEnvironment)) throw new Error('Invalid SOS_ENVIRONMENT');
+let sosEndpoint = process.env.SOS_ANALYTICS_ENDPOINT ?? '';
+if (sosEndpoint) {
+  const url = new URL(sosEndpoint);
+  if (url.protocol !== 'https:' || url.username || url.password || url.hash) throw new Error('Invalid SOS_ANALYTICS_ENDPOINT');
+  sosEndpoint = url.href;
+}
+files.push(...sosFiles);
 // Validate every input before replacing an existing export.
 for (const file of files) {
   const stat = await lstat(join(root, file));
@@ -68,4 +82,6 @@ await writeFile(join(output, 'snake-game/analytics-config.json'),
   JSON.stringify({ analyticsEndpoint: endpoint, environment, buildId }, null, 2) + '\n');
 await writeFile(join(output, 'sudoku-game/analytics-config.json'),
   JSON.stringify({ analyticsEndpoint: sudokuEndpoint, environment: sudokuEnvironment, buildId: sudokuBuildId }, null, 2) + '\n');
+await writeFile(join(output, 'sos-game/analytics-config.json'),
+  JSON.stringify({ analyticsEndpoint: sosEndpoint, environment: sosEnvironment, buildId: sosBuildId }, null, 2) + '\n');
 console.log(`Exported ${files.length} public files to dist/. Analytics ${endpoint ? 'enabled' : 'disabled'}.`);

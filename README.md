@@ -10,7 +10,7 @@ common controls, themes, storage, and other utilities.
 | Snake | `snake-game/` | [Overview](snake-game/README.md) · [Rules](snake-game/RULES.md) · [Analytics](snake-game/analytics/README.md) |
 | Sudoku | `sudoku-game/` | [Overview and rules](sudoku-game/README.md) · [Puzzle generation](sudoku-game/DIFFICULTY.md) · [Analytics](sudoku-game/analytics/README.md) |
 
-| SOS | `sos-game/` | [Overview and rules](sos-game/README.md) |
+| SOS | `sos-game/` | [Overview and rules](sos-game/README.md) · [Analytics](sos-game/analytics/README.md) |
 
 ## Run locally
 
@@ -62,6 +62,7 @@ storage limits, and privacy behavior.
 | --- | --- | --- |
 | Snake | `SNAKE_ANALYTICS_ENDPOINT` | `SNAKE_ENVIRONMENT` |
 | Sudoku | `SUDOKU_ANALYTICS_ENDPOINT` | `SUDOKU_ENVIRONMENT` |
+| SOS | `SOS_ANALYTICS_ENDPOINT` | `SOS_ENVIRONMENT` |
 
 Endpoint URLs are public configuration. Never include credentials, access tokens,
 or private storage identifiers in browser code or build settings exported to the
@@ -75,7 +76,7 @@ index.html                 Collection homepage
 shared/                    Reusable browser utilities and styles
 snake-game/                Snake source, rules, and analytics receiver
 sudoku-game/               Sudoku source, generation docs, and analytics receiver
-sos-game/                  SOS rules, local play, and computer opponent
+sos-game/                  SOS rules, computer opponent, and analytics receiver
 tests/                     Automated tests using synthetic fixtures
 scripts/                   Static export and source fingerprint tools
 preview_server.py          Restricted local development server
