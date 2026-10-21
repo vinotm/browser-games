@@ -1,10 +1,11 @@
-import { play, scoringLines } from './rules.js';
+import { play, scoringLines, allowedLetters } from './rules.js';
 
 function moves(state) {
   const result = [];
+  const letters = allowedLetters(state);
   state.cells.forEach((cell, index) => {
     if (cell) return;
-    for (const letter of ['S', 'O']) {
+    for (const letter of letters) {
       const cells = [...state.cells]; cells[index] = letter;
       result.push({ index, letter, gain: scoringLines(cells, state.size, index).length });
     }
