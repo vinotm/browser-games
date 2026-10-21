@@ -1,6 +1,6 @@
 # SOS
 
-Version: `beta-4.1`.
+Version: `beta-4.2`.
 
 A finite-board SOS game against SOS Bot (“vs Bot”) or two players sharing one device.
 The default board is 6 × 6; 8 × 8 and 10 × 10 are also available.
@@ -139,3 +139,7 @@ technology and in the name tooltip.
 Optional anonymous match reports and the private Apps Script receiver are described in
 [analytics documentation](analytics/README.md). Collection is disabled until a deployment
 configures its endpoint. Player names remain local and are excluded from reports.
+
+The letter picker waits 250 ms after opening or moving to another cell before
+accepting a letter. Pointer presses begun during this guard are ignored even when
+released later, preventing accidental mobile placements.

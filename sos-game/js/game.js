@@ -285,9 +285,12 @@ function showSetup() {
 $('#again').addEventListener('click', showSetup);
 const picker = $('#letter-picker');
 let pickerAnimation, pickerRevision = 0;
+const PICKER_INPUT_DELAY_MS = 250;
+let pickerAcceptsInputAt = Infinity, pickerPointerBlocked = false;
 function closePicker(restoreFocus = true, immediate = false) {
   const index = selected;
   selected = null;
+  pickerAcceptsInputAt = Infinity;
   $('#board .selected')?.classList.remove('selected');
   if (restoreFocus && index !== null) $(`[data-index="${index}"]`)?.focus({ preventScroll: true });
   if (!picker.open) return;
@@ -322,6 +325,8 @@ function selectCell(index) {
   if (selected === index) { closePicker(false); return; }
   const previous = selected !== null && picker.open ? picker.getBoundingClientRect() : null;
   pickerRevision++; pickerAnimation?.cancel();
+  pickerAcceptsInputAt = performance.now() + PICKER_INPUT_DELAY_MS;
+  pickerPointerBlocked = false;
   $('#board .selected')?.classList.remove('selected');
   selected = index; $(`[data-index="${index}"]`).classList.add('selected');
   picker.inert = false;
@@ -338,11 +343,17 @@ function selectCell(index) {
   picker.querySelector('[data-letter]:enabled')?.focus({ preventScroll: true });
 }
 function commitLetter(value) {
-  if (selected === null || !allowedLetters(state).includes(value) || isConfirming()) return;
+  if (selected === null || performance.now() < pickerAcceptsInputAt || !allowedLetters(state).includes(value) || isConfirming()) return;
   const index = selected; closePicker(false); place(index, value);
 }
+// A press begun during the opening guard stays blocked even if released later.
+picker.addEventListener('pointerdown', () => {
+  pickerPointerBlocked = performance.now() < pickerAcceptsInputAt;
+});
 picker.addEventListener('click', event => {
-  if (event.target.dataset.letter) commitLetter(event.target.dataset.letter);
+  const blocked = event.detail !== 0 && pickerPointerBlocked;
+  pickerPointerBlocked = false;
+  if (!blocked && event.target.dataset.letter) commitLetter(event.target.dataset.letter);
 });
 // Board navigation handles pointer taps, drags and pinch gestures.
 document.addEventListener('pointerdown', event => {
