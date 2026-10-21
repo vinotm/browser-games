@@ -1,11 +1,16 @@
 import { createPageShell, createConfirmationDialog } from '../../shared/js/page-shell.js';
 import { createGame, play, allowedLetters } from './rules.js';
-import { computerMove } from './difficulty.js';
+import { measuredComputerMove } from './difficulty.js';
+import { createRunAnalytics } from './analytics.js';
+import { loadDeploymentConfig } from '../../shared/js/config.js';
+import { describeDevice } from '../../shared/js/device.js';
 import { enhanceSelect } from '../../shared/js/select.js';
 import { createStorage } from '../../shared/js/storage.js';
 import { limitName, setupNameInput } from './player-names.js';
 
 const $ = selector => document.querySelector(selector);
+const analyticsConfig = loadDeploymentConfig(new URL('../analytics-config.json', import.meta.url));
+let analytics = createRunAnalytics();
 const settingsStorage = createStorage('sos');
 try {
   const saved = JSON.parse(settingsStorage.get('settings', '{}'));
@@ -45,13 +50,13 @@ try {
   worker = new Worker(new URL('./opponent-worker.js', import.meta.url), { type: 'module' });
   worker.onmessage = ({ data }) => {
     if (data.id !== requestId || !thinking) return;
-    deliverMove(data.id, data.move);
+    deliverMove(data.id, data.move, data.stats);
   };
   worker.onerror = event => {
     event.preventDefault(); worker.terminate(); worker = null;
     if (thinking) {
-      const move = computerMove(state, difficulty);
-      deliverMove(requestId, move);
+      const { move, stats } = measuredComputerMove(state, difficulty);
+      deliverMove(requestId, move, stats);
     }
   };
 } catch { worker = null; }
@@ -208,23 +213,25 @@ function computerTurn(minimumDelay = 0) {
   if (worker) worker.postMessage({ id, state, difficulty });
   else setTimeout(() => {
     if (id !== requestId) return;
-    const move = computerMove(state, difficulty);
-    deliverMove(id, move);
+    const { move, stats } = measuredComputerMove(state, difficulty);
+    deliverMove(id, move, stats);
   }, 60);
 }
-function deliverMove(id, move) {
+function deliverMove(id, move, stats) {
   if (id !== requestId || !thinking) return;
   const remaining = computerReadyAt - performance.now();
-  if (remaining > 0) { setTimeout(() => deliverMove(id, move), remaining); return; }
-  if (isConfirming()) { setTimeout(() => deliverMove(id, move), 100); return; }
+  if (remaining > 0) { setTimeout(() => deliverMove(id, move, stats), remaining); return; }
+  if (isConfirming()) { setTimeout(() => deliverMove(id, move, stats), 100); return; }
   thinking = false;
-  if (move) place(move.index, move.letter);
+  if (move) place(move.index, move.letter, stats);
 }
-function place(index, value) {
+function place(index, value, stats = null) {
   if (!started || thinking || isConfirming()) return;
   const next = play(state, index, value);
   if (!next) return;
   const gained = next.lines.length - state.lines.length;
+  analytics.move(index, value, stats);
+  if (next.finished) { analytics.finish('completed'); void analytics.flush({ force: true }); }
   state = next; lastFilled = index; render();
   if (gained && !state.finished) $('#status').textContent = `${name(state.player)} +${gained} · play again`;
   computerTurn(gained ? 700 : 0);
@@ -237,11 +244,15 @@ $('#start').addEventListener('click', () => {
     return input.value;
   });
   settingsStorage.set('settings', JSON.stringify({ mode, size: state.size, difficulty, names: playerNames }));
+  analytics.start({ size: state.size, mode, difficulty, firstPlayer: state.player });
+  analytics.visibility(!document.hidden);
+  void analytics.flush();
   $('#setup').hidden = true; $('#result').hidden = true; render();
   computerTurn();
   if (!thinking) $('#board button:enabled')?.focus({ preventScroll: true });
 });
 function showSetup() {
+  if (analytics.active) { analytics.finish('restarted'); void analytics.flush({ force: true }); }
   closePicker(false, true);
   clearTimeout(resultTimer); resultTimer = null;
   lastFilled = -1; started = false; thinking = false; requestId++; state = createGame(Number($('#size').value));
@@ -340,4 +351,32 @@ $('#mode').addEventListener('change', updateModeFields);
 updateModeFields();
 render();
 
+function reportProgress(options) { analytics.checkpoint(); void analytics.flush(options); }
+setInterval(() => reportProgress(), 60000);
+document.addEventListener('visibilitychange', () => {
+  analytics.visibility(!document.hidden); reportProgress({ keepalive: document.hidden });
+});
+window.addEventListener('pagehide', () => { analytics.visibility(false); reportProgress({ keepalive: true }); });
+window.addEventListener('pageshow', () => analytics.visibility(!document.hidden));
+window.addEventListener('online', () => reportProgress({ force: true }));
+const privacy = $('#privacy-view');
+function closePrivacy() {
+  privacy.hidden = true; $('#setup').hidden = false;
+  $('#privacy-open').focus({ preventScroll: true });
+}
+$('#privacy-open').addEventListener('click', () => {
+  $('#setup').hidden = true; privacy.hidden = false;
+  $('#privacy-title').focus({ preventScroll: true });
+});
+$('#privacy-back').addEventListener('click', closePrivacy);
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !privacy.hidden) closePrivacy(); });
+// Resolve configuration before revealing Start so a quick start cannot lose its report.
+const config = await analyticsConfig;
+analytics = createRunAnalytics({ ...config, endpoint: config.analyticsEndpoint, device: describeDevice });
+if (!analytics.enabled) {
+  $('#privacy-intro').textContent = 'Analytics are disabled on this site.';
+  $('#privacy-details').textContent = 'Your game and preferences stay in your browser.';
+  $('#privacy-status').hidden = true;
+}
+void analytics.flush();
 void page.reveal();

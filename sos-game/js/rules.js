@@ -1,4 +1,4 @@
-export const VERSION = 'beta-2';
+export const VERSION = 'beta-3';
 const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
 export function createGame(size = 6) {
   if (!Number.isInteger(size) || size < 4 || size > 10) throw new RangeError('Board size must be 4–10');

@@ -14,17 +14,18 @@ function moves(state) {
 }
 // Fixed work budget keeps large boards responsive; extra turns retain the same
 // maximizing/minimizing player rather than blindly alternating search roles.
-export function chooseMove(state, { maxNodes = 7000, depth = 3, random = Math.random } = {}) {
+export function chooseMove(state, { maxNodes = 7000, depth = 3, random = Math.random, onStats = () => {} } = {}) {
   if (state.finished) return null;
   const root = state.player;
-  let nodes = 0;
+  let nodes = 0, visited = 0, budgetHit = false;
   function evaluate(position) {
     const difference = position.scores[root] - position.scores[1 - root];
     const best = position.finished ? 0 : (moves(position)[0]?.gain || 0);
     return difference * 100 + best * (position.player === root ? 65 : -65);
   }
   function search(position, remaining, alpha, beta) {
-    nodes++;
+    nodes++; visited++;
+    if (nodes >= maxNodes) budgetHit = true;
     if (position.finished || remaining <= 0 || nodes >= maxNodes) return evaluate(position);
     const maximizing = position.player === root;
     let best = maximizing ? -Infinity : Infinity;
@@ -46,5 +47,6 @@ export function chooseMove(state, { maxNodes = 7000, depth = 3, random = Math.ra
     if (value > best) { best = value; choices = [move]; }
     else if (value === best) choices.push(move);
   }
+  onStats({ nodes: visited, budget_hit: budgetHit, random: false });
   return choices[Math.min(choices.length - 1, Math.floor(random() * choices.length))] || null;
 }

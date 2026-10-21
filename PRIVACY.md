@@ -8,7 +8,7 @@ view states whether reporting is enabled and explains that game's collection.
 Reports can include random run IDs, timestamps, broad device categories, game/build
 versions, scores or puzzle progress, outcomes, and feature usage. Snake records game
 events; Sudoku records cumulative summaries, the initial puzzle, and generation
-metadata. The clients do not collect names, email addresses, accounts, persistent
+metadata. SOS records compact match moves and summarized computer search work. The clients do not collect names, email addresses, accounts, persistent
 visitor IDs, location, raw user agents, or exact screen dimensions. Sudoku does not
 send entered answers, pencil notes, or a move history.
 
@@ -23,6 +23,7 @@ puzzle cache is separate from analytics and is used to reduce waiting time.
 
 - [Snake report format and receiver](snake-game/analytics/README.md)
 - [Sudoku report format and receiver](sudoku-game/analytics/README.md)
+- [SOS report format and receiver](sos-game/analytics/README.md)
 
 Anyone deploying an analytics-enabled copy should review its actual collection,
 receiver access, retention policy, and disclosures. The MIT source license permits

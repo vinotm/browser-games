@@ -9,9 +9,9 @@ from urllib.parse import unquote, urlsplit
 
 
 def source_build_id(root, game="snake"):
-    if game == "sudoku":
-        files = [root / "sudoku-game/index.html", root / "sudoku-game/style.css"]
-        directories = [("shared", (".js", ".css")), ("sudoku-game/js", (".js",))]
+    if game in ("sudoku", "sos"):
+        files = [root / f"{game}-game/index.html", root / f"{game}-game/style.css"]
+        directories = [("shared", (".js", ".css")), (f"{game}-game/js", (".js",))]
     else:
         files = [root / 'index.html', root / 'snake-game/index.html', root / 'snake-game/style.css']
         directories = [('shared', ('.js', '.css')), ('snake-game/js', ('.js',))]
@@ -56,7 +56,7 @@ class FreshAssetsHandler(SimpleHTTPRequestHandler):
     def deployment_config(self, head=False):
         # Only the public endpoint is returned; the private file is never served.
         path = unquote(urlsplit(self.path).path)
-        if path not in ('/snake-game/analytics-config.json', '/sudoku-game/analytics-config.json'):
+        if path not in ('/snake-game/analytics-config.json', '/sudoku-game/analytics-config.json', '/sos-game/analytics-config.json'):
             return False
         game = path.split('-game/')[0].lstrip('/')
         override = Path(self.directory) / (game + '-game/private/analytics-config.json')
