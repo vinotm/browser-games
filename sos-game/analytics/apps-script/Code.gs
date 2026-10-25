@@ -151,7 +151,7 @@ function validateBatch_(input) {
     require_(run.schema_version === 1 ? [4, 6, 8, 10].includes(run.size) :
       integer_(rows, 20) && rows >= 3 && integer_(columns, 20) && columns >= 3, 'invalid_setting');
     require_(['computer', 'local'].includes(run.mode) &&
-      (run.mode === 'computer' ? ['easy', 'medium', 'hard'].includes(run.difficulty) : run.difficulty === null) &&
+      (run.mode === 'computer' ? ['easy', 'casual', 'medium', 'advanced', 'hard', 'diff 1', 'diff 2', 'diff 3', 'diff 4', 'diff 5'].includes(run.difficulty) : run.difficulty === null) &&
       [0, 1].includes(run.first_player), 'invalid_setting');
     for (const field of (run.schema_version === 1 ? ['size'] : ['rows', 'columns']).concat(['mode', 'difficulty', 'first_player'])) result[field] = run[field];
     require_(['production', 'preview', 'development', 'unknown'].includes(run.environment), 'invalid_environment'); result.environment = run.environment;

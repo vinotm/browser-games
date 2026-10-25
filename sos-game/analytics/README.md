@@ -95,3 +95,10 @@ Anonymous requests can still consume Apps Script execution quotas even when reje
 Keep endpoint configuration empty until owner verification is complete. The underlined
 Data privacy link beneath Start opens a short statement inside the board, reflects
 whether analytics are configured, and returns to the unchanged setup.
+
+New difficulty values are strings `diff 1` through `diff 5`, matching the slider.
+Historical named values remain accepted unchanged; `easy`, `medium`, and `hard`
+correspond to levels 1, 3, and 5 (`casual` and `advanced` map to 2 and 4).
+Multiplayer reports use null. Publish the updated Apps Script receiver before
+releasing clients that send the new format. Existing queued reports keep their
+original difficulty value and run identity.

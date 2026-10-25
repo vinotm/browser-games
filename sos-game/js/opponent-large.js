@@ -60,8 +60,8 @@ function candidates(state, index, limit) {
 // A global tactical index spots every immediate score. Only lines within two
 // cells of a placement change; update those instead of rescanning the grid at
 // every search node. Cluster-ranked shortlists bound branching, not board vision.
-export function chooseLargeMove(state, { maxNodes = 7000, depth = 3, random = Math.random, onStats = () => {} } = {}) {
-  const root = state.player, start = performance.now(), milliseconds = depth >= 4 ? 220 : depth >= 2 ? 110 : 50;
+export function chooseLargeMove(state, { maxNodes = 7000, depth = 3, maxMilliseconds, random = Math.random, onStats = () => {} } = {}) {
+  const root = state.player, start = performance.now(), milliseconds = maxMilliseconds ?? (depth >= 4 ? 220 : depth >= 2 ? 110 : 50);
   const rootIndex = updateIndex(state), roots = candidates(state, rootIndex, 20);
   if (!roots.length) return null;
   const children = roots.map(move => { const next = play(state, move.index, move.letter); return { move, next, index: updateIndex(next, rootIndex, move.index) }; });

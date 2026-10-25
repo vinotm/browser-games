@@ -45,7 +45,7 @@ test('full computer match remains legal and accounts for every scored line', () 
 
 test('all difficulty settings return legal moves for either starting player', async () => {
   const { computerMove } = await import('../sos-game/js/difficulty.js');
-  for (const difficulty of ['easy', 'medium', 'hard']) for (const player of [0, 1]) {
+  for (const difficulty of ['easy', 'casual', 'medium', 'advanced', 'hard']) for (const player of [0, 1]) {
     const state = createGame(4); state.player = player;
     const move = computerMove(state, difficulty, () => .2);
     assert.ok(play(state, move.index, move.letter));
@@ -156,4 +156,30 @@ test('999-point threshold ends play immediately, including a multi-line overshoo
   const state = createGame(4); state.scores[0] = 997;
   state.cells[0] = 'S'; state.cells[1] = 'O';
   assert.equal(play(state, 2, 'S').finished, false);
+});
+
+test('five levels preserve legacy anchors and normalize saved settings', async () => {
+  const { computerMove, normalizeDifficulty, difficultyLevel } = await import('../sos-game/js/difficulty.js');
+  for (const [level, key] of ['easy', 'casual', 'medium', 'advanced', 'hard'].entries()) {
+    assert.equal(normalizeDifficulty(String(level + 1)), key);
+    assert.equal(difficultyLevel(key), level + 1);
+  }
+  for (const value of [undefined, null, 'invalid', 0, 6, 2.5]) assert.equal(normalizeDifficulty(value), 'medium');
+  const state = createGame(4);
+  for (const [level, key, depth, maxNodes] of [[1, 'easy', 1, 500], [3, 'medium', 2, 3000], [5, 'hard', 4, 18000]]) {
+    assert.deepEqual(computerMove(state, level, () => .9), chooseMove(state, { depth, maxNodes, random: () => .9 }));
+    assert.deepEqual(computerMove(state, level, () => .9), computerMove(state, key, () => .9));
+  }
+  let stats;
+  computerMove(state, 2, () => .1, value => { stats = value; });
+  assert.equal(stats.random, true);
+  computerMove(state, 2, () => .3, value => { stats = value; });
+  assert.equal(stats.random, false);
+  for (const level of [2, 4]) {
+    const large = createGame(12, 12);
+    large.letterStreaks[0] = { letter: 'S', count: 2 };
+    const move = computerMove(large, level, () => .9);
+    assert.equal(move.letter, 'O');
+    assert.ok(play(large, move.index, move.letter));
+  }
 });

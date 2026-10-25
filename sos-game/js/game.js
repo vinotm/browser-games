@@ -1,6 +1,6 @@
 import { createPageShell, createConfirmationDialog } from '../../shared/js/page-shell.js';
 import { createGame, play, allowedLetters } from './rules.js';
-import { measuredComputerMove } from './difficulty.js';
+import { measuredComputerMove, normalizeDifficulty, difficultyLevel } from './difficulty.js';
 import { createRunAnalytics } from './analytics.js';
 import { loadDeploymentConfig } from '../../shared/js/config.js';
 import { describeDevice } from '../../shared/js/device.js';
@@ -17,16 +17,29 @@ const settingsStorage = createStorage('sos');
 let saved = {};
 try {
   saved = JSON.parse(settingsStorage.get('settings', '{}')) || {};
-  for (const id of ['mode', 'size', 'difficulty']) {
+  for (const id of ['mode', 'size']) {
     const select = $(`#${id}`);
     const value = String(saved?.[id]);
     if ([...select.options].some(option => option.value === value)) select.value = value;
   }
+  $('#difficulty').value = difficultyLevel(saved.difficulty);
   for (const [index, id] of ['name-one', 'name-two'].entries()) {
     if (typeof saved?.names?.[index] === 'string') $(`#${id}`).value = limitName(saved.names[index].trim()) || `P${index + 1}`;
   }
 } catch { /* Invalid or unavailable storage leaves the built-in defaults intact. */ }
 document.querySelectorAll('#setup select').forEach(enhanceSelect);
+function updateDifficultySlider() {
+  const input = $('#difficulty');
+  input.setAttribute('aria-valuetext', `Level ${input.value}`);
+  input.style.setProperty('--progress', `${(Number(input.value) - 1) * 25}%`);
+  document.querySelectorAll('.difficulty-steps span').forEach((step, index) => {
+    step.classList.toggle('is-selected', index + 1 === Number(input.value));
+  });
+}
+$('#difficulty').addEventListener('input', updateDifficultySlider);
+$('#difficulty').addEventListener('pointerdown', () => $('#difficulty').classList.add('pointer-focus'));
+for (const type of ['keydown', 'blur']) $('#difficulty').addEventListener(type, () => $('#difficulty').classList.remove('pointer-focus'));
+updateDifficultySlider();
 const boardSettings = createBoardSettings($('#size'), saved);
 function configuredGame() { const { rows, columns } = boardSettings.dimensions(); return createGame(rows, columns); }
 document.querySelectorAll('.name-input').forEach(input => setupNameInput(input, count => {
@@ -45,7 +58,7 @@ document.querySelectorAll('.name-input').forEach(input => input.addEventListener
   if (event.key === 'Escape') input.blur();
 }));
 let state = configuredGame(), started = false, mode = $('#mode').value,
-  difficulty = $('#difficulty').value, selected = null, thinking = false, requestId = 0;
+  difficulty = normalizeDifficulty($('#difficulty').value), selected = null, thinking = false, requestId = 0;
 let resultTimer;
 let lastFilled = -1;
 let playerNames = [$('#name-one').value, $('#name-two').value];
@@ -105,7 +118,7 @@ const boardNavigation = createBoardNavigation({
 });
 function render() {
   $('#game-difficulty').hidden = !started || mode !== 'computer';
-  $('#game-difficulty').textContent = difficulty[0].toUpperCase() + difficulty.slice(1);
+  $('#game-difficulty').textContent = `DIFF ${difficultyLevel(difficulty)}`;
   $('#new-game').disabled = !started;
   $('.board-actions').hidden = !started || state.finished;
   $('.scoreboard').classList.toggle('is-waiting', !started);
@@ -260,7 +273,7 @@ function place(index, value, stats = null) {
   computerTurn(gained ? 700 : 0);
 }
 $('#start').addEventListener('click', () => {
-  lastFilled = -1; requestId++; state = configuredGame(); mode = $('#mode').value; difficulty = $('#difficulty').value; state.player = Math.random() < .5 ? 0 : 1; started = true;
+  lastFilled = -1; requestId++; state = configuredGame(); mode = $('#mode').value; difficulty = normalizeDifficulty($('#difficulty').value); state.player = Math.random() < .5 ? 0 : 1; started = true;
   playerNames = ['name-one', 'name-two'].map((id, index) => {
     const input = $(`#${id}`);
     input.value = limitName(input.value.trim()) || `P${index + 1}`;
