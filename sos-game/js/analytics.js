@@ -1,4 +1,5 @@
 import { VERSION } from './rules.js';
+import { difficultyLevel } from './difficulty.js';
 const PREFIX = 'sos-report-v1-';
 const MAX_BYTES = 200000, MAX_BATCH_BYTES = 60000;
 const bytes = value => new TextEncoder().encode(JSON.stringify(value)).length;
@@ -81,7 +82,7 @@ export function createRunAnalytics({ endpoint = '', environment = 'unknown', bui
       run = { schema_version: 2, game: 'sos', game_version: VERSION, rules_version: 'rectangular-v2',
         run_id: id(), revision: 0, environment, build_id: buildId,
         device: typeof device === 'function' ? device() : device,
-        rows, columns, mode, difficulty: mode === 'computer' ? difficulty : null, first_player: firstPlayer,
+        rows, columns, mode, difficulty: mode === 'computer' ? `diff ${difficultyLevel(difficulty)}` : null, first_player: firstPlayer,
         started_at: stamp(), updated_at: stamp(), ended_at: null, outcome: 'in_progress',
         elapsed_ms: 0, foreground_ms: 0, moves: [],
         ai: { decisions: 0, search_ms: 0, nodes: 0, budget_hits: 0, random_moves: 0 } };

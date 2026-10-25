@@ -14,9 +14,9 @@ function moves(state) {
 }
 // Fixed work budget keeps large boards responsive; extra turns retain the same
 // maximizing/minimizing player rather than blindly alternating search roles.
-export function chooseMove(state, { maxNodes = 7000, depth = 3, random = Math.random, onStats = () => {} } = {}) {
+export function chooseMove(state, { maxNodes = 7000, depth = 3, maxMilliseconds, random = Math.random, onStats = () => {} } = {}) {
   if (state.finished) return null;
-  if (state.cells.length > 100) return chooseLargeMove(state, { maxNodes, depth, random, onStats });
+  if (state.cells.length > 100) return chooseLargeMove(state, { maxNodes, depth, maxMilliseconds, random, onStats });
   const root = state.player;
   let nodes = 0, visited = 0, budgetHit = false;
   function evaluate(position) {

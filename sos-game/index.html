@@ -28,7 +28,11 @@
       <label for="mode">Game mode</label>
       <span class="select-wrap"><select id="mode"><option value="computer">vs Bot</option><option value="local">Multiplayers</option></select></span>
       <label for="difficulty" id="difficulty-label">Difficulty</label>
-      <span class="select-wrap" id="difficulty-wrap"><select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></span>
+      <div id="difficulty-wrap" class="difficulty-slider">
+        <input id="difficulty" type="range" min="1" max="5" step="1" value="3" aria-valuetext="Level 3" />
+        <div class="difficulty-steps" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+        <div class="difficulty-bands" aria-hidden="true"><span>Easy</span><span>Hard</span></div>
+      </div>
       <label for="size">Board size</label>
       <span class="select-wrap"><select id="size"><option value="6" selected>6 × 6</option><option value="8">8 × 8</option><option value="10">10 × 10</option><option value="custom">Custom</option></select></span>
       <label for="name-one" class="name-field-label">P1 name</label>
@@ -51,6 +55,11 @@
   <p id="status" class="sr-only" role="status" aria-live="polite"></p>
   <dialog id="custom-size" aria-labelledby="custom-title">
     <form id="custom-form"><h2 id="custom-title">Custom board</h2>
+      <div id="size-preview" aria-label="Board size preview">
+        <div id="size-preview-board" aria-hidden="true"></div>
+        <button id="size-resize" type="button" aria-label="Resize board" aria-describedby="size-drag-hint"><span class="resize-grip" aria-hidden="true"></span></button>
+      </div>
+      <p id="size-drag-hint">Drag the corner to resize</p>
       <div class="dimension-fields"><label>Rows<input id="custom-rows" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-describedby="custom-warning" /></label><label>Columns<input id="custom-columns" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-describedby="custom-warning" /></label></div>
       <p id="custom-warning" role="status"></p>
       <div class="custom-actions"><button id="custom-cancel" class="secondary" type="button">Cancel</button><button id="custom-ok" type="submit">OK</button></div>

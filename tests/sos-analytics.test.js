@@ -84,3 +84,11 @@ test('AI telemetry preserves move choice and measures actual search work', async
   const measured = measuredComputerMove(state, 'medium');
   assert.ok(measured.stats.nodes > 0); assert.ok(measured.stats.search_ms >= 0);
 });
+
+test('difficulty reports use diff n strings and multiplayer stays null', () => {
+  for (const [index, difficulty] of ['easy', 'casual', 'medium', 'advanced', 'hard'].entries()) {
+    const s = setup();
+    s.a.start({ ...settings, difficulty });
+    assert.equal(s.latest().difficulty, `diff ${index + 1}`);
+  }
+});

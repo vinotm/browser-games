@@ -1,6 +1,6 @@
 # SOS
 
-Version: `beta-4.2`.
+Version: `beta-5`.
 
 A finite-board SOS game against SOS Bot (“vs Bot”) or two players sharing one device.
 The default board is 6 × 6; 8 × 8 and 10 × 10 are also available.
@@ -9,6 +9,11 @@ Setup orders Game mode, Difficulty (computer only), Board size, P1 name and P2 n
 (local multiplayer only). Choosing Custom opens a compact dialog; invalid or out-of-range
 values show a warning and disable OK. Cancel keeps the previous size. An applied custom
 size appears as Custom (rows × columns) and is remembered with other game preferences.
+The custom-size dialog includes a grid preview. Drag its corner with a mouse or
+touch, or edit Rows and Columns; both controls stay in sync. With the resize
+handle focused, arrow keys adjust the dimensions. A fixed 20 × 20 grid shows the
+selected area, anchored at its top-left corner.
+Changes apply only after OK.
 The last applied game mode, board size, and computer difficulty are remembered in
 the browser after starting a game. Invalid or unavailable storage uses defaults;
 an unfinished board is not saved.
@@ -72,27 +77,35 @@ with the last applied settings in this browser when a game starts.
 
 ## Computer opponent
 
-Choose Easy, Medium, or Hard before starting against the computer. The selected
-difficulty appears under the title during computer matches, in the same uppercase
-style as Sudoku. Local multiplayer has no difficulty label.
+Choose level 1–5 with the slider, from Easy to Hard. The selected level appears
+under the title during bot matches. Local multiplayer has no difficulty label.
+Existing Easy, Medium and Hard preferences map to levels 1, 3 and 5.
 
-Easy mixes
-random legal placements with one-ply scoring; Medium searches two plies; Hard
-searches four plies with a larger node budget. These are tactical search settings,
-not a guarantee of perfect play.
+| Level | Target search depth | Node budget | Random legal move chance | Large-board time budget |
+| --- | --- | --- | --- | --- |
+| 1 | 1 | 500 | 45% | 50 ms |
+| 2 | 2 | 1,500 | 20% | 80 ms |
+| 3 | 2 | 3,000 | 0% | 110 ms |
+| 4 | 3 | 8,000 | 0% | 160 ms |
+| 5 | 4 | 18,000 | 0% | 220 ms |
+
+Levels 1, 3 and 5 preserve the previous Easy, Medium and Hard algorithms.
+Level 2 mixes occasional random placements with a smaller two-ply search;
+level 4 adds a third ply and a larger budget. These are tactical search settings,
+not a guarantee of perfect play or a strict ranking on every position.
 
 A worker runs depth-limited minimax with alpha-beta pruning, ordered by immediate
 scoring opportunities. Evaluation combines score difference with the next player's
 best immediate score. Extra turns preserve the current player throughout the search.
-Every search branch and Easy's random moves obey the per-player letter limit.
+Every search branch and levels 1–2's random moves obey the per-player letter limit.
 Equal choices are randomized. A fixed work budget is divided among legal first
 moves; this is a bounded tactical opponent, not an unbeatable solver. When workers
 are unavailable, the selected search runs on the main thread.
 On grids larger than 100 cells, a global tactical index checks all cells for immediate
 scores and updates only lines within two cells of each new move. Cluster-ranked
 shortlists include candidates from separate board regions. Iterative deepening retains
-the last completed search depth; Easy/Medium/Hard use computation budgets of about
-50/110/220 ms as well as node limits. Hard can search up to four plies, but the completed
+the last completed search depth, using the time and node budgets above. Level 5
+can search up to four plies, but the completed
 depth depends on position and device. These budgets bound search effort, not the
 quality of every decision.
 

@@ -127,3 +127,16 @@ test('schema 2 rectangular replay, maximum dimensions and schema 1 compatibility
   changed.runs[0].rules_version='rectangular-v2';changed.runs[0].rows=4;changed.runs[0].columns=4;
   assert.equal(r.post(changed).error,'run_id_conflict');
 });
+
+test('receiver accepts all five difficulty levels while preserving its allowlist', () => {
+  for (const difficulty of ['easy', 'casual', 'medium', 'advanced', 'hard', 'diff 1', 'diff 2', 'diff 3', 'diff 4', 'diff 5']) {
+    const batch = example();
+    batch.runs[0].mode = 'computer'; batch.runs[0].difficulty = difficulty;
+    assert.equal(receiver().post(batch).ok, true, difficulty);
+  }
+  for (const difficulty of ['expert', '2', 2, null]) {
+    const batch = example();
+    batch.runs[0].mode = 'computer'; batch.runs[0].difficulty = difficulty;
+    assert.equal(receiver().post(batch).error, 'invalid_setting');
+  }
+});
