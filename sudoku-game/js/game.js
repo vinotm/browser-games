@@ -1,3 +1,4 @@
+import { tutorialPages } from './tutorial.js';
 import { formatDuration } from '../../shared/js/clock.js';
 import { createScreenAwake } from '../../shared/js/screen-awake.js';
 import { createRunAnalytics } from './analytics.js';
@@ -137,7 +138,7 @@ function applyManualMode() {
   render();
 }
 let clues = Array(81).fill(0), board = [...clues], selected = -1, matchSource = -1, busy = false, finished = false, started = false, startedAt = 0, elapsed = 0;
-const page = createPageShell({ homeUrl: '../', ready: false, isActive: () => started && !finished });
+const page = createPageShell({ tutorial: { host: document.querySelector('.game-screen'), pages: tutorialPages }, homeUrl: '../', ready: false, isActive: () => started && !finished });
 const screenAwake = createScreenAwake();
 for (const event of ['pointerdown', 'keydown']) document.addEventListener(event, () => screenAwake.activity(), { passive: true });
 const noteLayer = document.createElement('div');
@@ -523,8 +524,8 @@ analyticsConfig.then(config => {
   analytics = createRunAnalytics({ ...config, endpoint: config.analyticsEndpoint, device: describeDevice });
   if (!analytics.enabled) {
     document.querySelector('#privacy-intro').textContent = 'Analytics are disabled on this site.';
-    document.querySelector('#privacy-details').textContent = 'Your game and preferences stay in your browser.';
-    document.querySelector('#privacy-status').hidden = true;
+    document.querySelector('#privacy-details').hidden = true;
+    document.querySelector('#privacy-local').hidden = false;
   }
   analytics.flush();
 });

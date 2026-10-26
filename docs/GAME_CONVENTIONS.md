@@ -2,9 +2,9 @@
 
 ## Shared page controls
 
-Every game uses `shared/js/page-shell.js` to create its theme switcher, Home link, and leave confirmation. Import shared base and component CSS.
+Every game uses `shared/js/page-shell.js` to create its theme switcher, Home link, optional game guide, and leave confirmation. Import shared base and component CSS.
 Keep a `[data-page-header]` element containing the game title and its left-side
-placeholder or game-specific mode indicator. The shell supplies matching Home and theme icons grouped on the right of the
+placeholder or game-specific mode indicator. The shell supplies matching Home, optional guide, and theme icons grouped on the right of the
 title row, without hover backgrounds. Home retains an accessible name and tooltip. Keep beta labels absolutely positioned beside the title
 so only the game name determines its center.
 Use a homepage URL relative to the game, so repository-subpath hosting works.
@@ -68,8 +68,9 @@ tracked files and the built output, including nested private paths and local set
 The source is MIT-licensed; analytics disclosure is a separate product requirement,
 not an extra license restriction. Public clones have collection disabled by default.
 Every game that enables analytics must disclose it in a short privacy view reachable
-before Start. State the purpose, main categories, exclusions, private storage, and
-what happens to offline reports. Reflect the actual enabled configuration.
+before Start. State the purpose, then separate “Not collected” and “Collected”
+groups without “we” or “us”. Keep storage and offline retry details in the full
+privacy and analytics documentation. Reflect the actual enabled configuration.
 
 Collect only what helps improve the game. Prefer cumulative counters when an event
 stream is unnecessary. Random run IDs identify attempts, not persistent people.
@@ -114,3 +115,53 @@ pointer inside an active board, an accessible zoom slider, persistent
 position bars for overflowing axes, and a return to playing size before selection.
 Keep a visible outline on the actual grid boundary so it remains recognizable while
 panning. Game coordinates and scoring must remain independent of display zoom.
+
+## Optional in-board guides
+
+Pass `tutorial: { host, pages }` to `createPageShell` when a game has a guide. Omit
+it entirely otherwise; the shell adds no empty icon slot. Keep the pages in the
+game folder, usually `js/tutorial.js`. Each page has a `title`, a `visual()` function returning a game-owned DOM/SVG
+example, and a short `caption`. Aim for understanding in five seconds. Avoid prose
+blocks or exhaustive feature inventories. The shared `shared/js/tutorial.js` owns rendering, pagination,
+board input protection, Escape dismissal, board-relative placement, and focus
+return. The guide is a non-modal board panel: it does not trap focus or make the
+rest of the page inert. Theme and navigation stay usable. Static game scenes can use `createGuideScene`; never insert player input or reports
+into SVG markup.
+
+The guide occupies the board rather than a separate page or a full-screen panel.
+It starts at page one each time. Back/Next step through the guide; only the close icon or Escape
+returns to the game. Outside clicks do not dismiss it; Next is disabled on the last page. Long content scrolls within the guide without moving its footer.
+The navigation order is Home, guide, theme, with identical transparent controls.
+On compact screens, Home sits on the left and guide/theme on the right; each
+control keeps a 44px target. Test narrow screens for title and beta-label overlap.
+
+`page.isConfirming()` includes an open guide, so existing game input and bot guards
+also protect guide reading. `tutorial.onOpen` can return a cleanup callback to restore
+play; by default the shell reuses `onPrompt`. Snake pauses and restores its previous
+state. Sudoku keeps counting time. SOS defers bot placement until the guide closes.
+Do not reset, restart, or count tutorial reading as a new run.
+
+Keep privacy wording direct: “Data privacy”, the purpose, and visually separated
+collection and exclusion groups. Avoid promotional headings and first-person copy. See
+[AGENTS.md](../AGENTS.md) for the copy convention and branch scope.
+
+## Game title navigation
+
+The shell makes each game title a link to `./`, clearing query parameters and
+returning to that game’s initial page. Active or paused runs get the shared leave
+confirmation, even when the destination is the current URL. Cancelling preserves
+play; accepting reloads once, without a second native warning. Ready and completed
+games navigate directly. Standard modified clicks retain browser behavior.
+
+Guides close only with X or Escape; outside clicks must leave them open. Keep
+captions literal and short. Show item effects without timers or hidden statistics.
+
+## Information-panel layout
+
+Privacy views start at the top-left inside the board border, with left-aligned
+headings, groups and return links. This applies to every game. Guide panels use
+square corners with no extra border. Set `--board-content-inset` on the board host
+to preserve its edge (Snake 6px, Sudoku 2px, SOS 0px because its parent owns the border).
+Guide content starts at the top. X and the centered Back · k/n · Next footer remain
+fixed while content scrolls. Menus must layer above the guide. Tutorial opens are
+not collected by analytics.

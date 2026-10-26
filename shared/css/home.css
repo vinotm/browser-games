@@ -5,10 +5,8 @@
 .game-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .game-card { display: block; overflow: hidden; border: 1px solid var(--key-border); border-radius: 18px; background: var(--board); color: var(--text); text-decoration: none; transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
 .game-card:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
-.game-art { padding: 16px 24px; background: color-mix(in srgb, var(--primary) 7%, var(--board)); }
+.game-art { padding: 16px 24px; background: var(--board); }
 .game-art svg { display: block; width: 100%; height: auto; }
-.sudoku-card .game-art { background: color-mix(in srgb, #5185ba 10%, var(--board)); }
-.sos-card .game-art { background: color-mix(in srgb, #7b6389 8%, var(--board)); }
 .preview-s { fill: #426e58; }
 .preview-o { fill: #956b43; }
 .preview-strike { stroke: #526b86; stroke-width: 3px; stroke-linecap: round; opacity: .8; }

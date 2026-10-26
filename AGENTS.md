@@ -5,28 +5,54 @@
 Keep privacy views consistent across games using the conventions below.
 
 - Keep privacy notes inside the board, with a simple back-to-game link.
-- Left-align the heading, paragraphs, and back link on a shared left edge.
+- Anchor privacy content at the board’s top-left, inside its border. Left-align
+  the heading, groups, and back link; never vertically center the view.
 - Underline both “Data privacy” and “Back to game” links in light and dark themes.
-- Use a short heading and three brief paragraphs: why reports help, the main data
-  categories and exclusions, then private storage and offline upload behavior.
-- Prefer plain, concise copy. Keep technical field lists and implementation details
-  in analytics documentation rather than the player-facing privacy view.
-- Adapt the data categories to the game. Describe only what is actually collected;
-  never copy another game's anonymity or exclusion claims without verifying them.
-- If analytics are disabled, state that clearly instead of implying reports upload.
+- Use “Data privacy” as the heading. State the purpose, then use separate
+  “Not collected” and “Collected” groups. Avoid “we” and “us”. Keep storage and
+  offline retry details in the full privacy/analytics docs, not the in-board view. Use direct sentences; avoid slogans
+  such as “A little data, a better game”. Do not impose a fixed paragraph count.
+- Keep technical field lists and implementation details in analytics docs.
+- Adapt categories and exclusions to the game's actual report schema. Do not claim
+  anonymity or exclusions without checking them. Do not imply that hosting services
+  receive no network metadata.
+- If analytics are disabled, say so plainly and explain that local preferences stay
+  in the browser. Never imply that disabled reports upload.
 
-Suggested structure:
+Example for an enabled deployment:
 
-> A little data, a better game
+> Data privacy
 >
-> Small, anonymous gameplay reports help improve [game].
+> This game sends anonymous play reports for game improvement.
 >
-> Reports include [main categories]. [Relevant personal data or player content]
-> aren’t collected.
+> **Not collected**
+> [Verified exclusions]
 >
-> Reports are stored privately. Offline reports upload when you’re connected again.
+> **Collected**
+> [Main gameplay categories], device type
 >
 > ← Back to game
+
+## Working branches
+
+Game branches are for changes specific to that game. The `core` branch can contain
+shared components, homepage work, cross-game fixes and assessments, documentation,
+private analytics, or a dedicated game's changes when part of that work. It is not
+restricted to shared code. Private material stays ignored regardless of branch.
+
+## Game guides
+
+Tutorials are optional; do not require them before a new game is ready. When a guide
+is useful, use the shared tutorial module through the page shell, with visual
+pages in the game's own `js/tutorial.js`. Keep each page to one visual example and one
+short caption. Each page should be understood in about five seconds: use a game
+example, with a few words underneath. Avoid paragraph-based tutorials.
+Do not expose deliberately hidden rules or stats. Check the guide against actual
+mechanics. Use the shared Home, guide, theme order, transparent icon controls, and
+comfortable hit targets. Check title/beta overlap and all three controls at narrow
+phone widths. Guides stay inside the board, support Next/Back, close, Escape and
+focus return, and block game input. They must not block theme/navigation or trap keyboard
+focus. Games decide whether ongoing play pauses.
 
 ## Public repository content
 
@@ -51,9 +77,11 @@ analytics disclosure described in [privacy](PRIVACY.md).
 
 ## Shared navigation design
 
-- Group Home and theme icons to the right of the centered game title. Use the
+- Group Home, optional guide, and theme icons to the right of the centered game title. Use the
   shared page shell; keep beta labels outside the title’s centering width.
-- Both icons must remain transparent on hover, press, and touch: no background
+  On compact screens, place Home on the left and guide/theme on the right,
+  retaining 44px hit targets and the centered game name.
+- All navigation icons must remain transparent on hover, press, and touch: no background
   shade, shadow, or brightness effect. Retain visible keyboard focus outlines.
 - Explicitly exclude navigation icons from generic desktop icon hover rules;
   verify computed styles with a real mouse hover, since selector specificity can
@@ -70,3 +98,15 @@ Game input handlers must leave Alt-, Command/Meta-, and Control-modified keys
 untouched unless implementing an explicit game shortcut. In particular, never
 prevent browser Back/Forward arrow shortcuts or interpret them as moves. Active
 and paused games rely on the shared leave guard for native navigation warnings.
+
+Game titles link to their own start page. Active games use the same leave
+confirmation as Home; confirmed navigation reloads the page and clears the run.
+
+Guides close only with X or Escape; outside clicks must leave them open. Keep
+captions literal and short. Show item effects without timers or hidden statistics.
+
+Guide panels have square corners and stay inside the board’s playing edge, using
+`--board-content-inset` for each game. Keep X at the top-right and the compact
+Back · k/n · Next row fixed at the bottom. Content begins at the top and scrolls
+independently if needed. Layer game menus above the guide, without blocking page
+navigation or theme controls. Tutorial opens are not tracked in analytics.

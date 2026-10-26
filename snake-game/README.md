@@ -17,7 +17,21 @@ Serve the repository root and open `snake-game/`. See the
 
 ## Collection navigation
 
-The current version is `beta-5`. Theme controls and Back to Homepage come from the
+The current version is `beta-6`. Theme controls and Back to Homepage come from the
 shared page shell. Leaving a running or paused game requires confirmation; ready
 and completed runs do not. The in-page confirmation pauses a running snake and
 resumes it when cancelled, while an already paused run stays paused.
+
+## Game guide and privacy
+
+The question-mark icon opens a visual, multi-page guide inside the board. Home,
+guide, and theme controls come from the shared page shell. Guide content lives in
+`js/tutorial.js`; layout, navigation, and dismissal use `shared/js/tutorial.js`.
+Each page uses a game example and a short caption. Clicking the title returns to
+the game’s start page, asking first if a run is unfinished.
+Data privacy is available before starting, with collection-specific details and
+an underlined return link. Disabled analytics are stated explicitly.
+
+Opening the guide pauses a running snake. Closing it resumes only if it was running
+beforehand; a paused game stays paused. The guide covers controls, food combos,
+wall warnings and every food/pickup type, without timers or hidden stats.

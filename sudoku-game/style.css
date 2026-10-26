@@ -247,7 +247,6 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 .privacy-view { padding: clamp(14px, 4vw, 30px); gap: 10px; background: var(--board); text-align: left; align-items: stretch; overflow: auto; }
 .privacy-view h2 { margin: 0; font-size: clamp(19px, 5vw, 24px); }
 .privacy-view p { margin: 0; font-size: clamp(12px, 3.3vw, 14px); line-height: 1.5; color: var(--muted); }
-.privacy-view #privacy-status { font-size: 12px; }
 .privacy-view .privacy-link { align-self: flex-start; padding-left: 0; }
 .privacy-view { z-index: 2; }
 
@@ -317,3 +316,5 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 }
 
 @media (prefers-reduced-motion: reduce) { .loading-digits span { animation: none; } }
+
+.game-screen { --board-content-inset: 2px; }
