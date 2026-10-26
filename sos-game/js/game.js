@@ -1,3 +1,4 @@
+import { tutorialPages } from './tutorial.js';
 import { createPageShell, createConfirmationDialog } from '../../shared/js/page-shell.js';
 import { createGame, play, allowedLetters } from './rules.js';
 import { measuredComputerMove, normalizeDifficulty, difficultyLevel } from './difficulty.js';
@@ -78,7 +79,7 @@ try {
     }
   };
 } catch { worker = null; }
-const page = createPageShell({ homeUrl: '../', ready: false, isActive: () => started && !state.finished });
+const page = createPageShell({ tutorial: { host: document.querySelector('.game-screen'), pages: tutorialPages }, homeUrl: '../', ready: false, isActive: () => started && !state.finished });
 const newGameDialog = createConfirmationDialog({ id: 'new-game', title: 'Start a new game?',
   detail: 'Your current progress will be lost.', confirmLabel: 'New game' });
 const isConfirming = () => page.isConfirming() || newGameDialog.isOpen() || boardSettings.isOpen();
@@ -427,8 +428,8 @@ const config = await analyticsConfig;
 analytics = createRunAnalytics({ ...config, endpoint: config.analyticsEndpoint, device: describeDevice });
 if (!analytics.enabled) {
   $('#privacy-intro').textContent = 'Analytics are disabled on this site.';
-  $('#privacy-details').textContent = 'Your game and preferences stay in your browser.';
-  $('#privacy-status').hidden = true;
+  $('#privacy-details').hidden = true;
+  $('#privacy-local').hidden = false;
 }
 void analytics.flush();
 void page.reveal();

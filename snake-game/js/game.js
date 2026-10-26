@@ -1,3 +1,4 @@
+import { tutorialPages } from './tutorial.js';
 import { size, interval, gameVersion, minimumSnakeLength, normalFoodWarmup, largeFoodLifetime,
   foodTravelTicks, regularFoodLifetimeMs, wallSpawnGapMs, wallLimit, magnetRadius,
   directions, keys, spawnIntervals, buffTypes, getPalette } from './config.js?v=beta-public-1';
@@ -43,10 +44,9 @@ const privacyOpen = document.querySelector('#privacy-open');
 const privacyView = document.querySelector('#privacy-view');
 const privacyBack = document.querySelector('#privacy-back');
 if (!analyticsEndpoint) {
-  privacyView.querySelector('h2').textContent = 'Your game data';
   privacyView.querySelector('#privacy-intro').textContent = 'Analytics are disabled on this site.';
-  privacyView.querySelector('#privacy-details').textContent = 'Scores and preferences stay in your browser.';
-  privacyView.querySelector('.privacy-status').hidden = true;
+  privacyView.querySelector('#privacy-details').hidden = true;
+  privacyView.querySelector('#privacy-local').hidden = false;
 }
 let displayedComboCount = 0, comboPunch = null;
 
@@ -117,7 +117,7 @@ function expireFoodCombo() {
 const frames = createFrameScheduler(loop);
 const overlayView = createOverlay({ element: overlay, title: overlayTitle,
   detail: overlayDetail, action: overlayAction });
-const page = createPageShell({ homeUrl: '../', ready: false, legacyStorage: storage,
+const page = createPageShell({ tutorial: { host: document.querySelector('.game-screen'), pages: tutorialPages }, homeUrl: '../', ready: false, legacyStorage: storage,
   isActive: () => ['playing', 'paused'].includes(state),
   onPrompt() { const wasPlaying = state === 'playing'; if (wasPlaying) pause();
     return () => { if (wasPlaying && state === 'paused') resume(); }; },

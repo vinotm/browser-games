@@ -1,7 +1,7 @@
 // Snake-specific settings; shared utilities know nothing about these rules.
 export const size = 32;
 export const interval = 80;
-export const gameVersion = 'beta-5';
+export const gameVersion = 'beta-6';
 export const minimumSnakeLength = 5;
 export const normalFoodWarmup = 5;
 export const largeFoodLifetime = 125; // Ten seconds of active play.

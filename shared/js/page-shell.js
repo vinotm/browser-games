@@ -1,4 +1,5 @@
 import './theme-button.js';
+import { createTutorial } from './tutorial.js';
 import { createTheme } from './theme.js';
 import { createLeaveGuard } from './leave-guard.js';
 
@@ -50,13 +51,19 @@ export function createConfirmationDialog({ id = 'leave', title = 'Leave this gam
 }
 
 export function createPageShell({ header = document.querySelector('[data-page-header]'),
-  homeUrl, ready = true, isActive = () => false, onPrompt, legacyStorage, onThemeChange } = {}) {
+  homeUrl, tutorial, ready = true, isActive = () => false, onPrompt, legacyStorage, onThemeChange } = {}) {
   const themeButton = header.querySelector('#theme') || globalThis.createCollectionThemeButton();
   header.append(themeButton);
   const theme = createTheme({ button: themeButton, legacyStorage, onChange: onThemeChange });
   theme.apply();
   if (!homeUrl) return { theme, refresh() {}, isConfirming: () => false };
 
+  const title = header.querySelector('h1');
+  const titleLink = document.createElement('a');
+  titleLink.className = 'game-title-link'; titleLink.href = './';
+  titleLink.dataset.gameRestart = '';
+  titleLink.setAttribute('aria-label', `Restart ${title.firstChild.textContent.trim()}`);
+  titleLink.append(...title.childNodes); title.append(titleLink);
   const home = document.createElement('a');
   home.className = 'page-home icon-button'; home.href = homeUrl;
   home.setAttribute('aria-label', 'Back to Homepage'); home.title = 'Back to Homepage';
@@ -64,7 +71,10 @@ export function createPageShell({ header = document.querySelector('[data-page-he
   home.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-8H9v8H4a1 1 0 0 1-1-1z"/></svg>';
   // Compact title-row controls share one appearance and reserve their width.
   const nav = document.createElement('nav'); nav.className = 'page-navigation';
-  nav.setAttribute('aria-label', 'Collection'); nav.append(home, themeButton); header.append(nav);
+  const guide = tutorial ? createTutorial({ ...tutorial, onOpen: tutorial.onOpen || onPrompt }) : null;
+  nav.setAttribute('aria-label', 'Collection'); nav.append(home);
+  if (guide) { nav.append(guide.button); header.classList.add('has-guide'); }
+  nav.append(themeButton); header.append(nav);
   nav.inert = true;
   let revealPromise;
   function reveal() {
@@ -88,13 +98,15 @@ export function createPageShell({ header = document.querySelector('[data-page-he
         link.target && link.target !== '_self') return;
     const url = new URL(link.href, location.href);
     if (!['http:', 'https:'].includes(url.protocol) ||
-        url.origin === location.origin && url.pathname === location.pathname && url.search === location.search) return;
+        !link.hasAttribute('data-game-restart') && url.origin === location.origin &&
+        url.pathname === location.pathname && url.search === location.search) return;
     if (!isActive()) return;
     event.preventDefault(); void guard.request(url.href);
   }
   document.addEventListener('click', followLink);
   guard.refresh();
-  return { theme, reveal, refresh: guard.refresh, isConfirming: modal.isOpen,
-    dispose() { guard.dispose(); theme.dispose(); modal.dispose(); nav.remove();
-      themeButton.remove(); document.removeEventListener('click', followLink); } };
+  return { theme, reveal, refresh: guard.refresh, isConfirming: () => modal.isOpen() || !!guide?.isOpen(),
+    dispose() { guide?.dispose(); header.classList.remove('has-guide'); guard.dispose(); theme.dispose(); modal.dispose(); nav.remove();
+      themeButton.remove(); title.append(...titleLink.childNodes); titleLink.remove();
+      document.removeEventListener('click', followLink); } };
 }

@@ -124,7 +124,7 @@ The title carries a small beta label. Before the first Start, Data privacy opens
 statement inside the board, replacing the start view without opening a modal or a
 new page. Back to game or Escape restores the same ready state. Viewing it does not
 start the gameplay clock; gameplay input stays inactive. It explains anonymous
-analytics, the collected categories, private storage, and deferred offline uploads. The GAS
+analytics with separate Collected and Not collected groups. The GAS
 receiver stores coarse per-run desktop/mobile/tablet and input/viewport categories.
 Analytics are optional and disabled in the default public configuration. When enabled,
 the privacy view describes report collection and uploading; otherwise, it states

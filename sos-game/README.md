@@ -1,6 +1,6 @@
 # SOS
 
-Version: `beta-5`.
+Version: `beta-6`.
 
 A finite-board SOS game against SOS Bot (“vs Bot”) or two players sharing one device.
 The default board is 6 × 6; 8 × 8 and 10 × 10 are also available.
@@ -143,8 +143,8 @@ preedit may temporarily exceed 20: the counter follows the actual field length,
 turns red, and shows “Name will be trimmed” to its left. On composition commit or
 blur, normalization restores the limit and clears the warning immediately.
 Autocorrection and automatic capitalization are disabled as keyboard hints.
-Long scoreboard names use tighter spacing and a modest font reduction (down to
-14px), then ellipsis when necessary. The full name remains available to assistive
+Long scoreboard names use tighter spacing and a modest font reduction, wrapping
+into two rows without ellipsis. The full name remains available to assistive
 technology and in the name tooltip.
 
 ## Analytics
@@ -156,3 +156,16 @@ configures its endpoint. Player names remain local and are excluded from reports
 The letter picker waits 250 ms after opening or moving to another cell before
 accepting a letter. Pointer presses begun during this guard are ignored even when
 released later, preventing accidental mobile placements.
+
+## Game guide and privacy
+
+The question-mark icon opens a visual, multi-page guide inside the board. Home,
+guide, and theme controls come from the shared page shell. Guide content lives in
+`js/tutorial.js`; layout, navigation, and dismissal use `shared/js/tutorial.js`.
+Each page uses a game example and a short caption. Clicking the title returns to
+the game’s start page, asking first if a run is unfinished.
+Data privacy is available before starting, with collection-specific details and
+an underlined return link. Disabled analytics are stated explicitly.
+
+Bot placement waits while the guide is open. Its pages cover SOS scoring, extra
+turns and each player’s two-letter limit.

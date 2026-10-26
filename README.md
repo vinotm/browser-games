@@ -9,7 +9,6 @@ common controls, themes, storage, and other utilities.
 | --- | --- | --- |
 | Snake | `snake-game/` | [Overview](snake-game/README.md) · [Rules](snake-game/RULES.md) · [Analytics](snake-game/analytics/README.md) |
 | Sudoku | `sudoku-game/` | [Overview and rules](sudoku-game/README.md) · [Puzzle generation](sudoku-game/DIFFICULTY.md) · [Analytics](sudoku-game/analytics/README.md) |
-
 | SOS | `sos-game/` | [Overview and rules](sos-game/README.md) · [Analytics](sos-game/analytics/README.md) |
 
 ## Run locally
@@ -90,10 +89,11 @@ Third-party icon attribution is in [Snake's icon license](snake-game/LUCIDE-LICE
 
 ## Development conventions
 
-The collection is version `0.5`. Shared navigation, theme controls, leave protection,
+The collection is version `0.6`. Shared navigation, theme controls, leave protection,
 private tooling, and analytics disclosure follow the
 [game integration conventions](docs/GAME_CONVENTIONS.md). New games should use the
-shared page shell instead of implementing those controls independently.
+shared page shell instead of implementing those controls independently. Optional
+in-board guides use shared pagination and each game’s own short guide content.
 
 ## License and privacy
 

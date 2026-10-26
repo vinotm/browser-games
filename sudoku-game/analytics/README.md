@@ -97,7 +97,7 @@ milliseconds can therefore have a zero serve time later. The receiver accepts
 integer timings from 0 to 300,000 ms and prevents these fields changing within a run.
 No per-candidate log, cache inventory, complete solution or generation seed is uploaded.
 
-New reports use `game_version: beta-4` and `generator_version: guided-v2`.
+New reports use `game_version: beta-5` and `generator_version: guided-v2`.
 Older reports remain valid with the difficulty/timing group entirely absent; their
 retry hashes remain unchanged. Missing fields mean unknown, not Easy or zero.
 The new metadata group is validated together, with given difficulty never higher

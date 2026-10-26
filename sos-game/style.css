@@ -61,7 +61,6 @@
 .privacy-view h2 { margin: 0; font-size: clamp(19px, 5vw, 24px); }
 .privacy-view h2:focus { outline: none; }
 .privacy-view p { margin: 0; font-size: clamp(12px, 3.3vw, 14px); line-height: 1.5; color: var(--muted); }
-.privacy-view #privacy-status { font-size: 12px; }
 .privacy-view .privacy-link { align-self: flex-start; padding-left: 0; }
 .board-actions { padding: 8px 12px; border-top: 1px solid var(--key-border); background: var(--page); }
 #new-game { min-width: 140px; background: var(--primary); color: #fff; }
@@ -169,3 +168,5 @@
 .game-screen > .overlay { z-index: 3; }
 .player-side { grid-template-rows: 39px 18px; row-gap: 7px; column-gap: 8px; }
 .player-name { white-space: normal; text-wrap: balance; overflow-wrap: anywhere; text-overflow: clip; line-height: 1.18; height: 38px; padding: 0; border: 0; align-content: center; }
+
+.game-screen { --board-content-inset: 0px; }

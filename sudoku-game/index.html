@@ -16,10 +16,10 @@
 <div id="start-screen" class="overlay"><button id="start">Start</button><button id="privacy-open" class="privacy-link" type="button">Data privacy</button></div>
 <section id="difficulty-screen" class="overlay difficulty-screen" aria-labelledby="difficulty-title" hidden><h2 id="difficulty-title">Choose difficulty</h2><div id="difficulty-start" class="difficulty-picker" role="group" aria-label="Difficulty"><button type="button" data-level="novice" aria-pressed="false">Novice</button><button type="button" data-level="easy" aria-pressed="false">Easy</button><button type="button" data-level="medium" aria-pressed="false">Medium</button><button type="button" data-level="hard" aria-pressed="false">Hard</button></div><button id="difficulty-play" type="button" hidden>Play</button></section>
 <section id="privacy-view" class="overlay privacy-view" aria-labelledby="privacy-title" hidden>
-<h2 id="privacy-title" tabindex="-1">A little data, a better game</h2>
-<p id="privacy-intro">Small, anonymous gameplay reports help improve Sudoku.</p>
-<p id="privacy-details">Reports include the starting puzzle, difficulty, timing, progress and broad device details. Your answers, names, emails and location aren’t collected.</p>
-<p id="privacy-status">Reports are stored privately. Offline reports upload when you’re connected again.</p>
+<h2 id="privacy-title" tabindex="-1">Data privacy</h2>
+<p id="privacy-intro">This game sends anonymous play reports for game improvement.</p>
+<dl id="privacy-details" class="privacy-groups"><div><dt>Not collected</dt><dd>Entered answers, names, email addresses, location</dd></div><div><dt>Collected</dt><dd>Starting puzzle, difficulty, timing, progress, device type</dd></div></dl>
+<p id="privacy-local" hidden>Preferences stay in your browser.</p>
 <button id="privacy-back" class="privacy-link" type="button">← Back to game</button></section>
 <section id="board-loading" class="overlay board-loading" role="status" hidden><div class="loading-digits" aria-hidden="true"><span>8</span><span>3</span><span>6</span><span>1</span><span>9</span><span>4</span><span>7</span><span>2</span><span>5</span></div><p>Loading Sudoku…</p><button id="puzzle-retry" type="button" hidden>Try again</button></section>
 <section id="completion" class="overlay completion" aria-labelledby="completion-title" hidden><h2 id="completion-title">Puzzle Completed!</h2><p id="completion-detail"></p><span class="completion-dismiss">Click anywhere to dismiss</span></section>

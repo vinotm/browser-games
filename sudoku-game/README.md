@@ -50,9 +50,22 @@ Serve the repository root and open `sudoku-game/`. See the
 
 ## Collection navigation
 
-The current version is `beta-4`. The shared page shell supplies theme controls and
+The current version is `beta-5`. The shared page shell supplies theme controls and
 Back to Homepage. Leaving an unfinished puzzle asks for confirmation; the timer
 continues during the in-page dialog. Ready and completed puzzles do not prompt.
 
 Refresh opens directly to the start scene while puzzle caching warms in the
 background. Starting any puzzle uses the in-board loading view, including cache hits.
+
+## Game guide and privacy
+
+The question-mark icon opens a visual, multi-page guide inside the board. Home,
+guide, and theme controls come from the shared page shell. Guide content lives in
+`js/tutorial.js`; layout, navigation, and dismissal use `shared/js/tutorial.js`.
+Each page uses a game example and a short caption. Clicking the title returns to
+the game’s start page, asking first if a run is unfinished.
+Data privacy is available before starting, with collection-specific details and
+an underlined return link. Disabled analytics are stated explicitly.
+
+The timer continues while the guide is open. Its pages cover the grid rules,
+fixed clues and pencil notes.

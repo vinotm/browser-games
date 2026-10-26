@@ -38,7 +38,6 @@
 .privacy-view h2 { margin: 0 0 14px; font-size: 20px; line-height: 1.2; }
 .privacy-view h2:focus { outline: none; }
 .privacy-view p { margin: 0 0 12px; }
-.privacy-view .privacy-status { color: var(--muted); }
 .privacy-view .privacy-link { padding-left: 0; color: var(--text); }
 #timer {
   display: inline-block;
@@ -233,3 +232,5 @@ canvas:focus-visible {
     inset -2px -2px 0 rgb(0 0 0 / 35%);
 }
 #overlay { inset: 6px; }
+
+.game-screen { --board-content-inset: 6px; }
