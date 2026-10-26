@@ -15,10 +15,20 @@ function grid(highlight) {
   }
   return art;
 }
+function gridScene(label, highlight) {
+  return () => {
+    const svg = createGuideScene(label, grid(highlight));
+    // Square artwork uses the available height without the wide scene's gutters.
+    // Leave room around the outer stroke so the grid never touches its bounds.
+    svg.setAttribute('viewBox', '104 0 112 112');
+    svg.classList.add('sudoku-guide-grid');
+    return svg;
+  };
+}
 export const tutorialPages = [
-  { title: 'Each row', visual: scene('A row contains one of every digit from one to nine', grid('row')), caption: 'Use 1–9 once. No repeats.' },
-  { title: 'Each column', visual: scene('A column contains one of every digit from one to nine', grid('column')), caption: 'Use 1–9 once. No repeats.' },
-  { title: 'Each 3 × 3 box', visual: scene('A box contains one of every digit from one to nine', grid('box')), caption: 'Use 1–9 once. No repeats.' },
+  { title: 'Each row', visual: gridScene('A row contains one of every digit from one to nine', 'row'), caption: 'Use 1–9 once. No repeats.' },
+  { title: 'Each column', visual: gridScene('A column contains one of every digit from one to nine', 'column'), caption: 'Use 1–9 once. No repeats.' },
+  { title: 'Each 3 × 3 box', visual: gridScene('A box contains one of every digit from one to nine', 'box'), caption: 'Use 1–9 once. No repeats.' },
   { title: 'Choose a cell, then a number',
     visual: scene('Clue five is fixed; fill the empty cell with seven', `${cell(20, '5', 'demo-clue')}${cell(100, '', 'demo-selected')}<path d="M178 60h32m-8-7 8 7-8 7" class="demo-arrow"/>${cell(238, '7')}<text x="50" y="112" class="demo-label">Clue</text>`),
     caption: 'Shaded clues stay fixed. Fill the other cells.' },
