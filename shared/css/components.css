@@ -97,9 +97,7 @@ button {
   cursor: pointer;
   touch-action: manipulation;
 }
-button:hover {
-  background: var(--primary-hover);
-}
+
 button:active {
   filter: brightness(0.9);
 }
@@ -115,9 +113,7 @@ button:disabled {
   background: var(--secondary);
   color: var(--text);
 }
-.secondary:hover {
-  background: var(--secondary-hover);
-}
+
 .icon-button {
   display: grid;
   place-items: center;
@@ -126,14 +122,7 @@ button:disabled {
   background: transparent;
   color: var(--text);
 }
-.icon-button:hover {
-  background: transparent;
-}
-@media (hover: hover) and (pointer: fine) {
-  .icon-button:not(#theme):not(.page-home):not(.page-tutorial):hover {
-    background: var(--secondary);
-  }
-}
+
 .icon-button svg {
   width: 22px;
   height: 22px;
@@ -172,9 +161,7 @@ button:disabled {
 .direction-pad button:disabled {
   opacity: 1;
 }
-.direction-pad button:hover {
-  background: var(--direction-background, #d0dae4);
-}
+
 .direction-pad button svg {
   width: 24px;
   height: 24px;
@@ -223,7 +210,7 @@ button:disabled {
 .leave-actions { display: flex; gap: 10px; }
 .leave-actions button { flex: 1; padding: 12px 8px; }
 .leave-close { position: absolute; top: 2px; right: 2px; width: 36px; min-height: 36px; padding: 0; font-size: 25px; font-weight: 400; background: transparent; color: var(--muted); }
-.leave-close:hover { background: transparent; color: var(--text); }
+
 .beta-label { white-space: nowrap; }
 
 /* Guide controls share the title-row navigation, with equal hit targets. */
@@ -305,3 +292,12 @@ button:disabled {
 .game-screen .privacy-view { inset: var(--board-content-inset, 0px); justify-content: flex-start;
   align-items: flex-start; text-align: left; }
 .privacy-view .privacy-groups { width: 100%; }
+
+/* No browser tap flash or pointer-focus ring. Keyboard focus remains visible. */
+a, button, [role='button'], [role='option'] { -webkit-tap-highlight-color: transparent; }
+:is(a, button, [role='button']):focus:not(:focus-visible) { outline: none; }
+:is(.guide-close, .leave-close, .dialog-close, .tool-icon):active { filter: none; }
+/* Prefer the side badge on phones; retain the raised badge only where space is tight. */
+@media (min-width: 361px) and (max-width: 480px) {
+  .has-guide .beta-label { left: calc(100% + 5px); right: auto; top: 0; font-size: 10px; }
+}
