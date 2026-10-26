@@ -176,3 +176,18 @@ held-button feedback stay visible. See the interaction rules in AGENTS.md.
 
 Mobile beta labels sit beside the title above 360px; at narrower widths they stay
 raised so the centered name and full-size navigation targets fit.
+
+## Link previews
+
+Each page includes static Open Graph and large-image Twitter card metadata in its
+document head, so link crawlers can read it without running JavaScript. Approved
+1200 × 630 PNGs live in `shared/social/` and must be explicitly included in the
+public build allowlist. Use a dark background, no titles or beta labels in the
+image, and centered game artwork. Individual game previews have no surrounding
+card; the homepage groups the game artwork in separate boxes.
+
+Metadata titles and descriptions remain plain text outside the image. Supply
+image dimensions, MIME type, and descriptive alt text. Preview image and page URLs
+are absolute URLs for the production site; forks or deployments on another domain
+should update these URLs in all four document heads. Use a new image filename when
+replacing artwork, since external services can cache previews.

@@ -6,7 +6,9 @@ import { sourceBuildId } from './source-version.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = join(root, 'dist');
-const files = ['LICENSE', 'index.html', 'snake-game/index.html', 'snake-game/style.css',
+const files = ['LICENSE', 'index.html',
+  'shared/social/homepage-v1.png', 'shared/social/snake-v1.png',
+  'shared/social/sudoku-v1.png', 'shared/social/sos-v1.png', 'snake-game/index.html', 'snake-game/style.css',
   'snake-game/analytics-config.json', 'snake-game/LUCIDE-LICENSE'];
 
 async function collect(relative, extensions) {

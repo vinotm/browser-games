@@ -50,6 +50,11 @@ class FreshAssetsHandler(SimpleHTTPRequestHandler):
             return False
         if relative == Path('.') or relative == Path('index.html'):
             return True
+        if relative.as_posix() in (
+            'shared/social/homepage-v1.png', 'shared/social/snake-v1.png',
+            'shared/social/sudoku-v1.png', 'shared/social/sos-v1.png',
+        ):
+            return True
         return (relative.parts[0] in ('snake-game', 'sudoku-game', 'sos-game', 'shared') and
                 (target.is_dir() or target.suffix in ('.html', '.css', '.js', '.json')))
 

@@ -31,6 +31,17 @@ test('public export excludes unpublished sources, deployment state and private o
     let result = build();
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['LICENSE', 'index.html', 'shared', 'snake-game', 'sos-game', 'sudoku-game']);
+    for (const [game, page] of [['homepage', 'index.html'], ['snake', 'snake-game/index.html'],
+      ['sudoku', 'sudoku-game/index.html'], ['sos', 'sos-game/index.html']]) {
+      const image = `shared/social/${game}-v1.png`;
+      const bytes = readFileSync(join(temporary, 'dist', image));
+      assert.equal(bytes.subarray(1, 4).toString(), 'PNG');
+      assert.equal(bytes.readUInt32BE(16), 1200);
+      assert.equal(bytes.readUInt32BE(20), 630);
+      const head = readFileSync(join(temporary, 'dist', page), 'utf8').split('</head>')[0];
+      assert.ok(head.includes(`property="og:image" content="https://browser-games-7cp.pages.dev/${image}"`));
+      assert.ok(head.includes('name="twitter:card" content="summary_large_image"'));
+    }
     assert.equal(readdirSync(join(temporary, 'dist/snake-game')).includes('private'), false);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game/js')).includes('settings.local.js'), false);
     assert.equal(readdirSync(join(temporary, 'dist/sos-game')).includes('private'), false);
@@ -70,6 +81,11 @@ h.directory = '.'
 for path in ['/snake-game/private/dashboard/index.html', '/snake-game/js/settings.local.js', '/sudoku-game/private/dev-helpers/legacy-puzzle.js']:
     h.path = path
     assert not h.public_path(), path
+for game in ['homepage', 'snake', 'sudoku', 'sos']:
+    h.path = '/shared/social/' + game + '-v1.png'
+    assert h.public_path(), h.path
+h.path = '/shared/social/unpublished.png'
+assert not h.public_path()
 h.path = '/snake-game/analytics-config.json'
 h.wfile = io.BytesIO()
 h.send_response = lambda *a: None
