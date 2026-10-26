@@ -75,7 +75,7 @@ test('requested and given difficulty plus generation and serve time remain separ
   const s=setup();
   s.collector.start(clues,true,false,{requestedDifficulty:'hard',givenDifficulty:'medium',generationMs:721,serveMs:2034,generatorVersion:'guided-v1'});
   const initial=s.latest();
-  assert.equal(initial.game_version,'beta-5.2'); assert.equal(initial.generator_version,'guided-v1');
+  assert.equal(initial.game_version,'beta-5.3'); assert.equal(initial.generator_version,'guided-v1');
   assert.equal(initial.requested_difficulty,'hard'); assert.equal(initial.given_difficulty,'medium');
   assert.equal(initial.puzzle_generation_ms,721);assert.equal(initial.puzzle_serve_ms,2034);
   s.tick(1000);s.collector.checkpoint({elapsed_ms:1000});

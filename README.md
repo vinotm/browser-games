@@ -89,7 +89,7 @@ Third-party icon attribution is in [Snake's icon license](snake-game/LUCIDE-LICE
 
 ## Development conventions
 
-The collection is version `0.6.1`. Shared navigation, theme controls, leave protection,
+The collection is version `0.6.2`. Shared navigation, theme controls, leave protection,
 private tooling, and analytics disclosure follow the
 [game integration conventions](docs/GAME_CONVENTIONS.md). New games should use the
 shared page shell instead of implementing those controls independently. Optional
