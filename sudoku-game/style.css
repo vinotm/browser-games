@@ -318,3 +318,14 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 @media (prefers-reduced-motion: reduce) { .loading-digits span { animation: none; } }
 
 .game-screen { --board-content-inset: 2px; }
+
+/* Let the first three guide grids fill the space between text and fixed controls. */
+.guide-example:has(> .sudoku-guide-grid) { flex: 1; height: auto; min-height: 56px; }
+.guide-example > .sudoku-guide-grid { min-height: 0; max-height: none; }
+
+/* Short landscape screens need the same compact chrome as portrait phones. */
+@media (max-height: 500px) {
+  .game-guide { padding: 16px; }
+  .game-guide[open] { gap: 8px; }
+  .game-guide h2 { font-size: 18px; }
+}
