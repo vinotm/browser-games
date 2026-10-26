@@ -21,7 +21,7 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.privacy-link:hover { background: transparent; color: var(--text); }
+
 #privacy-open { position: absolute; top: calc(50% + 44px); }
 .privacy-view {
   position: absolute;
@@ -163,9 +163,7 @@ canvas {
 :root[data-theme='dark'] .board-pause {
   color: #64d8ed;
 }
-.board-pause:hover {
-  background: transparent;
-}
+
 #overlay {
   z-index: 2;
 }

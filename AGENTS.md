@@ -110,3 +110,21 @@ Guide panels have square corners and stay inside the board’s playing edge, usi
 Back · k/n · Next row fixed at the bottom. Content begins at the top and scrolls
 independently if needed. Layer game menus above the guide, without blocking page
 navigation or theme controls. Tutorial opens are not tracked in analytics.
+
+## Interaction styling: required for every clickable element
+
+Do not add decorative hover/focus fills, gray boxes, glows, shadows, lifts, or border
+tints to buttons, icons, clickable game titles, tutorial controls, or homepage game
+cards. Do not rely on browser defaults: disable the tap highlight on links and
+buttons, and remove pointer-only focus outlines. A click or tap must not leave a
+highlight behind. New controls inherit this rule; check them before finishing.
+
+Keep an outline for keyboard-only `:focus-visible`, without a background fill.
+Preserve meaningful selected/disabled/game states and deliberate held-button
+feedback (for example Snake's arrow presses). Those are not hover decoration.
+Check actual mouse hover, press/release, touch taps, keyboard Tab, and returning
+with browser Back in both themes. Inspect computed styles and the final page;
+adding a low-specificity reset does not prove the appearance is fixed.
+
+On mobile, keep beta beside the title where it fits. At 360px and below, the raised
+position is allowed to avoid crowding the title or shrinking navigation targets.

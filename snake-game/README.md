@@ -17,7 +17,7 @@ Serve the repository root and open `snake-game/`. See the
 
 ## Collection navigation
 
-The current version is `beta-6`. Theme controls and Back to Homepage come from the
+The current version is `beta-6.1`. Theme controls and Back to Homepage come from the
 shared page shell. Leaving a running or paused game requires confirmation; ready
 and completed runs do not. The in-page confirmation pauses a running snake and
 resumes it when cancelled, while an already paused run stays paused.

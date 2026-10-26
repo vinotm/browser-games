@@ -2,7 +2,7 @@
 .board-navigation { position: absolute; right: 17px; bottom: 17px; z-index: 2; display: flex; align-items: center; gap: 6px; flex-direction: row-reverse; }
 .board-zoom-toggle { display: grid; place-items: center; width: 40px; min-height: 40px; padding: 9px; border: 1px solid color-mix(in srgb, var(--muted) 28%, transparent); border-radius: 50%; color: var(--text); background: color-mix(in srgb, var(--board) 78%, transparent); backdrop-filter: blur(5px); opacity: .72; }
 .board-zoom-toggle svg { width: 20px; height: 20px; }
-.board-zoom-toggle:is(:hover, [aria-expanded='true']) { opacity: 1; background: color-mix(in srgb, var(--board) 90%, transparent); }
+.board-zoom-toggle[aria-expanded='true'] { opacity: 1; background: color-mix(in srgb, var(--board) 90%, transparent); }
 .board-zoom-panel { display: flex; align-items: center; gap: 8px; width: min(190px, 52vw); padding: 10px 12px; border: 1px solid var(--key-border); border-radius: 8px; background: color-mix(in srgb, var(--board) 92%, transparent); backdrop-filter: blur(8px); }
 .board-zoom-slider { min-width: 0; width: 100%; accent-color: var(--primary); }
 .board-zoom-panel output { min-width: 37px; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); }

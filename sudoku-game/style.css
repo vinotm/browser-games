@@ -34,7 +34,7 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 #start { min-width: 160px; min-height: 62px; font-size: 24px; }
 .number-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: min(100%, 300px); margin: 20px auto 16px; }
 .number-pad button { min-height: 48px; padding: 8px; background: var(--board); color: var(--text); font-size: 22px; font-weight: 650; border: 1px solid var(--key-border); box-shadow: 0 2px 0 var(--key-border); }
-.number-pad button:enabled:hover { background: color-mix(in srgb, var(--primary) 12%, var(--board)); border-color: var(--primary); }
+
 .number-pad button.complete { background: color-mix(in srgb, var(--primary) 18%, var(--board)); color: var(--primary); border-color: var(--primary); opacity: .5; box-shadow: none; cursor: default; }
 .number-pad .erase { grid-column: 1 / -1; background: var(--board); color: var(--muted); font-size: 15px; }
 @media (max-height: 800px) { .game-page { padding-top: 16px; padding-bottom: 16px; } .game-header { margin-bottom: 12px; } .number-pad { margin-top: 14px; gap: 6px; } .number-pad button { min-height: 44px; } }
@@ -71,9 +71,9 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 .number-pad .erase { background: #8c4141; border-color: #8c4141; color: #fff; }
 #new { background: var(--primary); color: #fff; }
 #solve { background: #365c98; color: #fff; }
-.number-pad .erase:hover { background: #753535; }
-#new:hover { background: var(--primary-hover); }
-#solve:hover { background: #294a80; }
+
+
+
 :root[data-theme='dark'] .number-pad .erase { background: #a94d4d; border-color: #a94d4d; }
 :root[data-theme='dark'] #solve { background: #406dad; }
 .conflict-option { display: flex; align-items: center; justify-content: flex-start; text-align: left; gap: 7px; min-height: 36px; color: var(--muted); font-size: 13px; white-space: nowrap; cursor: pointer; }
@@ -91,18 +91,18 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 
 /* Emphasize continuing; keep reset and reveal actions secondary. */
 #confirm #cancel { background: var(--primary); color: #fff; }
-#confirm #cancel:hover { background: var(--primary-hover); }
+
 #confirm:not(.completed-new) #confirm-solve { background: var(--board); color: var(--muted); border: 1px solid var(--key-border); }
-#confirm:not(.completed-new) #confirm-solve:hover { background: var(--secondary); color: var(--text); }
+
 
 #confirm:not(.completed-new) #confirm-solve { background: #e5edf8; color: #365c98; border-color: #c3d3eb; }
-#confirm:not(.completed-new) #confirm-solve:hover { background: #d6e3f5; color: #294a80; }
+
 :root[data-theme='dark'] #confirm:not(.completed-new) #confirm-solve { background: #293c56; color: #bbd3f5; border-color: #42618b; }
-:root[data-theme='dark'] #confirm:not(.completed-new) #confirm-solve:hover { background: #334b6a; color: #dbe9ff; }
+
 #confirm.new-puzzle:not(.completed-new) #confirm-solve { background: #365c98; border-color: #365c98; color: white; }
-#confirm.new-puzzle:not(.completed-new) #confirm-solve:hover { background: #294a80; border-color: #294a80; }
+
 :root[data-theme='dark'] #confirm.new-puzzle:not(.completed-new) #confirm-solve { background: #406dad; border-color: #406dad; color: white; }
-:root[data-theme='dark'] #confirm.new-puzzle:not(.completed-new) #confirm-solve:hover { background: #365c98; border-color: #365c98; }
+
 
 #confirm { position: relative; padding-top: 46px; }
 .dialog-close { position: absolute; top: 3px; right: 3px; color: var(--muted); -webkit-tap-highlight-color: transparent; }
@@ -110,9 +110,9 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 
 #confirm.completed-new .overlay-actions { margin-top: 24px; }
 #confirm.completed-new #cancel { background: var(--secondary); color: var(--text); }
-#confirm.completed-new #cancel:hover { background: var(--secondary-hover); }
+
 #confirm.completed-new #confirm-solve { background: var(--primary); border-color: var(--primary); color: white; }
-#confirm.completed-new #confirm-solve:hover { background: var(--primary-hover); }
+
 
 .completion { inset: 0; flex-direction: column; gap: 12px; padding: 20px; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; animation: completion-arrive 280ms ease-out both; }
 .completion h2 { margin: 0; font-size: clamp(23px, 6vw, 32px); font-weight: 750; color: var(--primary); }
@@ -145,13 +145,13 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 .number-pad button { display: grid; place-items: center; min-height: 48px; }
 .number-pad .erase { grid-column: auto; font-size: 22px; }
 .number-pad .pencil { background: #e5edf8; color: #365c98; border-color: #9cb5d9; }
-.number-pad .pencil:enabled:hover { background: #d6e3f5; border-color: #365c98; }
+
 .number-pad .pencil.active { background: #365c98; color: white; border-color: #365c98; box-shadow: inset 0 0 0 2px var(--board), 0 2px 0 #294a80; }
-.number-pad .pencil.active:enabled:hover { background: #294a80; }
+
 :root[data-theme='dark'] .number-pad .pencil { background: #293c56; color: #bbd3f5; border-color: #6386b5; }
-:root[data-theme='dark'] .number-pad .pencil:enabled:hover { background: #334b6a; }
+
 :root[data-theme='dark'] .number-pad .pencil.active { background: #406dad; color: white; }
-:root[data-theme='dark'] .number-pad .pencil.active:enabled:hover { background: #365c98; }
+
 .note-layer { position: absolute; inset: 2px; display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(9, 1fr); pointer-events: none; }
 .cell-notes { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 2px; color: var(--muted); font-size: clamp(9px, 2.7vw, 13px); line-height: 1; }
 .cell-notes span { display: grid; place-items: center; }
@@ -177,7 +177,7 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 .number-pad button:nth-child(9) { grid-row: 3; grid-column: 3; }
 .number-pad .erase { grid-column: 4; grid-row: 1; }
 .number-pad .pencil { grid-column: 4; grid-row: 2; }
-.tool-icon:enabled:hover, .tool-icon:enabled:focus-visible { background: var(--secondary-hover); color: var(--text); }
+
 .tool-icon { -webkit-tap-highlight-color: transparent; }
 #checkpoint-confirm #checkpoint-detail { color: var(--muted); font-size: 14px; margin-top: -8px; }
 @media (min-width: 760px) {
@@ -243,7 +243,7 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 
 #start-screen { gap: 14px; }
 .privacy-link { text-decoration: underline; text-underline-offset: 4px; background: transparent; color: var(--muted); padding: 6px 10px; font-size: 13px; min-height: 32px; }
-.privacy-link:hover { color: var(--text); background: transparent; }
+
 .privacy-view { padding: clamp(14px, 4vw, 30px); gap: 10px; background: var(--board); text-align: left; align-items: stretch; overflow: auto; }
 .privacy-view h2 { margin: 0; font-size: clamp(19px, 5vw, 24px); }
 .privacy-view p { margin: 0; font-size: clamp(12px, 3.3vw, 14px); line-height: 1.5; color: var(--muted); }
@@ -273,7 +273,7 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 /* Difficulty belongs to game setup; no level badge or fallback notice in play. */
 .difficulty-picker { display: flex; flex-direction: column; gap: 10px; width: min(100%, 180px); }
 .difficulty-picker button { position: relative; min-width: 66px; min-height: 40px; padding: 8px 30px; font-size: 16px; font-weight: 650; background: var(--secondary); color: var(--text); border: 1px solid color-mix(in srgb, var(--edge) 55%, var(--board)); }
-.difficulty-picker button:enabled:hover { background: var(--secondary-hover); color: var(--text); }
+
 .difficulty-picker button:focus-visible { outline: 2px solid #458bd6; outline-offset: 3px; }
 .difficulty-screen { inset: 0; z-index: 3; background: var(--board); gap: 20px; padding: 20px; }
 .difficulty-screen h2 { margin: 0; font-size: 22px; font-weight: 650; }
@@ -287,7 +287,7 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 .difficulty-picker button[aria-pressed='true']::after { content: ''; position: absolute; right: 15px; top: 50%; width: 6px; height: 11px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-65%) rotate(45deg); }
 :root[data-theme='dark'] .difficulty-picker button[aria-pressed='true'] { color: #f0f6ff; border-color: #8ab8ee; background: #304c6c; box-shadow: inset 0 0 0 1px #8ab8ee; }
 #difficulty-play { width: min(100%, 180px); min-height: 44px; background: var(--primary); color: white; font-size: 16px; font-weight: 700; }
-#difficulty-play:hover { background: var(--primary-hover); }
+
 
 .number-pad button { position: relative; }
 .digit-progress { position: absolute; right: 5px; bottom: 5px; display: grid; grid-template-columns: repeat(3, 3px); gap: 2px; pointer-events: none; }

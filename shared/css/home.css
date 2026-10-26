@@ -3,7 +3,7 @@
 .collection-header h1 { font-size: clamp(27px, 5vw, 36px); }
 .collection-header .icon-button { flex: 0 0 44px; }
 .game-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-.game-card { display: block; overflow: hidden; border: 1px solid var(--key-border); border-radius: 18px; background: var(--board); color: var(--text); text-decoration: none; transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.game-card { display: block; overflow: hidden; border: 1px solid var(--key-border); border-radius: 18px; background: var(--board); color: var(--text); text-decoration: none; }
 .game-card:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
 .game-art { padding: 16px 24px; background: var(--board); }
 .game-art svg { display: block; width: 100%; height: auto; }
@@ -24,15 +24,13 @@
 .preview-sudoku-grid { stroke: var(--muted); stroke-width: 1.5; }
 .preview-cell { fill: color-mix(in srgb, #5185ba 22%, var(--board)); }
 .preview-digits { fill: var(--text); font-size: 23px; font-weight: 600; }
-@media (hover: hover) and (pointer: fine) {
-  .game-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 10px 24px rgb(0 0 0 / 8%); }
-}
 @media (max-width: 520px) {
   .game-cards { grid-template-columns: 1fr; gap: 18px; }
   .collection-header { margin-bottom: 24px; }
   .game-art { padding: 8px 40px; }
   .card-details { padding: 18px 20px; }
 }
-@media (prefers-reduced-motion: reduce) { .game-card { transition: none; } .game-card:hover { transform: none; } }
 
 .collection-beta { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; white-space: nowrap; vertical-align: super; }
+
+.game-card:is(:hover, :active, :focus) { background: var(--board); color: var(--text); border-color: var(--key-border); box-shadow: none; transform: none; }

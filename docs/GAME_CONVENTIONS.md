@@ -165,3 +165,14 @@ to preserve its edge (Snake 6px, Sudoku 2px, SOS 0px because its parent owns the
 Guide content starts at the top. X and the centered Back · k/n · Next footer remain
 fixed while content scrolls. Menus must layer above the guide. Tutorial opens are
 not collected by analytics.
+
+## Click and hover appearance
+
+All clickable controls, including homepage game cards and game-title links, keep
+their resting appearance on hover and pointer focus. Disable browser tap highlights;
+no decorative fill, shadow, lift, or border tint may linger after a click. Keyboard
+focus uses an outline only. Functional selected/disabled states and intentional
+held-button feedback stay visible. See the interaction rules in AGENTS.md.
+
+Mobile beta labels sit beside the title above 360px; at narrower widths they stay
+raised so the centered name and full-size navigation targets fit.
