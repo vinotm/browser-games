@@ -261,3 +261,12 @@ image dimensions, MIME type, and descriptive alt text. Preview image and page UR
 are absolute URLs for the production site; forks or deployments on another domain
 should update these URLs in all four document heads. Use a new image filename when
 replacing artwork, since external services can cache previews.
+
+### Board navigation and guides
+
+The shared board navigator restores playing scale on selection by default. Games
+that support revealing cards at the chosen scale can set `resetZoomOnSelect: false`.
+The page shell treats an open guide as blocking game input. External controls
+that remain usable can check `isConfirming({ includeTutorial: false })`; keep
+real confirmation dialogs blocking. Use `closeTutorial()` when an action returns
+to setup, after confirmation succeeds. Cancellation should preserve the guide.

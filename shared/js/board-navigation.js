@@ -1,6 +1,6 @@
 // Pan and zoom a finite board without changing its logical cell coordinates.
 // Magnifier: Lucide search (ISC), see snake-game/LUCIDE-LICENSE.
-export function createBoardNavigation({ viewport, stage, host, geometry, canExplore, onSelect, onNavigate }) {
+export function createBoardNavigation({ viewport, stage, host, geometry, canExplore, onSelect, onNavigate, resetZoomOnSelect = true }) {
   const controls = document.createElement('div');
   controls.className = 'board-navigation'; controls.hidden = true;
   controls.innerHTML = `<button class="board-zoom-toggle" type="button" aria-label="Board zoom" aria-expanded="false" aria-controls="board-zoom-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></button><div id="board-zoom-panel" class="board-zoom-panel" hidden><input class="board-zoom-slider" aria-label="Board zoom" type="range" min="0.3" max="1.5" step="0.01" value="1"/><output>100%</output></div>`;
@@ -72,7 +72,7 @@ export function createBoardNavigation({ viewport, stage, host, geometry, canExpl
     if (restoring || !canExplore()) return;
     const cell = stage.querySelector(`[data-index="${index}"]`);
     if (!cell) return;
-    if (Math.abs(zoom - 1) > .005) {
+    if (resetZoomOnSelect && Math.abs(zoom - 1) > .005) {
       onNavigate(); panel.hidden = true; toggle.setAttribute('aria-expanded', 'false');
       const r = cell.getBoundingClientRect(), v = viewport.getBoundingClientRect();
       const anchor = anchorAt(r.left + r.width / 2, r.top + r.height / 2);

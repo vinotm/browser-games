@@ -61,7 +61,7 @@ export function createTutorial({ host, pages, onOpen = () => {} }) {
     event.preventDefault(); event.stopImmediatePropagation(); step(delta);
   }
   document.addEventListener('keydown', guideKey, true);
-  return { button, isOpen: () => dialog.open,
+  return { button, close, isOpen: () => dialog.open,
     dispose() { close(); document.removeEventListener('keydown', guideKey, true); unbindSwipe();
       dialog.remove(); button.remove(); } };
 

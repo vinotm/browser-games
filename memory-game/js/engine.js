@@ -1,5 +1,5 @@
 // Card identities live in this closure, never in DOM attributes or browser storage.
-export const VERSION = 'beta-1.1';
+export const VERSION = 'beta-1.2';
 export const SHAPES = Object.freeze(['circle', 'square', 'triangle', 'diamond', 'star', 'cross', 'hexagon', 'heart', 'oval', 'pentagon', 'crescent', 'ring']);
 
 export function createMemoryGame(random = Math.random, { rows = 4, columns = 4 } = {}) {

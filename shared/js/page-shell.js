@@ -105,7 +105,8 @@ export function createPageShell({ header = document.querySelector('[data-page-he
   }
   document.addEventListener('click', followLink);
   guard.refresh();
-  return { theme, reveal, refresh: guard.refresh, isConfirming: () => modal.isOpen() || !!guide?.isOpen(),
+  return { theme, reveal, refresh: guard.refresh, isConfirming: ({ includeTutorial = true } = {}) => modal.isOpen() || (includeTutorial && !!guide?.isOpen()),
+    closeTutorial: () => guide?.close(),
     dispose() { guide?.dispose(); header.classList.remove('has-guide'); guard.dispose(); theme.dispose(); modal.dispose(); nav.remove();
       themeButton.remove(); title.append(...titleLink.childNodes); titleLink.remove();
       document.removeEventListener('click', followLink); } };
