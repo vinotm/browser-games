@@ -9,10 +9,10 @@ h1 { position: relative; display: inline-block; justify-self: center; }
 #board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: clamp(6px, 2vw, 10px); padding: clamp(10px, 3vw, 16px); aspect-ratio: 1; }
 /* Both faces are absolutely positioned inside one fixed grid cell. Artwork never
    participates in sizing, so flipping cannot alter card or row dimensions. */
-.card { position: relative; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--text); perspective: 650px; }
+.card { position: relative; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--text); perspective: 650px; }
 .card:disabled { opacity: 1; }
 .card-flipper { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 280ms ease-in-out; pointer-events: none; }
-.card-face { position: absolute; inset: 0; display: grid; place-items: center; border: 1px solid var(--key-border); border-radius: 5px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.card-face { position: absolute; inset: 0; display: grid; place-items: center; border: 1px solid var(--key-border); border-radius: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .card-back { background: var(--secondary); }
 .card-back::before { content: ''; width: 18%; aspect-ratio: 1; border: 2px solid var(--muted); border-radius: 2px; opacity: .35; transform: rotate(45deg); }
 .card-front { background: var(--board); transform: rotateY(180deg); }
@@ -22,7 +22,7 @@ h1 { position: relative; display: inline-block; justify-self: center; }
   border-color: color-mix(in srgb, var(--primary) 38%, var(--key-border));
   animation: pair-confirm 520ms ease-out;
 }
-.card svg { position: absolute; inset: 0; margin: auto; display: block; width: 86%; height: 86%; color: var(--primary); transform-origin: center; }
+.card svg { position: absolute; inset: 0; margin: auto; display: block; width: 80%; height: 80%; color: var(--primary); transform-origin: center; }
 .card.is-matched svg { opacity: .7; animation: pair-settle 400ms 100ms ease-out both; }
 @keyframes pair-confirm {
   0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
@@ -67,12 +67,16 @@ button:active { filter: none; }
   .game-stats { margin-bottom: 12px; }
 }
 @media (max-width: 360px) { .beta-label { top: -8px; font-size: 9px; } }
+@media (min-width: 481px) {
+  .game-layout { --board-width: min(100%, 448px, calc(100svh - 260px)); }
+  .game-actions { margin-top: 24px; }
+}
 @media (max-height: 650px) and (min-width: 481px) {
   .game-page { padding: 12px; }
   .game-header { margin-bottom: 8px; }
   .game-stats { margin-bottom: 8px; }
-  .game-layout { --board-width: min(100%, calc(100svh - 180px)); }
-  .game-actions { margin-top: 8px; }
+  .game-layout { --board-width: min(100%, 448px, calc(100svh - 210px)); }
+  .game-actions { margin-top: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card-flipper { transition: none; }
@@ -87,7 +91,7 @@ button:active { filter: none; }
 /* The shared navigator pans/zooms only the grid; overlays stay inside the frame. */
 .board-scroll { position: absolute; inset: 0; display: flex; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; touch-action: none; }
 .board-scroll::-webkit-scrollbar { display: none; }
-#board { flex: none; margin: auto; width: var(--board-width, 100%); height: var(--board-height, 100%); min-height: 0; grid-template-columns: repeat(var(--columns, 4), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 4), minmax(0, 1fr)); gap: clamp(3px, 1vw, 6px); padding: clamp(6px, 2vw, 12px); aspect-ratio: auto; }
+#board { flex: none; margin: auto; width: var(--board-width, 100%); height: var(--board-height, 100%); min-height: 0; grid-template-columns: repeat(var(--columns, 4), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 4), minmax(0, 1fr)); gap: clamp(2px, .6vw, 4px); padding: clamp(8px, 2.4vw, 14px); aspect-ratio: auto; }
 .board-scroll.is-dragging, .board-scroll.is-dragging button { cursor: grabbing; }
 .card { touch-action: none; }
 .game-screen > .overlay { z-index: 3; }
@@ -96,8 +100,8 @@ button:active { filter: none; }
 .card svg[data-color='1'] { color: light-dark(#2869b2, #80b8ff); }
 .card svg[data-color='2'] { color: light-dark(#ac4965, #f391af); }
 .card svg[data-color='3'] { color: light-dark(#9a6a10, #e7bc62); }
-.card svg[data-size='small'] { width: 46%; height: 46%; }
-.card svg[data-size='large'] { width: 90%; height: 90%; }
+.card svg[data-size='small'] { width: 42%; height: 42%; }
+.card svg[data-size='large'] { width: 84%; height: 84%; }
 #custom-size { width: min(340px, calc(100vw - 32px)); max-height: calc(100svh - 24px); overflow: auto; padding: 20px; border: 1px solid var(--key-border); border-radius: 8px; background: var(--board); color: var(--text); }
 #custom-size::backdrop { background: #0006; }
 #custom-title { font-size: 20px; margin: 0 0 16px; }
@@ -115,3 +119,15 @@ button:active { filter: none; }
 #custom-size button:hover, .select-trigger:hover { filter: none; }
 #size-handle { min-height: 22px; }
 @media (max-height: 600px) { #size-preview { width: 150px; } #custom-size { padding: 16px; } }
+/* Tutorial examples share the live artwork and card proportions. */
+.memory-example { display: flex; width: calc(100% - 16px); margin-inline: auto; height: 100%; align-items: center; justify-content: center; gap: 10px; }
+.memory-example-card { position: relative; flex: 1; max-width: 64px; aspect-ratio: 1; border: 1px solid var(--key-border); display: grid; place-items: center; color: var(--primary); }
+.memory-example-card.card-back::before { position: absolute; }
+.memory-example svg { position: absolute; inset: 0; margin: auto; width: 80%; height: 80%; min-height: 0; }
+.memory-example svg[data-color='1'] { color: light-dark(#2869b2, #80b8ff); }
+.memory-example svg[data-color='2'] { color: light-dark(#ac4965, #f391af); }
+.memory-example svg[data-size='small'] { width: 42%; height: 42%; }
+.memory-example svg[data-size='large'] { width: 84%; height: 84%; }
+
+.game-guide h2 { margin-bottom: 16px; }
+.game-guide .guide-caption { margin-top: 16px; }

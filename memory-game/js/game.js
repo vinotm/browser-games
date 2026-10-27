@@ -8,6 +8,7 @@ import { createMemoryGame } from './engine.js';
 import { enhanceSelect } from '../../shared/js/select.js';
 import { setupBoardMenu } from './menu.js';
 import { createShape } from './shapes.js';
+import { tutorialPages } from './tutorial.js';
 
 const $ = selector => document.querySelector(selector);
 const board = $('#board');
@@ -22,7 +23,7 @@ let finished = false;
 let concealTimer;
 let completionTimer;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const page = createPageShell({ homeUrl: '../', ready: false, isActive: () => started && !finished });
+const page = createPageShell({ homeUrl: '../', ready: false, tutorial: { host: $('.game-screen'), pages: tutorialPages }, isActive: () => started && !finished });
 const restart = createConfirmationDialog({ id: 'restart', title: 'Start a new game?',
   detail: 'Your current progress will be lost.', confirmLabel: 'New game' });
 const selection = setupBoardMenu();
@@ -31,6 +32,7 @@ let cards = [];
 let dimensions = { rows: 4, columns: 4 };
 const boardNavigation = createBoardNavigation({
   viewport: $('#board-viewport'), stage: board, host: $('.game-screen'),
+  resetZoomOnSelect: false,
   geometry: () => {
     const viewport = $('#board-viewport');
     const count = Math.max(dimensions.rows, dimensions.columns);
@@ -106,7 +108,7 @@ function start() {
   clock.reset(); clock.start();
   analytics.start(game.view()); analytics.visibility(!document.hidden); void analytics.flush();
   $('#start-view').hidden = true; $('#result').hidden = true;
-  $('#new-game').disabled = false;
+  $('#new-game').disabled = false; $('.game-actions').hidden = false;
   $('#status').textContent = 'Find matching pairs.';
   render(); updateTime(); page.refresh(); cards.find(card => !card.disabled)?.focus({ preventScroll: true });
 }
@@ -151,13 +153,14 @@ function updateTime() { $('#timer').textContent = formatDuration(clock.value());
 setInterval(() => { if (started && !finished) updateTime(); }, 250);
 $('#start').addEventListener('click', start);
 $('#new-game').addEventListener('click', async () => {
-  if (restart.isOpen() || page.isConfirming()) return;
+  if (restart.isOpen() || page.isConfirming({ includeTutorial: false })) return;
   if (!finished && !await restart.confirm()) return;
+  page.closeTutorial();
   if (analytics.active) { analytics.finish('restarted', reportProgress()); void analytics.flush({ force: true }); }
   started = false; finished = false; clock.reset(); updateTime();
   clearTimeout(concealTimer); clearTimeout(completionTimer);
   $('#result').hidden = true; $('#start-view').hidden = false;
-  $('#new-game').disabled = true; board.classList.remove('won');
+  $('#new-game').disabled = true; $('.game-actions').hidden = true; board.classList.remove('won');
   createCards(4, 4); $('#moves').textContent = '0'; page.refresh();
 });
 $('#privacy-open').addEventListener('click', () => {
