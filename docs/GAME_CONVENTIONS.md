@@ -197,7 +197,7 @@ rest of the page inert. Theme and navigation stay usable. Static game scenes can
 into SVG markup.
 
 The guide occupies the board rather than a separate page or a full-screen panel.
-It starts at page one each time. Back/Next step through the guide; only the close icon or Escape
+It starts at page one each time. Back/Next, Left/Right arrows, A/D, and horizontal swipes step through the guide; only the close icon or Escape
 returns to the game. Outside clicks do not dismiss it; Next is disabled on the last page. Long content scrolls within the guide without moving its footer.
 The navigation order is Home, guide, theme, with identical transparent controls.
 On compact screens, Home sits on the left and guide/theme on the right; each
@@ -221,7 +221,9 @@ confirmation, even when the destination is the current URL. Cancelling preserves
 play; accepting reloads once, without a second native warning. Ready and completed
 games navigate directly. Standard modified clicks retain browser behavior.
 
-Guides close only with X or Escape; outside clicks must leave them open. Keep
+Guide navigation ignores modified keys, typing fields and open modal dialogs.
+Vertical gestures retain content scrolling; horizontal swipes turn one page without
+wrapping at the ends. Guides close only with X or Escape; outside clicks must leave them open. Keep
 captions literal and short. Show item effects without timers or hidden statistics.
 
 ## Information-panel layout

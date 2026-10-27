@@ -5,7 +5,7 @@ h1 { position: relative; display: inline-block; justify-self: center; }
 .game-stats > :first-child { text-align: left; }
 .game-stats strong { font-size: 22px; font-weight: 650; }
 #timer { color: var(--text); font-size: 28px; font-weight: 650; }
-.game-screen { width: var(--board-width); margin-inline: auto; border: 1px solid var(--key-border); background: var(--board); --board-content-inset: 0px; }
+.game-screen { aspect-ratio: 1; width: var(--board-width); margin-inline: auto; border: 1px solid var(--key-border); background: var(--board); --board-content-inset: 0px; }
 #board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: clamp(6px, 2vw, 10px); padding: clamp(10px, 3vw, 16px); aspect-ratio: 1; }
 /* Both faces are absolutely positioned inside one fixed grid cell. Artwork never
    participates in sizing, so flipping cannot alter card or row dimensions. */
@@ -22,7 +22,7 @@ h1 { position: relative; display: inline-block; justify-self: center; }
   border-color: color-mix(in srgb, var(--primary) 38%, var(--key-border));
   animation: pair-confirm 520ms ease-out;
 }
-.card svg { position: absolute; inset: 21%; width: 58%; height: 58%; color: var(--primary); }
+.card svg { position: absolute; inset: 0; margin: auto; display: block; width: 86%; height: 86%; color: var(--primary); transform-origin: center; }
 .card.is-matched svg { opacity: .7; animation: pair-settle 400ms 100ms ease-out both; }
 @keyframes pair-confirm {
   0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
@@ -84,17 +84,20 @@ button:active { filter: none; }
   .completion p { font-size: 18px; }
   .completion-dismiss { margin-top: 8px; font-size: 12px; }
 }
-/* Large games preserve readable cards and scroll inside the playing area. */
-.board-scroll { height: 100%; aspect-ratio: 1; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--muted) var(--board); }
-#board { grid-template-columns: repeat(var(--columns, 4), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 4), minmax(0, 1fr)); min-height: 100%; gap: 6px; }
-#board.large-board { width: max(100%, calc(var(--columns) * (var(--cell) + 6px) + 24px)); height: max(100%, calc(var(--rows) * (var(--cell) + 6px) + 24px)); aspect-ratio: auto; }
+/* The shared navigator pans/zooms only the grid; overlays stay inside the frame. */
+.board-scroll { position: absolute; inset: 0; display: flex; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; touch-action: none; }
+.board-scroll::-webkit-scrollbar { display: none; }
+#board { flex: none; margin: auto; width: var(--board-width, 100%); height: var(--board-height, 100%); min-height: 0; grid-template-columns: repeat(var(--columns, 4), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 4), minmax(0, 1fr)); gap: clamp(3px, 1vw, 6px); padding: clamp(6px, 2vw, 12px); aspect-ratio: auto; }
+.board-scroll.is-dragging, .board-scroll.is-dragging button { cursor: grabbing; }
+.card { touch-action: none; }
+.game-screen > .overlay { z-index: 3; }
 .card.is-blocked { background: repeating-linear-gradient(135deg, transparent 0 5px, var(--key-border) 5px 6px); opacity: .45; }
 .card.is-blocked .card-flipper { visibility: hidden; }
 .card svg[data-color='1'] { color: light-dark(#2869b2, #80b8ff); }
 .card svg[data-color='2'] { color: light-dark(#ac4965, #f391af); }
 .card svg[data-color='3'] { color: light-dark(#9a6a10, #e7bc62); }
-.card svg[data-size='small'] { inset: 33%; width: 34%; height: 34%; }
-.card svg[data-size='large'] { inset: 10%; width: 80%; height: 80%; }
+.card svg[data-size='small'] { width: 46%; height: 46%; }
+.card svg[data-size='large'] { width: 90%; height: 90%; }
 #custom-size { width: min(340px, calc(100vw - 32px)); max-height: calc(100svh - 24px); overflow: auto; padding: 20px; border: 1px solid var(--key-border); border-radius: 8px; background: var(--board); color: var(--text); }
 #custom-size::backdrop { background: #0006; }
 #custom-title { font-size: 20px; margin: 0 0 16px; }

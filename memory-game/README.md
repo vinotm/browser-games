@@ -1,6 +1,6 @@
 # Memory
 
-Version: `beta-1`.
+Version: `beta-1.1`.
 
 An offline, single-player matching game with selectable boards and up to twelve shapes.
 Use the collection's development server and open `/memory-game/`. The game uses
@@ -31,7 +31,8 @@ only for this run in the JavaScript heap. It is not attached to `window`, saved 
 local storage, included in HTML attributes, or sent to a server.
 
 The engine's `view()` supplies `null` for every face-down identity. The renderer
-creates shape SVGs only for exposed or matched cards. Both faces occupy the same
+creates shape SVGs only for exposed or matched cards. Shapes use explicit centered SVG placement and visible-art view boxes. Standard
+art fills about 86% of its card; small/large variants use 46%/90%. Both faces occupy the same
 fixed card rectangle and flip in 3D, without resizing. Concealing mismatches
 restores generic accessible labels immediately and removes their SVGs halfway
 through the closing flip, when the front is out of view. Reduced-motion mode
@@ -64,6 +65,8 @@ Hosting services can process ordinary asset-request metadata.
 - Above 192 cells: clearly small and large shapes add another matching requirement.
 - The shape vocabulary adapts to the pair count; every full identity has an even
   number of cards. A match requires the same shape, color and size.
-- Boards above ten rows or columns scroll within the playing area, preserving
-  usable card sizes. Scrollbars indicate remaining board area.
+- Boards up to ten rows and columns fit at the default scale. Larger boards
+  scroll inside the playing area with shared position bars. The shared magnifier,
+  slider, pinch and Ctrl/Cmd-wheel zoom work like SOS; tapping a card restores
+  playing scale before revealing it. Dragging pans without revealing cards.
 - `js/menu.js` owns board selection and the custom picker, separate from rules.

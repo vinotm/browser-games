@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../shared/css/base.css" />
   <link rel="stylesheet" href="../shared/css/components.css" />
   <link rel="stylesheet" href="../shared/css/setup-select.css" />
+  <link rel="stylesheet" href="../shared/css/board-navigation.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="game-page page-entering">
@@ -19,7 +20,7 @@
     <time id="timer" aria-label="Elapsed time">0:00</time>
   </div>
   <div class="game-screen">
-    <div class="board-scroll"><div id="board" role="group" aria-label="Memory cards"></div></div>
+    <div id="board-viewport" class="board-scroll" aria-label="Scrollable Memory board"><div id="board" role="group" aria-label="Memory cards"></div></div>
     <section id="start-view" class="overlay start-menu">
       <div class="setup-select-row"><label for="board-size">Board size</label><span class="select-wrap"><select id="board-size"><option value="4">4 × 4</option><option value="6">6 × 6</option><option value="8">8 × 8</option><option value="10">10 × 10</option><option value="custom">Custom</option></select></span></div>
       <button id="start" type="button">Start game</button>
