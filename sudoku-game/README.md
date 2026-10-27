@@ -4,7 +4,7 @@ Fill a 9×9 grid so that every row, column, and 3×3 box contains the digits 1�
 Starting clues cannot be edited. Select a cell, then use the number pad or keyboard
 to enter a digit; Backspace or Delete clears an editable cell.
 
-Choose Start, select Novice, Easy, Medium, or Hard, then press Play. Every served
+Select Novice, Easy, Medium, or Hard on the start screen, then press Start game. Every served
 puzzle is generated in the browser and verified to have exactly one solution.
 The label above the timer shows the requested level. A bounded search can deliver
 a lower-rated puzzle; the label remains the requested level.
@@ -50,7 +50,7 @@ Serve the repository root and open `sudoku-game/`. See the
 
 ## Collection navigation
 
-The current version is `beta-5.3`. The shared page shell supplies theme controls and
+The current version is `beta-5.4`. The shared page shell supplies theme controls and
 Back to Homepage. Leaving an unfinished puzzle asks for confirmation; the timer
 continues during the in-page dialog. Ready and completed puzzles do not prompt.
 

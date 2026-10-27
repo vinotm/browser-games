@@ -83,6 +83,11 @@ kbd {
   clip-path: inset(50%);
 }
 button {
+  /* Center the line box explicitly instead of relying on native button baselines. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
   min-height: 44px;
   border: 0;
   border-radius: 5px;

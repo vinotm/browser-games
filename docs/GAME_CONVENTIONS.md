@@ -26,6 +26,74 @@ The link and theme switcher have no hover background or tap shade. Maintain visi
 keyboard focus. Shared theme initialization runs in the document head before styles
 paint. Do not duplicate theme SVGs or preference handling in game pages.
 
+## Frontend workflow and design baseline
+
+Use the `browser-games-frontend` skill for collection frontend work. Apply
+`frontend-no-slop` by default, including its relevant catalog checks. An explicit
+product decision may override a particular design rule; keep that exception
+limited to the approved element and behavior. Existing code is a reference, not
+permission to copy a visual inconsistency. User instructions take precedence.
+
+### Start menus and primary actions
+
+SOS is the visual reference for compact start-menu fields. Memory and Sudoku
+share `shared/css/setup-select.css` and `shared/js/select.js`. Reuse these when
+adding comparable menus, rather than copying a screenshot into separate CSS.
+
+- Shared text buttons use explicit inline-flex centering on both axes. Preserve
+  grid/flex overrides for icon controls, board cells and dropdowns; do not use
+  per-label pixel nudges to compensate for native button baselines.
+- Keep setup inside the board. Place each setting label to the left of its
+  control, vertically centered, with consistent label/control columns.
+- A single selection belongs on the same start screen as **Start game** and
+  **Data privacy**. Do not add a redundant Start → selection → Play sequence.
+- Use `.setup-select-row` inside `.overlay.start-menu`. The shared style supplies
+  the compact width, typography, border, background, chevron and responsive
+  spacing. Current control width is 170px (158px on narrow phones), with a 46px
+  mobile height and 40px desktop height. These describe setup controls, not all
+  buttons or navigation targets.
+- Use `enhanceSelect()` for animated, keyboard-accessible choices, selected
+  checkmarks and automatic upward placement. Do not substitute a browser-native
+  select or a custom lookalike with different proportions.
+- Use the theme's green `--primary` for **Start game** and **New game**. New game
+  is a main game action, not a muted secondary action; do not give it
+  `class="secondary"`. Keep disabled buttons visibly disabled before play.
+- Compact Start game uses the shared 16px text and 44px minimum height. Snake's
+  established centered start/pause scene is a separate layout; do not resize it
+  merely to adopt these setup conventions.
+- Keep Data privacy underlined and below Start game, with breathing room. Use
+  the actual enabled/disabled analytics disclosure, not copied claims.
+- New game returns to setup when settings need selection. Ask before discarding
+  an unfinished run; cancellation preserves the board, settings and game state.
+  Completed games need no progress-loss warning. Respect each game's timing rules.
+- Primary coloring does not mean destructive confirmation should dominate.
+  Preserve **Keep playing** emphasis when asking to discard ongoing progress.
+
+Shared changes should stay scoped to their component. Do not change another game's
+established menus, gameplay controls or version just because a shared file exists.
+
+### Review before handoff
+
+Inspect both source and the running page. Check a desktop width, a normal phone
+width and a narrow/short phone (for example 1440px, 390px and 320px), in light and
+dark themes. For the controls changed, verify:
+
+- Label/control alignment, dropdown width and height, text size, chevron padding,
+  Start/New game color and spacing. Compare against the reference, not just the
+  presence of a CSS class.
+- The start scene, open dropdown (including the bottom option), chosen value,
+  disabled state, active game, restart cancellation and return to setup.
+- Real mouse hover, press/release, touch activation and keyboard navigation.
+  Pointer interaction must not leave a fill, shade, glow or focus box. Keep an
+  outline for keyboard focus and meaningful selected/disabled states.
+- No page overflow or clipped controls. Large boards may scroll intentionally
+  inside their playing area; ordinary setup should not force scrolling.
+- No JavaScript errors or private helpers in public imports/build output.
+
+Run the relevant gameplay checks when changing behavior and `npm run build` for
+public asset changes. Report checks that failed or could not run. Source inspection
+alone is not proof that responsive CSS or interaction styling works.
+
 ## Leaving an unfinished game
 
 Active means started and unfinished, including a paused game. Ready screens and

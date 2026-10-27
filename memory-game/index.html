@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memory · Browser Games</title>
+  <meta name="description" content="Match shapes on a board of your choice." />
+  <script src="../shared/js/theme-init.js"></script>
+  <link rel="stylesheet" href="../shared/css/base.css" />
+  <link rel="stylesheet" href="../shared/css/components.css" />
+  <link rel="stylesheet" href="../shared/css/setup-select.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="game-page page-entering">
+<main class="game-layout">
+  <header class="game-header" data-page-header><span></span><h1>Memory<span class="beta-label">beta</span></h1></header>
+  <div class="game-stats" aria-label="Game progress">
+    <span>Moves <strong id="moves">0</strong></span>
+    <time id="timer" aria-label="Elapsed time">0:00</time>
+  </div>
+  <div class="game-screen">
+    <div class="board-scroll"><div id="board" role="group" aria-label="Memory cards"></div></div>
+    <section id="start-view" class="overlay start-menu">
+      <div class="setup-select-row"><label for="board-size">Board size</label><span class="select-wrap"><select id="board-size"><option value="4">4 × 4</option><option value="6">6 × 6</option><option value="8">8 × 8</option><option value="10">10 × 10</option><option value="custom">Custom</option></select></span></div>
+      <button id="start" type="button">Start game</button>
+      <button id="privacy-open" class="privacy-link" type="button">Data privacy</button>
+    </section>
+    <section id="privacy-view" class="overlay privacy-view" aria-labelledby="privacy-title" hidden>
+      <h2 id="privacy-title" tabindex="-1">Data privacy</h2>
+      <p id="privacy-intro">Analytics are disabled on this site.</p>
+      <dl id="privacy-details" class="privacy-groups" hidden><div><dt>Not collected</dt><dd>Card layouts, individual flips, names, email addresses, location</dd></div><div><dt>Collected</dt><dd>Board settings, timing, moves, progress, device type</dd></div></dl>
+      <p id="privacy-local">Your theme preference stays in your browser.</p>
+      <button id="privacy-back" class="privacy-link" type="button">← Back to game</button>
+    </section>
+    <section id="result" class="overlay completion" aria-labelledby="result-title" tabindex="-1" hidden>
+      <h2 id="result-title">Game Completed!</h2>
+      <p id="result-time"></p>
+      <p id="result-moves"></p>
+      <span class="completion-dismiss">Click anywhere to dismiss</span>
+    </section>
+  </div>
+  <div class="game-actions"><button id="new-game" type="button" disabled>New game</button></div>
+  <p id="status" class="sr-only" role="status" aria-live="polite"></p>
+</main>
+<dialog id="custom-size" aria-labelledby="custom-title"><form id="custom-form">
+<h2 id="custom-title">Custom board</h2>
+<div id="size-preview" aria-label="Drag to choose board size"><div id="size-fill"></div><button id="size-handle" type="button" aria-label="Resize board, use arrow keys"></button></div>
+<div class="dimension-fields"><label>Rows<input id="custom-rows" type="text" inputmode="numeric" autocomplete="off" maxlength="3"></label><label>Columns<input id="custom-columns" type="text" inputmode="numeric" autocomplete="off" maxlength="3"></label></div>
+<p id="custom-warning" role="status"></p><div class="custom-actions"><button id="custom-cancel" class="secondary" type="button">Cancel</button><button id="custom-ok" type="submit">OK</button></div>
+</form></dialog>
+<script type="module" src="js/game.js"></script>
+</body>
+</html>

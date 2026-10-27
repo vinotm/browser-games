@@ -12,6 +12,9 @@ metadata. SOS records compact match moves and summarized computer search work. T
 visitor IDs, location, raw user agents, or exact screen dimensions. Sudoku does not
 send entered answers, pencil notes, or a move history.
 
+Memory optionally records cumulative board, timing and progress summaries. It does
+not report shuffled layouts, individual flips or the positions of revealed cards.
+
 Reports are stored privately by the configured receiver. Pending reports may be saved
 in browser storage and retried when connected; bounded queues can drop older reports.
 Gameplay continues when collection is disabled, storage is unavailable, or uploads
@@ -24,6 +27,7 @@ puzzle cache is separate from analytics and is used to reduce waiting time.
 - [Snake report format and receiver](snake-game/analytics/README.md)
 - [Sudoku report format and receiver](sudoku-game/analytics/README.md)
 - [SOS report format and receiver](sos-game/analytics/README.md)
+- [Memory report format and receiver](memory-game/analytics/README.md)
 
 Anyone deploying an analytics-enabled copy should review its actual collection,
 receiver access, retention policy, and disclosures. The MIT source license permits

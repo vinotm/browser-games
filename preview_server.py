@@ -9,7 +9,7 @@ from urllib.parse import unquote, urlsplit
 
 
 def source_build_id(root, game="snake"):
-    if game in ("sudoku", "sos"):
+    if game in ("sudoku", "sos", "memory"):
         files = [root / f"{game}-game/index.html", root / f"{game}-game/style.css"]
         directories = [("shared", (".js", ".css")), (f"{game}-game/js", (".js",))]
     else:
@@ -55,13 +55,13 @@ class FreshAssetsHandler(SimpleHTTPRequestHandler):
             'shared/social/sudoku-v1.png', 'shared/social/sos-v1.png',
         ):
             return True
-        return (relative.parts[0] in ('snake-game', 'sudoku-game', 'sos-game', 'shared') and
+        return (relative.parts[0] in ('snake-game', 'sudoku-game', 'sos-game', 'memory-game', 'shared') and
                 (target.is_dir() or target.suffix in ('.html', '.css', '.js', '.json')))
 
     def deployment_config(self, head=False):
         # Only the public endpoint is returned; the private file is never served.
         path = unquote(urlsplit(self.path).path)
-        if path not in ('/snake-game/analytics-config.json', '/sudoku-game/analytics-config.json', '/sos-game/analytics-config.json'):
+        if path not in ('/snake-game/analytics-config.json', '/sudoku-game/analytics-config.json', '/sos-game/analytics-config.json', '/memory-game/analytics-config.json'):
             return False
         game = path.split('-game/')[0].lstrip('/')
         override = Path(self.directory) / (game + '-game/private/analytics-config.json')

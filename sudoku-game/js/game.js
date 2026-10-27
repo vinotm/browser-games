@@ -1,3 +1,4 @@
+import { enhanceSelect } from '../../shared/js/select.js';
 import { tutorialPages } from './tutorial.js';
 import { formatDuration } from '../../shared/js/clock.js';
 import { createScreenAwake } from '../../shared/js/screen-awake.js';
@@ -308,9 +309,10 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const puzzleClient = createPuzzleClient();
 puzzleClient.setVisible(!document.hidden);
 puzzleClient.warmup();
-let requestedDifficulty = 'easy', chosenDifficulty = null, puzzleDelivery = null;
-const difficultyPlay = document.querySelector('#difficulty-play');
-const difficultyScreen = document.querySelector('#difficulty-screen');
+let requestedDifficulty = 'easy', puzzleDelivery = null;
+const difficultySelect = document.querySelector('#difficulty-select');
+enhanceSelect(difficultySelect);
+const difficultyScreen = document.querySelector('#start-screen');
 const boardLoader = document.querySelector('#board-loading');
 function chooseDifficulty(reason = 'restarted') {
   if (busy) return;
@@ -326,20 +328,11 @@ function chooseDifficulty(reason = 'restarted') {
   privacy.hidden = true; document.querySelector('#start-screen').hidden = true;
   boardLoader.hidden = true; document.querySelector('.game-screen').classList.remove('awaiting-puzzle');
   grid.classList.remove('won'); grid.removeAttribute('aria-busy'); status.textContent = '';
-  chosenDifficulty = null; difficultyPlay.hidden = true;
-  difficultyScreen.querySelectorAll('[data-level]').forEach(button => button.setAttribute('aria-pressed', 'false'));
+  difficultySelect.value = requestedDifficulty;
+  difficultySelect.dispatchEvent(new Event('optionschange'));
   difficultyScreen.hidden = false; render();
-  difficultyScreen.querySelector(`[data-level="${requestedDifficulty}"]`).focus({ preventScroll: true });
+  document.querySelector('#difficulty-select-trigger').focus({ preventScroll: true });
 }
-document.querySelectorAll('#difficulty-start [data-level]').forEach(button => button.addEventListener('click', () => {
-  chosenDifficulty = button.dataset.level;
-  difficultyScreen.querySelectorAll('[data-level]').forEach(option => option.setAttribute('aria-pressed', String(option === button)));
-  difficultyPlay.hidden = false;
-}));
-difficultyPlay.addEventListener('click', () => {
-  if (!chosenDifficulty || busy || difficultyScreen.hidden) return;
-  requestedDifficulty = chosenDifficulty; newPuzzle();
-});
 async function newPuzzle(autoStart = true, reason = 'restarted') {
   if (busy) return;
   if (analytics.active) { analytics.finish(reason, analyticsProgress()); analytics.flush({ force: true }); }
@@ -386,7 +379,11 @@ function startGame() {
   started = true; startedAt = performance.now();
   document.querySelector('#start-screen').hidden = true; render();
 }
-document.querySelector('#start').addEventListener('click', () => chooseDifficulty());
+document.querySelector('#start').addEventListener('click', () => {
+  if (busy || difficultyScreen.hidden) return;
+  requestedDifficulty = difficultySelect.value;
+  newPuzzle();
+});
 function confirmAction(action) {
   closeMenu(); closeCheckpoint();
   pendingAction = action;

@@ -1,0 +1,20 @@
+/* A compact label/control row for an in-board start menu. */
+.setup-select-row { display: grid; grid-template-columns: auto minmax(0, 170px); align-items: center; gap: 16px; width: auto; max-width: 100%; text-align: left; margin-bottom: 0; }
+.setup-select-row label { color: var(--muted); font-size: 14px; }
+.setup-select-row .select-wrap { display: block; position: relative; min-width: 0; }
+.setup-select-row .select-trigger { width: 100%; min-height: 46px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--key-border); border-radius: 8px; background: var(--board); color: var(--text); text-align: left; font-size: 15px; font-weight: 600; }
+.setup-select-row .select-trigger::after { content: ''; flex: 0 0 6px; width: 6px; height: 6px; margin-top: -4px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(45deg); }
+.setup-select-row .select-options { position: absolute; left: 0; right: 0; z-index: 10; overflow-y: auto; padding: 4px; background: var(--board); border: 1px solid var(--key-border); border-radius: 6px; }
+.setup-select-row .select-option { min-height: 40px; padding: 10px 12px; cursor: pointer; font-size: 15px; }
+.setup-select-row .select-option[aria-selected='true']::after { content: '✓'; float: right; color: var(--primary); }
+.setup-select-row .select-option.is-active { outline: 1px solid var(--key-border); outline-offset: -1px; }
+.setup-select-row .select-trigger:hover, .setup-select-row .select-trigger:active { background: var(--board); box-shadow: none; filter: none; }
+.setup-select-row .select-trigger:focus:not(:focus-visible) { outline: none; }
+.setup-select-row .select-trigger { -webkit-tap-highlight-color: transparent; }
+
+/* Both start screens share proportions rather than keeping per-game overrides. */
+.overlay.start-menu { gap: 18px; padding: 20px; background: var(--overlay); }
+.overlay.start-menu #start { min-width: 0; min-height: 44px; margin-top: 8px; padding: 12px 24px; font-size: 16px; font-weight: 600; }
+.overlay.start-menu .privacy-link { min-height: 32px; padding: 6px 8px; margin: 0; font-size: 13px; text-underline-offset: 3px; }
+@media (min-width: 760px) { .setup-select-row .select-trigger { min-height: 40px; padding-block: 7px; } }
+@media (max-width: 380px) { .setup-select-row { grid-template-columns: auto minmax(0, 158px); gap: 12px; } .overlay.start-menu { gap: 14px; padding: 16px; } }

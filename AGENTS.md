@@ -128,3 +128,17 @@ adding a low-specificity reset does not prove the appearance is fixed.
 
 On mobile, keep beta beside the title where it fits. At 360px and below, the raised
 position is allowed to avoid crowding the title or shrinking navigation targets.
+
+
+## Frontend skill and baseline
+
+For Browser Games frontend implementation, polish or review, use
+`browser-games-frontend` and `frontend-no-slop`. Anti-slop guidance applies by
+default unless the user explicitly approves a specific exception; never infer a
+blanket exception from existing code or a previous one-off design decision.
+Read the [frontend baseline and start-menu rules](docs/GAME_CONVENTIONS.md#frontend-workflow-and-design-baseline)
+before changing setup controls or game actions. Reuse the shared start-menu CSS
+and select component. Match the reference's style **and dimensions**, not just
+its layout. Start game and New game are green primary actions; muted secondary
+styling is for secondary actions. Verify actual computed styles and rendered
+states on phones and desktop in both themes before reporting completion.
