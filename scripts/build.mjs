@@ -70,6 +70,22 @@ if (sosEndpoint) {
   sosEndpoint = url.href;
 }
 files.push(...sosFiles);
+// Memory has an independent endpoint and fingerprint, disabled by default.
+const memoryFiles = ['memory-game/index.html', 'memory-game/style.css', 'memory-game/analytics-config.json'];
+const beforeMemory = files.length;
+await collect('memory-game/js', ['.js']);
+memoryFiles.push(...files.splice(beforeMemory));
+const memoryBuildId = await sourceBuildId(root, [...memoryFiles, ...files.filter(file => file.startsWith('shared/'))]);
+const memoryEnvironment = process.env.MEMORY_ENVIRONMENT || (process.env.CF_PAGES === '1' &&
+  process.env.CF_PAGES_BRANCH !== 'main' ? 'preview' : 'production');
+if (!['development', 'preview', 'production'].includes(memoryEnvironment)) throw new Error('Invalid MEMORY_ENVIRONMENT');
+let memoryEndpoint = process.env.MEMORY_ANALYTICS_ENDPOINT ?? '';
+if (memoryEndpoint) {
+  const url = new URL(memoryEndpoint);
+  if (url.protocol !== 'https:' || url.username || url.password || url.hash) throw new Error('Invalid MEMORY_ANALYTICS_ENDPOINT');
+  memoryEndpoint = url.href;
+}
+files.push(...memoryFiles);
 // Validate every input before replacing an existing export.
 for (const file of files) {
   const stat = await lstat(join(root, file));
@@ -86,4 +102,6 @@ await writeFile(join(output, 'sudoku-game/analytics-config.json'),
   JSON.stringify({ analyticsEndpoint: sudokuEndpoint, environment: sudokuEnvironment, buildId: sudokuBuildId }, null, 2) + '\n');
 await writeFile(join(output, 'sos-game/analytics-config.json'),
   JSON.stringify({ analyticsEndpoint: sosEndpoint, environment: sosEnvironment, buildId: sosBuildId }, null, 2) + '\n');
+await writeFile(join(output, 'memory-game/analytics-config.json'),
+  JSON.stringify({ analyticsEndpoint: memoryEndpoint, environment: memoryEnvironment, buildId: memoryBuildId }, null, 2) + '\n');
 console.log(`Exported ${files.length} public files to dist/. Analytics ${endpoint ? 'enabled' : 'disabled'}.`);

@@ -10,14 +10,14 @@ test('public export excludes unpublished sources, deployment state and private o
   const temporary = mkdtempSync(join(tmpdir(), 'browser-games-export-'));
   const source = fileURLToPath(new URL('../', import.meta.url));
   try {
-    for (const item of ['LICENSE', 'index.html', 'shared', 'snake-game', 'sudoku-game', 'sos-game', 'scripts', 'preview_server.py']) {
+    for (const item of ['LICENSE', 'index.html', 'shared', 'snake-game', 'sudoku-game', 'sos-game', 'memory-game', 'scripts', 'preview_server.py']) {
       cpSync(join(source, item), join(temporary, item), {
         recursive: true,
         filter: (path) => !path.split(/[\\/]/).includes('private'),
       });
     }
     for (const path of ['snake-game/private/prototype-preview', 'snake-game/private/analytics-dashboard',
-      'sos-game/private/feature-preview', 'sudoku-game/private/feature-preview', 'sudoku-solver', 'analytics', '.git']) {
+      'memory-game/private/feature-preview', 'sos-game/private/feature-preview', 'sudoku-game/private/feature-preview', 'sudoku-solver', 'analytics', '.git']) {
       mkdirSync(join(temporary, path), { recursive: true });
       writeFileSync(join(temporary, path, 'unpublished.txt'), 'not a public asset');
       writeFileSync(join(temporary, path, 'index.html'), '<p>Private review page</p>');
@@ -26,11 +26,11 @@ test('public export excludes unpublished sources, deployment state and private o
     writeFileSync(join(temporary, 'snake-game/js/settings.local.js'), 'local-only');
     const build = (endpoint = '', extra = {}) => spawnSync(process.execPath, ['scripts/build.mjs'], {
       cwd: temporary, env: { ...process.env, CF_PAGES: '', SNAKE_ENVIRONMENT: '',
-        SNAKE_ANALYTICS_ENDPOINT: endpoint, SOS_ANALYTICS_ENDPOINT: '', SOS_ENVIRONMENT: '', ...extra }, encoding: 'utf8',
+        SNAKE_ANALYTICS_ENDPOINT: endpoint, SOS_ANALYTICS_ENDPOINT: '', SOS_ENVIRONMENT: '', MEMORY_ANALYTICS_ENDPOINT: '', MEMORY_ENVIRONMENT: '', ...extra }, encoding: 'utf8',
     });
     let result = build();
     assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['LICENSE', 'index.html', 'shared', 'snake-game', 'sos-game', 'sudoku-game']);
+    assert.deepEqual(readdirSync(join(temporary, 'dist')).sort(), ['LICENSE', 'index.html', 'memory-game', 'shared', 'snake-game', 'sos-game', 'sudoku-game']);
     for (const [game, page] of [['homepage', 'index.html'], ['snake', 'snake-game/index.html'],
       ['sudoku', 'sudoku-game/index.html'], ['sos', 'sos-game/index.html']]) {
       const image = `shared/social/${game}-v1.png`;
@@ -45,7 +45,19 @@ test('public export excludes unpublished sources, deployment state and private o
     assert.equal(readdirSync(join(temporary, 'dist/snake-game')).includes('private'), false);
     assert.equal(readdirSync(join(temporary, 'dist/snake-game/js')).includes('settings.local.js'), false);
     assert.equal(readdirSync(join(temporary, 'dist/sos-game')).includes('private'), false);
+    assert.equal(readdirSync(join(temporary, 'dist/memory-game')).includes('private'), false);
+    assert.ok(readFileSync(join(temporary, 'dist/memory-game/js/engine.js')).length);
     assert.ok(readFileSync(join(temporary, 'dist/sos-game/js/opponent-worker.js')).length);
+    const memoryConfig = JSON.parse(readFileSync(join(temporary, 'dist/memory-game/analytics-config.json')));
+    assert.equal(memoryConfig.analyticsEndpoint, '');
+    assert.match(memoryConfig.buildId, /^sha256-[a-f0-9]{16}$/);
+    assert.equal(readdirSync(join(temporary, 'dist/memory-game')).includes('analytics'), false);
+    let memoryBuild = build('', { MEMORY_ANALYTICS_ENDPOINT: 'https://memory.test/exec', MEMORY_ENVIRONMENT: 'development' });
+    assert.equal(memoryBuild.status, 0, memoryBuild.stderr);
+    assert.equal(JSON.parse(readFileSync(join(temporary, 'dist/memory-game/analytics-config.json'))).analyticsEndpoint, 'https://memory.test/exec');
+    memoryBuild = build('', { MEMORY_ANALYTICS_ENDPOINT: 'http://memory.test/exec' });
+    assert.notEqual(memoryBuild.status, 0);
+    assert.equal(build().status, 0);
     const sosConfig = JSON.parse(readFileSync(join(temporary, 'dist/sos-game/analytics-config.json')));
     assert.equal(sosConfig.analyticsEndpoint, '');
     assert.match(sosConfig.buildId, /^sha256-[a-f0-9]{16}$/);
@@ -75,10 +87,11 @@ import io, json
 from pathlib import Path
 from preview_server import source_build_id
 assert source_build_id(Path('.'), 'sos') == '${sosConfig.buildId}'
+assert source_build_id(Path('.'), 'memory') == '${memoryConfig.buildId}'
 from preview_server import FreshAssetsHandler
 h = FreshAssetsHandler.__new__(FreshAssetsHandler)
 h.directory = '.'
-for path in ['/snake-game/private/dashboard/index.html', '/snake-game/js/settings.local.js', '/sudoku-game/private/dev-helpers/legacy-puzzle.js']:
+for path in ['/memory-game/private/feature-preview/index.html', '/snake-game/private/dashboard/index.html', '/snake-game/js/settings.local.js', '/sudoku-game/private/dev-helpers/legacy-puzzle.js']:
     h.path = path
     assert not h.public_path(), path
 for game in ['homepage', 'snake', 'sudoku', 'sos']:

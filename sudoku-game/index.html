@@ -19,7 +19,8 @@
 
 
 <script src="../shared/js/theme-init.js"></script>
-<link rel="stylesheet" href="../shared/css/base.css"><link rel="stylesheet" href="../shared/css/components.css"><link rel="stylesheet" href="style.css"></head>
+<link rel="stylesheet" href="../shared/css/base.css"><link rel="stylesheet" href="../shared/css/components.css"><link rel="stylesheet" href="../shared/css/setup-select.css" />
+<link rel="stylesheet" href="style.css"></head>
 <body class="game-page page-entering"><main class="game-layout" aria-busy="true">
       <header class="game-header" data-page-header>
         <span class="mode-slot" aria-live="polite"><span id="manual-label" class="manual-label" hidden>Manual mode ON</span></span>
@@ -30,8 +31,10 @@
 <div class="scores toolbar"><span id="difficulty-label" class="difficulty-label" aria-label="Requested difficulty"></span><div class="menu-anchor"><button id="menu-toggle" class="secondary" aria-expanded="false" aria-controls="game-menu">Menu</button><div id="game-menu" class="game-menu" inert><button id="new">New puzzle</button><button id="solve">Solve puzzle</button><label class="conflict-option"><input id="check-conflicts" type="checkbox" checked><span>Check conflicts</span></label><label class="conflict-option"><input id="manual-mode" type="checkbox" autocomplete="off"><span>Manual mode</span></label></div></div><div class="timer-controls"><button id="undo" class="tool-icon" aria-label="Undo (Ctrl or Command + Z)" title="Undo (Ctrl/⌘ Z)" disabled></button><strong id="timer">0:00</strong><button id="redo" class="tool-icon" aria-label="Redo (Ctrl or Command + Y or Shift + Z)" title="Redo (Ctrl/⌘ Y or Shift Z)" disabled></button></div><div class="checkpoint-tools"><button id="save" class="tool-icon" aria-label="Save checkpoint (S)" title="Save checkpoint (S)"></button><button id="load" class="tool-icon" aria-label="Load checkpoint (L)" title="Load checkpoint (L)" disabled></button><span id="checkpoint-feedback" class="checkpoint-feedback" aria-hidden="true"></span></div><section id="checkpoint-confirm" class="checkpoint-confirm" aria-labelledby="checkpoint-title" hidden><p id="checkpoint-title"></p><p id="checkpoint-detail" hidden>The timer will keep running.</p><div><button id="checkpoint-cancel" class="secondary">Cancel</button><button id="checkpoint-accept">Confirm</button></div></section></div>
 <div class="play-layout"><div class="game-screen">
 <div class="grid" role="group" aria-label="Sudoku board"></div>
-<div id="start-screen" class="overlay"><button id="start">Start</button><button id="privacy-open" class="privacy-link" type="button">Data privacy</button></div>
-<section id="difficulty-screen" class="overlay difficulty-screen" aria-labelledby="difficulty-title" hidden><h2 id="difficulty-title">Choose difficulty</h2><div id="difficulty-start" class="difficulty-picker" role="group" aria-label="Difficulty"><button type="button" data-level="novice" aria-pressed="false">Novice</button><button type="button" data-level="easy" aria-pressed="false">Easy</button><button type="button" data-level="medium" aria-pressed="false">Medium</button><button type="button" data-level="hard" aria-pressed="false">Hard</button></div><button id="difficulty-play" type="button" hidden>Play</button></section>
+<section id="start-screen" class="overlay start-menu">
+<div class="setup-select-row"><label for="difficulty-select">Difficulty</label><span class="select-wrap"><select id="difficulty-select"><option value="novice">Novice</option><option value="easy" selected>Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></span></div>
+<button id="start" type="button">Start game</button><button id="privacy-open" class="privacy-link" type="button">Data privacy</button>
+</section>
 <section id="privacy-view" class="overlay privacy-view" aria-labelledby="privacy-title" hidden>
 <h2 id="privacy-title" tabindex="-1">Data privacy</h2>
 <p id="privacy-intro">This game sends anonymous play reports for game improvement.</p>

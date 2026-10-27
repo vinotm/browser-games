@@ -270,23 +270,14 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
   .manual-label { max-width: 78px; white-space: normal; line-height: 1.2; text-align: center; }
 }
 
-/* Difficulty belongs to game setup; no level badge or fallback notice in play. */
-.difficulty-picker { display: flex; flex-direction: column; gap: 10px; width: min(100%, 180px); }
-.difficulty-picker button { position: relative; min-width: 66px; min-height: 40px; padding: 8px 30px; font-size: 16px; font-weight: 650; background: var(--secondary); color: var(--text); border: 1px solid color-mix(in srgb, var(--edge) 55%, var(--board)); }
+/* Puzzle loading stays inside the board. */
 
-.difficulty-picker button:focus-visible { outline: 2px solid #458bd6; outline-offset: 3px; }
-.difficulty-screen { inset: 0; z-index: 3; background: var(--board); gap: 20px; padding: 20px; }
-.difficulty-screen h2 { margin: 0; font-size: 22px; font-weight: 650; }
 .board-loading { inset: 0; z-index: 4; background: var(--board); padding: 24px; gap: 22px; text-align: center; transition: opacity 180ms ease-out; }
 .board-loading p { margin: 0; color: var(--muted); font-size: 15px; }
 .board-loading.is-leaving { opacity: 0; }
 .awaiting-puzzle .grid, .awaiting-puzzle .note-layer { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .board-loading { transition: none; } }
 
-.difficulty-picker button[aria-pressed='true'] { color: #204d86; border-color: #365c98; background: #e5edf8; font-weight: 700; box-shadow: inset 0 0 0 1px #365c98; }
-.difficulty-picker button[aria-pressed='true']::after { content: ''; position: absolute; right: 15px; top: 50%; width: 6px; height: 11px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-65%) rotate(45deg); }
-:root[data-theme='dark'] .difficulty-picker button[aria-pressed='true'] { color: #f0f6ff; border-color: #8ab8ee; background: #304c6c; box-shadow: inset 0 0 0 1px #8ab8ee; }
-#difficulty-play { width: min(100%, 180px); min-height: 44px; background: var(--primary); color: white; font-size: 16px; font-weight: 700; }
 
 
 .number-pad button { position: relative; }
@@ -303,11 +294,6 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
 .difficulty-label { position: absolute; top: 0; left: 50%; transform: translateX(-50%); color: #28634b; font-size: 15px; line-height: 22px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 :root[data-theme='dark'] .difficulty-label { color: #88c9a9; }
 .difficulty-label:empty { visibility: hidden; }
-@media (max-width: 400px) {
-  .difficulty-screen { gap: 10px; padding: 12px; }
-  .difficulty-picker { gap: 6px; }
-  .difficulty-picker button { min-height: 36px; padding-block: 6px; }
-}
 
 
 /* Fit the board and all three pad rows on short portrait phone screens. */
@@ -329,3 +315,7 @@ dialog h2 { margin: 0; font-size: 23px; } dialog p { color: var(--muted); line-h
   .game-guide[open] { gap: 8px; }
   .game-guide h2 { font-size: 18px; }
 }
+
+#start-screen { gap: 18px; padding: 20px; background: var(--board); }
+#start { min-width: 160px; min-height: 56px; font-size: 20px; }
+@media (max-width: 360px) { #start-screen { gap: 14px; padding: 16px; } }

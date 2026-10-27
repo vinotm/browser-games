@@ -11,6 +11,9 @@ common controls, themes, storage, and other utilities.
 | Sudoku | `sudoku-game/` | [Overview and rules](sudoku-game/README.md) · [Puzzle generation](sudoku-game/DIFFICULTY.md) · [Analytics](sudoku-game/analytics/README.md) |
 | SOS | `sos-game/` | [Overview and rules](sos-game/README.md) · [Analytics](sos-game/analytics/README.md) |
 
+Memory is available at `memory-game/`; see its
+[overview and rules](memory-game/README.md).
+
 ## Run locally
 
 Use Python 3.9 or newer:
@@ -76,6 +79,7 @@ shared/                    Reusable browser utilities and styles
 snake-game/                Snake source, rules, and analytics receiver
 sudoku-game/               Sudoku source, generation docs, and analytics receiver
 sos-game/                  SOS rules, computer opponent, and analytics receiver
+memory-game/               Shape-pair memory game
 tests/                     Automated tests using synthetic fixtures
 scripts/                   Static export and source fingerprint tools
 preview_server.py          Restricted local development server
