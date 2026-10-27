@@ -1,3 +1,4 @@
+import { createBoardNavigation } from '../../shared/js/board-navigation.js';
 import { createRunAnalytics } from './analytics.js';
 import { loadDeploymentConfig } from '../../shared/js/config.js';
 import { describeDevice } from '../../shared/js/device.js';
@@ -27,16 +28,30 @@ const restart = createConfirmationDialog({ id: 'restart', title: 'Start a new ga
 const selection = setupBoardMenu();
 enhanceSelect($('#board-size'));
 let cards = [];
+let dimensions = { rows: 4, columns: 4 };
+const boardNavigation = createBoardNavigation({
+  viewport: $('#board-viewport'), stage: board, host: $('.game-screen'),
+  geometry: () => {
+    const viewport = $('#board-viewport');
+    const count = Math.max(dimensions.rows, dimensions.columns);
+    const style = getComputedStyle(board);
+    const padding = parseFloat(style.paddingLeft), gap = parseFloat(style.columnGap);
+    const cell = (Math.min(viewport.clientWidth, viewport.clientHeight) - padding * 2 + gap) / (count > 10 ? 10.5 : count);
+    return { width: cell * dimensions.columns - gap + padding * 2,
+      height: cell * dimensions.rows - gap + padding * 2 };
+  },
+  canExplore: () => started && !finished && !page.isConfirming() && !restart.isOpen(),
+  onSelect: flip, onNavigate: () => {},
+});
 function createCards(rows, columns) {
   cards.forEach(button => button.clearShape());
   board.replaceChildren();
   board.style.setProperty('--columns', columns);
   board.style.setProperty('--rows', rows);
-  board.style.setProperty('--cell', `${Math.max(40, 430 / Math.max(10, columns))}px`);
-  board.classList.toggle('large-board', columns > 10 || rows > 10);
+  dimensions = { rows, columns };
   cards = Array.from({ length: rows * columns }, (_, index) => {
   const button = document.createElement('button');
-  button.type = 'button'; button.className = 'card';
+  button.type = 'button'; button.className = 'card'; button.dataset.index = index;
   button.setAttribute('aria-label', `Card ${index + 1}, face down`);
   button.disabled = true;
   const flipper = document.createElement('span'); flipper.className = 'card-flipper';
@@ -56,10 +71,11 @@ function createCards(rows, columns) {
   };
   button.clearShape = () => { clearTimeout(discardTimer); front.replaceChildren(); };
   // Only the position is captured here. No identity is bound to a card element.
-  button.addEventListener('click', () => flip(index));
+  button.addEventListener('click', event => { if (event.detail === 0) void boardNavigation.select(index); });
   board.append(button);
   return button;
   });
+  boardNavigation.reset();
 }
 createCards(4, 4);
 
@@ -75,23 +91,24 @@ function render() {
     button.classList.toggle('is-blocked', blocked);
     button.setAttribute('aria-label', blocked ? 'Blocked cell' : `Card ${index + 1}, ${matched ? 'matched ' : ''}${shape?.replaceAll(':', ' ') ?? 'face down'}`);
     button.setAttribute('aria-disabled', String(open || finished));
-    button.disabled = blocked; // Keep every position reachable by keyboard.
+    button.disabled = blocked; // Keep every playable position reachable by keyboard.
   });
+  boardNavigation.update();
 }
 function start() {
   clearTimeout(concealTimer); clearTimeout(completionTimer);
   cards.forEach(button => { button.clearShape(); button.classList.remove('is-open', 'is-matched'); });
   board.classList.remove('won');
-  const dimensions = selection.value();
-  createCards(dimensions.rows, dimensions.columns);
-  game = createMemoryGame(Math.random, dimensions); started = true; finished = false;
+  const selectedSize = selection.value();
+  createCards(selectedSize.rows, selectedSize.columns);
+  game = createMemoryGame(Math.random, selectedSize); started = true; finished = false;
   flips = 0; earlyCloses = 0; seen = new Set();
   clock.reset(); clock.start();
   analytics.start(game.view()); analytics.visibility(!document.hidden); void analytics.flush();
   $('#start-view').hidden = true; $('#result').hidden = true;
   $('#new-game').disabled = false;
   $('#status').textContent = 'Find matching pairs.';
-  render(); updateTime(); page.refresh(); cards[0].focus();
+  render(); updateTime(); page.refresh(); cards.find(card => !card.disabled)?.focus({ preventScroll: true });
 }
 function flip(index) {
   if (!started || finished || page.isConfirming() || restart.isOpen() || !$('#privacy-view').hidden) return;

@@ -1,6 +1,6 @@
 # SOS
 
-Version: `beta-6.3`.
+Version: `beta-6.4`.
 
 A finite-board SOS game against SOS Bot (“vs Bot”) or two players sharing one device.
 The default board is 6 × 6; 8 × 8 and 10 × 10 are also available.

@@ -1,3 +1,5 @@
+import { bindSwipe } from './input.js';
+
 // Optional in-board guide. Content belongs to each game; this module owns navigation,
 // keyboard handling, dismissal, and board placement. Lucide circle-help (ISC).
 export function createTutorial({ host, pages, onOpen = () => {} }) {
@@ -32,20 +34,35 @@ export function createTutorial({ host, pages, onOpen = () => {} }) {
     restore = onOpen(); index = 0; render(); dialog.show();
     dialog.querySelector('h2').focus({ preventScroll: true });
   });
-  back.addEventListener('click', () => { if (index > 0) { index--; render(); } });
-  next.addEventListener('click', () => { if (index < pages.length - 1) { index++; render(); } });
+  function step(delta) {
+    const target = Math.max(0, Math.min(pages.length - 1, index + delta));
+    if (target !== index) { index = target; render(); }
+  }
+  back.addEventListener('click', () => step(-1));
+  next.addEventListener('click', () => step(1));
+  const unbindSwipe = bindSwipe(dialog.querySelector('.guide-content'), direction => {
+    if (!dialog.open || document.querySelector('dialog:modal')) return;
+    if (direction === 'left') step(1);
+    if (direction === 'right') step(-1);
+  }, { threshold: 40 });
   dialog.querySelector('.guide-close').addEventListener('click', close);
   dialog.addEventListener('close', () => { restore?.(); restore = null;
     if (returnFocus) button.focus({ preventScroll: true }); });
   // This is a board panel, not a page-wide modal. Tab may reach outside controls.
   dialog.addEventListener('keydown', event => event.stopPropagation());
-  function escape(event) {
-    if (!dialog.open || event.key !== 'Escape' || document.querySelector('dialog:modal')) return;
-    event.preventDefault(); event.stopPropagation(); close();
+  function guideKey(event) {
+    if (!dialog.open || document.querySelector('dialog:modal') || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); close(); return; }
+    // Other page controls remain usable while a non-modal guide is open.
+    if (event.target.closest?.('input, textarea, select, [contenteditable], [role="combobox"], [role="slider"]')) return;
+    const key = event.key.toLowerCase();
+    const delta = ['arrowleft', 'a'].includes(key) ? -1 : ['arrowright', 'd'].includes(key) ? 1 : 0;
+    if (!delta) return;
+    event.preventDefault(); event.stopImmediatePropagation(); step(delta);
   }
-  document.addEventListener('keydown', escape, true);
+  document.addEventListener('keydown', guideKey, true);
   return { button, isOpen: () => dialog.open,
-    dispose() { close(); document.removeEventListener('keydown', escape, true);
+    dispose() { close(); document.removeEventListener('keydown', guideKey, true); unbindSwipe();
       dialog.remove(); button.remove(); } };
 
 }

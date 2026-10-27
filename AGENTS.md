@@ -142,3 +142,9 @@ and select component. Match the reference's style **and dimensions**, not just
 its layout. Start game and New game are green primary actions; muted secondary
 styling is for secondary actions. Verify actual computed styles and rendered
 states on phones and desktop in both themes before reporting completion.
+
+Guides support Left/Right, A/D and horizontal swipes through the shared tutorial
+module. Preserve browser shortcuts, editable controls and vertical guide scrolling.
+Memory and SOS share board navigation; reuse its magnifier, gestures and position
+bars for comparable boards. Center artwork by its visible bounds as well as its
+SVG element; asymmetric artwork must not rely on an assumed square center.
